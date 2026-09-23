@@ -2,7 +2,7 @@ import express from "express";
 import path from "path";
 // import { ProductController } from "./controllers/ProductController.mjs";
 // import { OrderController } from "./controllers/OrderController.mjs";
-// import { EmployeeController } from "./controllers/EmployeeController.mjs";
+import { UsersController } from "./controllers/UsersController.mjs";
 // import { AuthenticationController } from "./controllers/AuthenticationController.mjs";
 // import { APIController } from "./controllers/api/APIController.mjs";
 import cors from 'cors';
@@ -28,7 +28,7 @@ app.use(express.urlencoded({ extended: true }));
 //TODO: Use routes (from controllers)
 // app.use("/products", ProductController.routes);
 // app.use("/orders", OrderController.routes);
-// app.use("/employee", EmployeeController.routes);
+app.use("/users", UsersController.routes);
 // app.use("/authenticate", AuthenticationController.routes);
 // app.use("/api", APIController.routes);
 app.get("/", (req, res) => {

@@ -7,7 +7,8 @@
     "dev": "nodemon --env-file=./src/.env src/server.mjs",
     "prod": "nodemon --env-file=./src/.envprod src/server.mjs",
     "tailwind": "npx @tailwindcss/cli -i src/public/css/style.css -o src/dist/css/tailwind.css --watch",
-    "dev-full": "npm-run-all --parallel tailwind dev"
+    "dev-full": "npm-run-all --parallel tailwind dev",
+     "doc": "node /node_modules/jsdoc/jsdoc.js -c ./jsdoc.conf.json"
   },
   "keywords": [],
   "author": "",

@@ -1,5 +1,6 @@
 import express from "express";
 import { UsersModel } from "../models/UsersModel.mjs";
+import bcrypt from "bcrypt";
 
 /** HTTP handlers for users. */
 export class UsersController {
@@ -9,25 +10,25 @@ export class UsersController {
         this.routes.get(
             "/",
             //AuthenticationController.restrict(["admin"]),
-            this.viewEmployeeManagement
+            this.viewUserManagement
         )
 
         this.routes.get(
             "/:id",
             //AuthenticationController.restrict(["admin"]),
-            this.viewEmployeeManagement
+            this.viewUserManagement
         )
 
         this.routes.post(
             "/",
             //AuthenticationController.restrict(["admin"]),
-            this.handleEmployeeManagement
+            this.handleUserManagement
         )
 
         this.routes.post(
             "/:id",
             //AuthenticationController.restrict(["admin"]),
-            this.handleEmployeeManagement
+            this.handleUserManagement
         )
     }
 
@@ -36,17 +37,28 @@ export class UsersController {
      * @type {express.RequestHandler}
      */
     static viewUserManagement(req, res) {
-        const selectedEmployeeId = req.params.id
+        const selectedUserId = req.params.id
 
-        UserModel.getAll()
+        UsersModel.getAll()
             .then(users => {
 
                 const selectedUser = users.find(
                     e => e.id == selectedUserId
-                ) ?? new UserModel(null, "", "", "", "", "")
+                ) ?? new UsersModel(
+                    null,
+                    "",
+                    "",
+                    "",
+                    "",
+                    "",
+                    "",
+                    "",
+                    0,
+                    0,
+                )
 
                 res.render("user_management.ejs", {
-                    user,
+                    users,
                     selectedUser,
                     role: "admin",
                 })
@@ -72,13 +84,17 @@ export class UsersController {
             formData["firstName"],
             formData["lastName"],
             formData["role"],
-            formData["username"],
-            formData["password"]
+            formData["email"],
+            formData["password"],
+            formData["phone"],
+            formData["dob"],
+            formData["deleted"],
+            formData["updatedBy"]
         )
 
         // We need to hash the password if it is not hashed
-        if (!user.password.startsWith("$2a")) {
-            user.password = bcrypt.hashSync(user.password)
+        if (!/^\$2[aby]\$/.test(user.password)) {
+            user.password = bcrypt.hashSync(user.password, 10)
         }
 
         if (action == "create") {
@@ -116,18 +132,18 @@ export class UsersController {
             UsersModel.delete(user.id)
                 .then(result => {
                     if (result.affectedRows > 0) {
-                        res.redirect("/usersemployees")
+                        res.redirect("/users")
                     } else {
                         res.render("status.ejs", {
-                            status: "Employee Deletion Failed",
-                            message: "The employee could not be found.",
+                            status: "User Deletion Failed",
+                            message: "The user could not be found.",
                         });
                     }
                 })
                 .catch(error => {
                     res.render("status.ejs", {
                         status: "Database Error",
-                        message: "The employee could not be deleted.",
+                        message: "The user could not be deleted.",
                     });
                     console.error(error)
                 })
