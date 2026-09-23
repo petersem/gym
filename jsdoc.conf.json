@@ -1,0 +1,16 @@
+{
+  "source": {
+    "include": ["src"],
+    "includePattern": ".+\\.(m?js(doc|x)?|cjs|ts)$",
+    "excludePattern": "(^|\\/|\\\\)_"
+  },
+  "plugins": ["plugins/markdown"],
+  "recurseDepth": 10,
+  "opts": {
+    "encoding": "utf8",
+    "destination": "./src/public/docs",
+    "recurse": true,
+    "verbose": true
+  }
+}
+

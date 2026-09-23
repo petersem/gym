@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<coverage generated="1790139615878" clover="3.2.0">
+  <project timestamp="1790139615878" name="All files">
+    <metrics statements="82" coveredstatements="82" conditionals="8" coveredconditionals="8" methods="51" coveredmethods="51" elements="141" coveredelements="141" complexity="0" loc="82" ncloc="82" packages="1" files="5" classes="5"/>
+    <file name="ActivitiesModel.mjs" path="C:\code\gym\backend\src\models\ActivitiesModel.mjs">
+      <metrics statements="17" coveredstatements="17" conditionals="2" coveredconditionals="2" methods="13" coveredmethods="13"/>
+      <line num="15" count="7" type="stmt"/>
+      <line num="16" count="7" type="stmt"/>
+      <line num="17" count="7" type="stmt"/>
+      <line num="18" count="7" type="stmt"/>
+      <line num="19" count="7" type="stmt"/>
+      <line num="20" count="7" type="stmt"/>
+      <line num="29" count="5" type="stmt"/>
+      <line num="43" count="1" type="stmt"/>
+      <line num="44" count="2" type="stmt"/>
+      <line num="54" count="1" type="stmt"/>
+      <line num="61" count="1" type="stmt"/>
+      <line num="71" count="2" type="stmt"/>
+      <line num="72" count="2" type="cond" truecount="2" falsecount="0"/>
+      <line num="83" count="1" type="stmt"/>
+      <line num="105" count="1" type="stmt"/>
+      <line num="121" count="1" type="stmt"/>
+      <line num="143" count="1" type="stmt"/>
+    </file>
+    <file name="DatabaseModel.mjs" path="C:\code\gym\backend\src\models\DatabaseModel.mjs">
+      <metrics statements="7" coveredstatements="7" conditionals="0" coveredconditionals="0" methods="2" coveredmethods="2"/>
+      <line num="7" count="5" type="stmt"/>
+      <line num="19" count="1" type="stmt"/>
+      <line num="20" count="1" type="stmt"/>
+      <line num="30" count="1" type="stmt"/>
+      <line num="31" count="1" type="stmt"/>
+      <line num="32" count="1" type="stmt"/>
+      <line num="34" count="1" type="stmt"/>
+    </file>
+    <file name="LocationModel.mjs" path="C:\code\gym\backend\src\models\LocationModel.mjs">
+      <metrics statements="23" coveredstatements="23" conditionals="2" coveredconditionals="2" methods="14" coveredmethods="14"/>
+      <line num="19" count="8" type="stmt"/>
+      <line num="20" count="8" type="stmt"/>
+      <line num="21" count="8" type="stmt"/>
+      <line num="22" count="8" type="stmt"/>
+      <line num="23" count="8" type="stmt"/>
+      <line num="24" count="8" type="stmt"/>
+      <line num="25" count="8" type="stmt"/>
+      <line num="26" count="8" type="stmt"/>
+      <line num="27" count="8" type="stmt"/>
+      <line num="28" count="8" type="stmt"/>
+      <line num="29" count="8" type="stmt"/>
+      <line num="35" count="6" type="stmt"/>
+      <line num="55" count="1" type="stmt"/>
+      <line num="56" count="2" type="stmt"/>
+      <line num="65" count="1" type="stmt"/>
+      <line num="72" count="1" type="stmt"/>
+      <line num="81" count="2" type="stmt"/>
+      <line num="82" count="2" type="cond" truecount="2" falsecount="0"/>
+      <line num="93" count="1" type="stmt"/>
+      <line num="121" count="1" type="stmt"/>
+      <line num="136" count="1" type="stmt"/>
+      <line num="161" count="1" type="stmt"/>
+      <line num="187" count="1" type="stmt"/>
+    </file>
+    <file name="SessionsModel.mjs" path="C:\code\gym\backend\src\models\SessionsModel.mjs">
+      <metrics statements="13" coveredstatements="13" conditionals="2" coveredconditionals="2" methods="9" coveredmethods="9"/>
+      <line num="14" count="6" type="stmt"/>
+      <line num="15" count="6" type="stmt"/>
+      <line num="16" count="6" type="stmt"/>
+      <line num="17" count="6" type="stmt"/>
+      <line num="18" count="6" type="stmt"/>
+      <line num="27" count="4" type="stmt"/>
+      <line num="35" count="1" type="stmt"/>
+      <line num="36" count="2" type="stmt"/>
+      <line num="47" count="2" type="stmt"/>
+      <line num="48" count="2" type="cond" truecount="2" falsecount="0"/>
+      <line num="59" count="1" type="stmt"/>
+      <line num="75" count="1" type="stmt"/>
+      <line num="90" count="1" type="stmt"/>
+    </file>
+    <file name="UsersModel.mjs" path="C:\code\gym\backend\src\models\UsersModel.mjs">
+      <metrics statements="22" coveredstatements="22" conditionals="2" coveredconditionals="2" methods="13" coveredmethods="13"/>
+      <line num="31" count="7" type="stmt"/>
+      <line num="32" count="7" type="stmt"/>
+      <line num="33" count="7" type="stmt"/>
+      <line num="34" count="7" type="stmt"/>
+      <line num="35" count="7" type="stmt"/>
+      <line num="36" count="7" type="stmt"/>
+      <line num="37" count="7" type="stmt"/>
+      <line num="38" count="7" type="stmt"/>
+      <line num="39" count="7" type="stmt"/>
+      <line num="40" count="7" type="stmt"/>
+      <line num="41" count="7" type="stmt"/>
+      <line num="50" count="5" type="stmt"/>
+      <line num="69" count="1" type="stmt"/>
+      <line num="70" count="2" type="stmt"/>
+      <line num="80" count="1" type="stmt"/>
+      <line num="87" count="1" type="stmt"/>
+      <line num="97" count="2" type="stmt"/>
+      <line num="98" count="2" type="cond" truecount="2" falsecount="0"/>
+      <line num="109" count="1" type="stmt"/>
+      <line num="137" count="1" type="stmt"/>
+      <line num="163" count="1" type="stmt"/>
+      <line num="190" count="1" type="stmt"/>
+    </file>
+  </project>
+</coverage>
