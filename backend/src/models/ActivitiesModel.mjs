@@ -9,7 +9,7 @@ export class ActivitiesModel extends DatabaseModel {
    * @param {string} name Activity name.
    * @param {string} description Activity description.
    * @param {number} deleted Soft-delete flag.
-   * @param {string|number} updatedBy User who last updated the activity.
+   * @param {number} updatedBy ID of the user who last updated the activity.
    */
   constructor(id, name, description, deleted, updatedBy) {
     super();

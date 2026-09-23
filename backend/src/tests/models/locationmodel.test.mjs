@@ -11,7 +11,7 @@ const row = {
   postcode: '4000',
   manager: '7',
   deleted: 0,
-  updated_by: 'admin',
+  updated_by: 3,
 };
 
 const location = new LocationModel(

@@ -6,7 +6,7 @@ const row = {
   name: 'Yoga',
   description: 'A guided yoga class',
   deleted: 0,
-  updated_by: 'admin',
+  updated_by: 3,
 };
 
 const activity = new ActivitiesModel(
