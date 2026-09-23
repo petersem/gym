@@ -74,10 +74,5 @@ describe('UsersController load test', () => {
       expect(users).toHaveLength(1);
       createdUserIds.push(users[0].id);
     }
-
-    console.log(
-      `Users load test: ${requestCount} requests in ${durationMs.toFixed(0)}ms ` +
-      `(${requestsPerSecond.toFixed(2)} requests/sec)`,
-    );
   });
 });
