@@ -31,7 +31,7 @@ jobs:
           node --experimental-vm-modules ./node_modules/jest/bin/jest.js \
             --coverage \
             --verbose \
-            backend/src/tests/models > unit-test-results.txt 2>&1
+            backend/src/tests > unit-test-results.txt 2>&1
           test_status=$?
           cat unit-test-results.txt
           {
