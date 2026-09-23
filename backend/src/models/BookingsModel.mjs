@@ -3,7 +3,7 @@ import { DatabaseModel } from "./DatabaseModel.mjs";
 /**
  * Represents a booking stored in the bookings table.
  */
-export class BooksingModel extends DatabaseModel {
+export class BookingsModel extends DatabaseModel {
   /**
    * @param {number|null} id Booking identifier.
    * @param {string} sessionId Session identifier.
@@ -19,12 +19,12 @@ export class BooksingModel extends DatabaseModel {
   }
 
   /**
-   * Convert a database row into a BooksingModel instance.
+   * Convert a database row into a BookingsModel instance.
    * @param {Object} row Database row.
-   * @returns {BooksingModel} Mapped booking.
+   * @returns {BookingsModel} Mapped booking.
    */
   static tableToModel(row) {
-    return new BooksingModel(
+    return new BookingsModel(
       Number(row.id),
       row.session_id,
       Number(row.user_id),
@@ -34,7 +34,7 @@ export class BooksingModel extends DatabaseModel {
 
   /**
    * Retrieve all bookings.
-   * @returns {Promise<Array<BooksingModel>>} Stored bookings.
+   * @returns {Promise<Array<BookingsModel>>} Stored bookings.
    */
   static async getAll() {
     return this.query("SELECT * FROM bookings").then(
@@ -45,7 +45,7 @@ export class BooksingModel extends DatabaseModel {
   /**
    * Retrieve a booking by its identifier.
    * @param {number} id Booking identifier.
-   * @returns {Promise<BooksingModel>} Matching booking.
+   * @returns {Promise<BookingsModel>} Matching booking.
    * @throws {string} "not found" when no booking matches the identifier.
    */
   static async getById(id) {
@@ -57,7 +57,7 @@ export class BooksingModel extends DatabaseModel {
 
   /**
    * Update an existing booking.
-   * @param {BooksingModel} booking Booking to update.
+   * @param {BookingsModel} booking Booking to update.
    * @returns {Promise<import("mysql2/promise").OkPacket>} Database result.
    */
   static update(booking) {
@@ -73,7 +73,7 @@ export class BooksingModel extends DatabaseModel {
 
   /**
    * Create a booking with a generated identifier.
-   * @param {BooksingModel} booking Booking to create.
+   * @param {BookingsModel} booking Booking to create.
    * @returns {Promise<import("mysql2/promise").OkPacket>} Database result.
    */
   static create(booking) {
@@ -88,7 +88,7 @@ export class BooksingModel extends DatabaseModel {
 
   /**
    * Create a booking with a caller-provided identifier.
-   * @param {BooksingModel} booking Booking to create.
+   * @param {BookingsModel} booking Booking to create.
    * @returns {Promise<import("mysql2/promise").OkPacket>} Database result.
    */
   static createWithExistingID(booking) {
