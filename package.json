@@ -1,0 +1,31 @@
+{
+  "name": "gym",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "node --experimental-vm-modules ./node_modules/jest/bin/jest.js --coverage --verbose",
+    "doc": "node /node_modules/jsdoc/jsdoc.js -c ./jsdoc.conf.json"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "module",
+  "workspaces": [
+    "backend",
+    "frontend"
+  ],
+  "devDependencies": {
+    "jsdoc": "^4.0.5",
+    "npm-run-all": "^4.1.5"
+  },
+  "allowScripts": {
+    "@parcel/watcher@2.5.1": true,
+    "@parcel/watcher@2.6.0": true,
+    "@scarf/scarf@1.4.0": true,
+    "bcrypt@6.0.0": true,
+    "unrs-resolver@1.12.2": true,
+    "bson@0.2.22": true,
+    "kerberos@0.0.4": true
+  }
+}
