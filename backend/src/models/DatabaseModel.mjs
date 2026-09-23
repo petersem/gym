@@ -5,7 +5,7 @@ export class DatabaseModel {
 
     static {
         this.connection = mysql.createPool({
-            host: "localhost",
+            host: "127.0.0.1",
             user: "gymuser",
             port: 3307,
             password: "Testing123!",

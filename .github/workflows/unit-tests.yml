@@ -10,6 +10,22 @@ jobs:
   unit-tests:
     runs-on: ubuntu-latest
 
+    services:
+      mysql:
+        image: mysql:8.0
+        ports:
+          - 3307:3306
+        env:
+          MYSQL_DATABASE: gym
+          MYSQL_USER: gymuser
+          MYSQL_PASSWORD: Testing123!
+          MYSQL_ROOT_PASSWORD: rootpassword
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1 -uroot -prootpassword"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=10
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -22,6 +38,32 @@ jobs:
 
       - name: Install dependencies
         run: npm ci
+
+      - name: Install MySQL client
+        run: sudo apt-get update && sudo apt-get install --yes mysql-client
+
+      - name: Initialize test database
+        run: |
+          mysql --host=127.0.0.1 --port=3307 --user=gymuser --password=Testing123! gym <<'SQL'
+          CREATE TABLE IF NOT EXISTS users (
+            id INT NOT NULL AUTO_INCREMENT,
+            first_name VARCHAR(45) NOT NULL,
+            last_name VARCHAR(45) NOT NULL,
+            role ENUM('admin', 'trainer', 'member') NOT NULL,
+            email VARCHAR(100) NOT NULL UNIQUE,
+            password VARCHAR(70) NOT NULL,
+            phone VARCHAR(20) NOT NULL,
+            dob DATE NULL,
+            deleted TINYINT NOT NULL DEFAULT 0,
+            authentication_key VARCHAR(36) NULL,
+            PRIMARY KEY (id)
+          );
+          INSERT INTO users
+            (id, first_name, last_name, role, email, password, phone, dob, deleted)
+          VALUES
+            (1, 'GitHub', 'Test User', 'admin', 'github-test@example.com', 'seeded', '0000000000', '2000-01-01', 0)
+          ON DUPLICATE KEY UPDATE id = id;
+          SQL
 
       - name: Run unit tests
         id: tests
