@@ -1,5 +1,4 @@
 import { DatabaseModel } from "./DatabaseModel.mjs";
-import mysql from "mysql2/promise";
 
 export class LocationModel extends DatabaseModel {
   //// Instance
@@ -66,9 +65,9 @@ export class LocationModel extends DatabaseModel {
       `
             SELECT * FROM locations 
             WHERE deleted = 0 
-            AND (name LIKE ? OR description LIKE ?)
+            AND (name LIKE ? OR city LIKE ? OR postcode LIKE ?)
         `,
-      [`%${term}%`, `%${term}%`],
+          [`%${term}%`, `%${term}%`, `%${term}%`],
     ).then((result) => result.map((row) => this.tableToModel(row.locations)));
   }
 
@@ -121,7 +120,7 @@ export class LocationModel extends DatabaseModel {
     return this.query(
       `
             UPDATE locations
-            SET stock = stock + ?, updated_by = ?
+            SET stock = stock + ?
             WHERE id = ?
         `,
       [difference, id],

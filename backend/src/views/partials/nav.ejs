@@ -1,0 +1,15 @@
+<nav>
+    <% if (role == "admin") { %>
+        <a href="/users">Members</a>
+    <% } %>
+
+    <% if (role == "trainers" || role == "admin") { %>
+        <a href="/products/edit">for trainers Products</a>
+    <% } %>
+
+    <% if (role == "members" || role == "trainers" || role == "admin") { %>
+        <a href="/orders/view">for members</a>
+    <% } %>
+    
+    <a href="/authenticate/logout">Logout</a>
+</nav>

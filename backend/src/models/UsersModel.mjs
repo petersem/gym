@@ -1,5 +1,11 @@
 import { DatabaseModel } from "./DatabaseModel.mjs";
 
+
+export const USER_ROLE_ADMIN = "admin"
+export const USER_ROLE_TRAINER = "trainer"
+export const USER_ROLE_MEMBER = "member"
+
+
 /**
  * Represents a user stored in the users table.
  */
@@ -85,6 +91,22 @@ export class UsersModel extends DatabaseModel {
         `,
       [`%${term}%`, `%${term}%`, `%${term}%`],
     ).then((result) => result.map((row) => this.tableToModel(row.users)));
+  }
+
+  /**
+   * Retrieve an active user by email address used as the login name.
+   * @param {string} username Login email address.
+   * @returns {Promise<UsersModel>} Matching user.
+   * @throws {string} "not found" when no user matches the username.
+   */
+  static async getByUsername(username) {
+    const result = await this.query(
+      "SELECT * FROM users WHERE email = ? AND deleted = 0",
+      [username],
+    );
+    return result.length > 0
+      ? this.tableToModel(result[0].users)
+      : Promise.reject("not found");
   }
 
   /**

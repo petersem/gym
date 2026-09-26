@@ -3,22 +3,20 @@ import { BlogModel } from '../../models/BlogModel.mjs';
 
 const row = {
   id: '31',
-  title: 'Training Tips',
-  content: 'Build a consistent training routine.',
+  subject: 'Training Tips',
+  body: 'Build a consistent training routine.',
   user_id: '7',
-  created: '2026-09-23 10:00:00',
-  deleted: 0,
-  updated_by: '3',
+  create_date: '2026-09-23 10:00:00',
 };
 
 const blog = new BlogModel(
   31,
-  row.title,
-  row.content,
+  row.subject,
+  row.body,
   7,
-  row.created,
-  row.deleted,
-  3,
+  row.create_date,
+  0,
+  null,
 );
 
 afterEach(() => {
@@ -31,34 +29,50 @@ describe('BlogModel unit tests', () => {
     expect(BlogModel.tableToModel(row)).toEqual(blog);
   });
 
+  test('maps legacy blog field aliases when present', () => {
+    const legacyRow = {
+      id: '32',
+      title: 'Legacy title',
+      content: 'Legacy body',
+      user_id: '7',
+      created: '2026-09-24 10:00:00',
+      deleted: 0,
+      updated_by: '3',
+    };
+
+    expect(BlogModel.tableToModel(legacyRow)).toEqual(
+      new BlogModel(32, 'Legacy title', 'Legacy body', 7, legacyRow.created, 0, 3),
+    );
+  });
+
   test('getAll maps returned blog posts', async () => {
     const query = jest.spyOn(BlogModel, 'query').mockResolvedValue([
-      { blogs: row },
-      { blogs: { ...row, id: '32', title: 'Nutrition Basics' } },
+      { blog: row },
+      { blog: { ...row, id: '32', subject: 'Nutrition Basics' } },
     ]);
 
     await expect(BlogModel.getAll()).resolves.toEqual([
       blog,
-      new BlogModel(32, 'Nutrition Basics', row.content, 7, row.created, row.deleted, 3),
+      new BlogModel(32, 'Nutrition Basics', row.body, 7, row.create_date, 0, null),
     ]);
-    expect(query).toHaveBeenCalledWith('SELECT * FROM blogs WHERE deleted = 0');
+    expect(query).toHaveBeenCalledWith('SELECT * FROM blog');
   });
 
   test('getBySearch uses the term for title and content', async () => {
-    const query = jest.spyOn(BlogModel, 'query').mockResolvedValue([{ blogs: row }]);
+    const query = jest.spyOn(BlogModel, 'query').mockResolvedValue([{ blog: row }]);
 
     await expect(BlogModel.getBySearch('Training')).resolves.toEqual([blog]);
     expect(query).toHaveBeenCalledWith(
-      expect.stringContaining('title LIKE ? OR content LIKE ?'),
+      expect.stringContaining('subject LIKE ? OR body LIKE ?'),
       ['%Training%', '%Training%'],
     );
   });
 
   test('getById returns a blog post when found', async () => {
-    const query = jest.spyOn(BlogModel, 'query').mockResolvedValue([{ blogs: row }]);
+    const query = jest.spyOn(BlogModel, 'query').mockResolvedValue([{ blog: row }]);
 
     await expect(BlogModel.getById(31)).resolves.toEqual(blog);
-    expect(query).toHaveBeenCalledWith('SELECT * FROM blogs WHERE id = ?', [31]);
+    expect(query).toHaveBeenCalledWith('SELECT * FROM blog WHERE id = ?', [31]);
   });
 
   test('getById rejects when no blog post is found', async () => {
@@ -72,8 +86,8 @@ describe('BlogModel unit tests', () => {
 
     await expect(BlogModel.update(blog)).resolves.toEqual({ affectedRows: 1 });
     expect(query).toHaveBeenCalledWith(
-      expect.stringContaining('UPDATE blogs'),
-      [blog.title, blog.content, blog.user_id, blog.created, blog.deleted, blog.updated_by, blog.id],
+      expect.stringContaining('UPDATE blog'),
+      [blog.title, blog.content, blog.user_id, blog.created, blog.id],
     );
   });
 
@@ -82,8 +96,8 @@ describe('BlogModel unit tests', () => {
 
     await expect(BlogModel.create(blog)).resolves.toEqual({ insertId: 31 });
     expect(query).toHaveBeenCalledWith(
-      expect.stringContaining('INSERT INTO blogs'),
-      [blog.title, blog.content, blog.user_id, blog.created, blog.deleted, blog.updated_by],
+      expect.stringContaining('INSERT INTO blog'),
+      [blog.title, blog.content, blog.user_id, blog.created],
     );
   });
 
@@ -92,8 +106,8 @@ describe('BlogModel unit tests', () => {
 
     await expect(BlogModel.createWithExistingID(blog)).resolves.toEqual({ insertId: 31 });
     expect(query).toHaveBeenCalledWith(
-      expect.stringContaining('INSERT INTO blogs'),
-      [blog.id, blog.title, blog.content, blog.user_id, blog.created, blog.deleted, blog.updated_by],
+      expect.stringContaining('INSERT INTO blog'),
+      [blog.id, blog.title, blog.content, blog.user_id, blog.created],
     );
   });
 
@@ -101,6 +115,6 @@ describe('BlogModel unit tests', () => {
     const query = jest.spyOn(BlogModel, 'query').mockResolvedValue({ affectedRows: 1 });
 
     await expect(BlogModel.delete(31)).resolves.toEqual({ affectedRows: 1 });
-    expect(query).toHaveBeenCalledWith('DELETE FROM blogs WHERE id = ?', [31]);
+    expect(query).toHaveBeenCalledWith('DELETE FROM blog WHERE id = ?', [31]);
   });
 });

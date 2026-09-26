@@ -1,4 +1,5 @@
 import { afterEach, describe, expect, jest, test } from '@jest/globals';
+import bcrypt from 'bcrypt';
 import { UsersController } from '../../controllers/UsersController.mjs';
 import { UsersModel } from '../../models/UsersModel.mjs';
 
@@ -57,6 +58,17 @@ describe('UsersController unit tests', () => {
     });
   });
 
+  test('logs user-list load errors', async () => {
+    const error = new Error('database error');
+    jest.spyOn(UsersModel, 'getAll').mockRejectedValue(error);
+    const log = jest.spyOn(console, 'log').mockImplementation(() => {});
+
+    UsersController.viewUserManagement(request(), response());
+    await flushPromises();
+
+    expect(log).toHaveBeenCalledWith(error);
+  });
+
   test('renders a complete empty user when no user is selected', async () => {
     jest.spyOn(UsersModel, 'getAll').mockResolvedValue([]);
     const res = response();
@@ -90,6 +102,30 @@ describe('UsersController unit tests', () => {
     expect(res.redirect).toHaveBeenCalledWith('/users');
   });
 
+  test('hashes an unencrypted password before creating', async () => {
+    const create = jest.spyOn(UsersModel, 'create').mockResolvedValue({ insertId: 7 });
+    const hash = jest.spyOn(bcrypt, 'hashSync').mockReturnValue('hashed-password');
+    const res = response();
+
+    UsersController.handleUserManagement(request({}, { ...formData('create'), password: 'plain-text' }), res);
+    await flushPromises();
+
+    expect(hash).toHaveBeenCalledWith('plain-text', 10);
+    expect(create).toHaveBeenCalledWith(expect.objectContaining({ password: 'hashed-password' }));
+  });
+
+  test('renders create database errors', async () => {
+    jest.spyOn(UsersModel, 'create').mockRejectedValue(new Error('database error'));
+    const errorLog = jest.spyOn(console, 'error').mockImplementation(() => {});
+    const res = response();
+
+    UsersController.handleUserManagement(request({}, formData('create')), res);
+    await flushPromises();
+
+    expect(res.render).toHaveBeenCalledWith('status.ejs', expect.objectContaining({ status: 'Database Error' }));
+    expect(errorLog).toHaveBeenCalled();
+  });
+
   test('updates a user when the database changes a row', async () => {
     const update = jest.spyOn(UsersModel, 'update').mockResolvedValue({ affectedRows: 1 });
     const res = response();
@@ -114,6 +150,17 @@ describe('UsersController unit tests', () => {
     });
   });
 
+  test('renders update database errors', async () => {
+    jest.spyOn(UsersModel, 'update').mockRejectedValue(new Error('database error'));
+    jest.spyOn(console, 'error').mockImplementation(() => {});
+    const res = response();
+
+    UsersController.handleUserManagement(request({ id: '7' }, formData('update')), res);
+    await flushPromises();
+
+    expect(res.render).toHaveBeenCalledWith('status.ejs', expect.objectContaining({ status: 'Database Error' }));
+  });
+
   test('deletes a user and redirects when a row is deleted', async () => {
     const remove = jest.spyOn(UsersModel, 'delete').mockResolvedValue({ affectedRows: 1 });
     const res = response();
@@ -136,6 +183,17 @@ describe('UsersController unit tests', () => {
       status: 'User Deletion Failed',
       message: 'The user could not be found.',
     });
+  });
+
+  test('renders deletion database errors', async () => {
+    jest.spyOn(UsersModel, 'delete').mockRejectedValue(new Error('database error'));
+    jest.spyOn(console, 'error').mockImplementation(() => {});
+    const res = response();
+
+    UsersController.handleUserManagement(request({ id: '7' }, formData('delete')), res);
+    await flushPromises();
+
+    expect(res.render).toHaveBeenCalledWith('status.ejs', expect.objectContaining({ status: 'Database Error' }));
   });
 
   test('renders an invalid action error', () => {

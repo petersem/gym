@@ -51,13 +51,13 @@ describe('LocationModel unit tests', () => {
     expect(query).toHaveBeenCalledWith('SELECT * FROM locations where deleted = 0');
   });
 
-  test('getBySearch uses the search term for both fields', async () => {
+  test('getBySearch uses the search term for location fields', async () => {
     const query = jest.spyOn(LocationModel, 'query').mockResolvedValue([{ locations: row }]);
 
     await expect(LocationModel.getBySearch('Central')).resolves.toEqual([location]);
     expect(query).toHaveBeenCalledWith(
-      expect.stringContaining('name LIKE ? OR description LIKE ?'),
-      ['%Central%', '%Central%'],
+      expect.stringContaining('name LIKE ? OR city LIKE ? OR postcode LIKE ?'),
+      ['%Central%', '%Central%', '%Central%'],
     );
   });
 

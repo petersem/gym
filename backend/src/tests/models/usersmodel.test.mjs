@@ -60,6 +60,22 @@ describe('UsersModel unit tests', () => {
     );
   });
 
+  test('getByUsername returns an active user by email', async () => {
+    const query = jest.spyOn(UsersModel, 'query').mockResolvedValue([{ users: row }]);
+
+    await expect(UsersModel.getByUsername('ada@example.com')).resolves.toEqual(user);
+    expect(query).toHaveBeenCalledWith(
+      'SELECT * FROM users WHERE email = ? AND deleted = 0',
+      ['ada@example.com'],
+    );
+  });
+
+  test('getByUsername rejects when the email is not found', async () => {
+    jest.spyOn(UsersModel, 'query').mockResolvedValue([]);
+
+    await expect(UsersModel.getByUsername('missing@example.com')).rejects.toBe('not found');
+  });
+
   test('getById returns a user when found', async () => {
     const query = jest.spyOn(UsersModel, 'query').mockResolvedValue([{ users: row }]);
 

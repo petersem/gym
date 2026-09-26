@@ -1,21 +1,25 @@
 import { DatabaseModel } from "./DatabaseModel.mjs";
 
 /**
- * Represents a persisted session in the sessions table.
+ * Represents a gym session stored in the sessions table.
  */
 export class SessionsModel extends DatabaseModel {
   /**
-   * @param {string} sid Session identifier.
-   * @param {Object|string} data Serialized or parsed session data.
-   * @param {string|Date} lastAccess Last access timestamp.
-   * @param {string|Date} expires Session expiration timestamp.
+   * @param {number|null} id Session identifier.
+   * @param {number} activityId Activity identifier.
+   * @param {number} locationId Location identifier.
+   * @param {number} trainerId Trainer user identifier.
+   * @param {string|Date} date Session date.
+   * @param {string} time Session time.
    */
-  constructor(sid, data, lastAccess, expires) {
+  constructor(id, activityId, locationId, trainerId, date, time) {
     super();
-    this.sid = sid;
-    this.data = data;
-    this.lastAccess = lastAccess;
-    this.expires = expires;
+    this.id = id;
+    this.activity_id = activityId;
+    this.location_id = locationId;
+    this.trainer_id = trainerId;
+    this.date = date;
+    this.time = time;
   }
 
   /**
@@ -24,7 +28,14 @@ export class SessionsModel extends DatabaseModel {
    * @returns {SessionsModel} Mapped session.
    */
   static tableToModel(row) {
-    return new SessionsModel(row.sid, row.data, row.lastAccess, row.expires);
+    return new SessionsModel(
+      Number(row.id),
+      Number(row.activity_id),
+      Number(row.location_id),
+      Number(row.trainer_id),
+      row.date,
+      row.time,
+    );
   }
 
   /**
@@ -43,8 +54,8 @@ export class SessionsModel extends DatabaseModel {
    * @returns {Promise<SessionsModel>} Matching session.
    * @throws {string} "not found" when no session matches the identifier.
    */
-  static async getById(sid) {
-    const result = await this.query("SELECT * FROM sessions WHERE sid = ?", [sid]);
+  static async getById(id) {
+    const result = await this.query("SELECT * FROM sessions WHERE id = ?", [id]);
     return result.length > 0
       ? this.tableToModel(result[0].sessions)
       : Promise.reject("not found");
@@ -59,10 +70,10 @@ export class SessionsModel extends DatabaseModel {
     return this.query(
       `
             UPDATE sessions
-            SET data = ?, lastAccess = ?, expires = ?
-            WHERE sid = ?
+            SET activity_id = ?, location_id = ?, trainer_id = ?, date = ?, time = ?
+            WHERE id = ?
         `,
-      [session.data, session.lastAccess, session.expires, session.sid],
+          [session.activity_id, session.location_id, session.trainer_id, session.date, session.time, session.id],
     );
   }
 
@@ -74,10 +85,10 @@ export class SessionsModel extends DatabaseModel {
   static create(session) {
     return this.query(
       `
-            INSERT INTO sessions (sid, data, lastAccess, expires)
-            VALUES (?, ?, ?, ?)
+            INSERT INTO sessions (activity_id, location_id, trainer_id, date, time)
+            VALUES (?, ?, ?, ?, ?)
         `,
-      [session.sid, session.data, session.lastAccess, session.expires],
+          [session.activity_id, session.location_id, session.trainer_id, session.date, session.time],
     );
   }
 
@@ -86,7 +97,7 @@ export class SessionsModel extends DatabaseModel {
    * @param {string} sid Session identifier.
    * @returns {Promise<import("mysql2/promise").OkPacket>} Database result.
    */
-  static delete(sid) {
-    return this.query("DELETE FROM sessions WHERE sid = ?", [sid]);
+  static delete(id) {
+    return this.query("DELETE FROM sessions WHERE id = ?", [id]);
   }
 }

@@ -1,7 +1,7 @@
 import { DatabaseModel } from "./DatabaseModel.mjs";
 
 /**
- * Represents a blog post stored in the blogs table.
+ * Represents a blog post stored in the blog table.
  */
 export class BlogModel extends DatabaseModel {
   /**
@@ -32,22 +32,22 @@ export class BlogModel extends DatabaseModel {
   static tableToModel(row) {
     return new BlogModel(
       Number(row.id),
-      row.title,
-      row.content,
+      row.subject ?? row.title,
+      row.body ?? row.content,
       Number(row.user_id),
-      row.created,
-      row.deleted,
-      Number(row.updated_by),
+      row.create_date ?? row.created,
+      row.deleted ?? 0,
+      row.updated_by == null ? null : Number(row.updated_by),
     );
   }
 
   /**
-   * Retrieve all non-deleted blog posts.
+  * Retrieve all blog posts.
    * @returns {Promise<Array<BlogModel>>} Active blog posts.
    */
   static async getAll() {
-    return this.query("SELECT * FROM blogs WHERE deleted = 0").then(
-      (result) => result.map((row) => this.tableToModel(row.blogs)),
+    return this.query("SELECT * FROM blog").then(
+      (result) => result.map((row) => this.tableToModel(row.blog)),
     );
   }
 
@@ -59,12 +59,11 @@ export class BlogModel extends DatabaseModel {
   static async getBySearch(term) {
     return this.query(
       `
-            SELECT * FROM blogs
-            WHERE deleted = 0
-            AND (title LIKE ? OR content LIKE ?)
+            SELECT * FROM blog
+            WHERE subject LIKE ? OR body LIKE ?
         `,
       [`%${term}%`, `%${term}%`],
-    ).then((result) => result.map((row) => this.tableToModel(row.blogs)));
+    ).then((result) => result.map((row) => this.tableToModel(row.blog)));
   }
 
   /**
@@ -74,9 +73,9 @@ export class BlogModel extends DatabaseModel {
    * @throws {string} "not found" when no post matches the identifier.
    */
   static async getById(id) {
-    const result = await this.query("SELECT * FROM blogs WHERE id = ?", [id]);
+    const result = await this.query("SELECT * FROM blog WHERE id = ?", [id]);
     return result.length > 0
-      ? this.tableToModel(result[0].blogs)
+      ? this.tableToModel(result[0].blog)
       : Promise.reject("not found");
   }
 
@@ -88,8 +87,8 @@ export class BlogModel extends DatabaseModel {
   static update(blog) {
     return this.query(
       `
-            UPDATE blogs
-            SET title = ?, content = ?, user_id = ?, created = ?, deleted = ?, updated_by = ?
+            UPDATE blog
+            SET subject = ?, body = ?, user_id = ?, create_date = ?
             WHERE id = ?
         `,
       [
@@ -97,8 +96,6 @@ export class BlogModel extends DatabaseModel {
         blog.content,
         blog.user_id,
         blog.created,
-        blog.deleted,
-        blog.updated_by,
         blog.id,
       ],
     );
@@ -112,11 +109,11 @@ export class BlogModel extends DatabaseModel {
   static create(blog) {
     return this.query(
       `
-            INSERT INTO blogs
-            (title, content, user_id, created, deleted, updated_by)
-            VALUES (?, ?, ?, ?, ?, ?)
+            INSERT INTO blog
+            (subject, body, user_id, create_date)
+            VALUES (?, ?, ?, ?)
         `,
-      [blog.title, blog.content, blog.user_id, blog.created, blog.deleted, blog.updated_by],
+          [blog.title, blog.content, blog.user_id, blog.created],
     );
   }
 
@@ -128,9 +125,9 @@ export class BlogModel extends DatabaseModel {
   static createWithExistingID(blog) {
     return this.query(
       `
-            INSERT INTO blogs
-            (id, title, content, user_id, created, deleted, updated_by)
-            VALUES (?, ?, ?, ?, ?, ?, ?)
+            INSERT INTO blog
+            (id, subject, body, user_id, create_date)
+            VALUES (?, ?, ?, ?, ?)
         `,
       [
         blog.id,
@@ -138,8 +135,6 @@ export class BlogModel extends DatabaseModel {
         blog.content,
         blog.user_id,
         blog.created,
-        blog.deleted,
-        blog.updated_by,
       ],
     );
   }
@@ -150,6 +145,6 @@ export class BlogModel extends DatabaseModel {
    * @returns {Promise<import("mysql2/promise").OkPacket>} Database result.
    */
   static delete(id) {
-    return this.query("DELETE FROM blogs WHERE id = ?", [id]);
+    return this.query("DELETE FROM blog WHERE id = ?", [id]);
   }
 }

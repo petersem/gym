@@ -89,7 +89,7 @@ export class UsersController {
             formData["phone"],
             formData["dob"],
             formData["deleted"],
-            formData["updatedBy"]
+            formData["authenticationKey"] ?? formData["authentication_key"] ?? 0
         )
 
         // We need to hash the password if it is not hashed
