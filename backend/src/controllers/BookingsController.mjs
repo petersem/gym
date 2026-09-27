@@ -1,5 +1,9 @@
 import express from "express";
 import { BookingsModel } from "../models/BookingsModel.mjs";
+import { UsersModel } from "../models/UsersModel.mjs";
+import { SessionsModel } from "../models/SessionsModel.mjs";
+import { LocationModel } from "../models/LocationModel.mjs";
+import { ActivitiesModel } from "../models/ActivitiesModel.mjs";
 
 /** HTTP handlers for bookings. */
 export class BookingsController {
@@ -14,46 +18,122 @@ export class BookingsController {
   }
 
   /** @type {import("express").RequestHandler} */
-  static async viewBookingManagement(req, res) {
-    try {
-      const bookings = await BookingsModel.getAll();
+  static viewBookingManagement(req, res) {
+    const canManageBookings = ["admin", "trainer"].includes(req.authenticatedUser?.role);
+    const bookingsPromise = canManageBookings
+      ? BookingsModel.getAll()
+      : req.authenticatedUser?.id
+        ? BookingsModel.getByUserId(req.authenticatedUser.id)
+        : Promise.resolve([]);
+    return Promise.all([
+      bookingsPromise,
+      UsersModel.getAll(),
+      SessionsModel.getAll(),
+      LocationModel.getAll(),
+      ActivitiesModel.getAll(),
+    ])
+      .then(([bookings, users, sessions, locations, activities]) => {
       const selectedBooking = bookings.find((booking) => booking.id == req.params.id)
-        ?? new BookingsModel(null, "", 0, "");
-      res.render("booking_management.ejs", { bookings, selectedBooking, role: "admin" });
-    } catch (error) {
-      res.status(500).render("status.ejs", { status: "Database Error", message: "Bookings could not be loaded." });
-    }
+        ?? new BookingsModel(null, req.query.session_id ?? "", 0, "");
+      const availableLocationId = Number(req.query.available_location_id) || null;
+      const bookingLocationId = Number(req.query.booking_location_id) || null;
+      const bookingUserId = canManageBookings
+        ? Number(req.query.booking_user_id) || null
+        : req.authenticatedUser?.id ?? null;
+      const availableSessions = availableLocationId
+        ? sessions.filter((session) => Number(session.location_id) === availableLocationId)
+        : sessions;
+      const bookingSessions = bookingLocationId
+        ? sessions.filter((session) => Number(session.location_id) === bookingLocationId)
+        : sessions;
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const calendarDays = Array.from({ length: 7 }, (_, index) => {
+        const date = new Date(today);
+        date.setDate(today.getDate() + index);
+        const dateValue = [
+          date.getFullYear(),
+          String(date.getMonth() + 1).padStart(2, "0"),
+          String(date.getDate()).padStart(2, "0"),
+        ].join("-");
+        const daySessions = availableSessions.filter((session) => String(session.date).slice(0, 10) === dateValue);
+        return {
+          dateValue,
+          label: `${date.toLocaleDateString("en-AU", { weekday: "short" }).slice(0, 3)} ${date.getDate()} ${date.toLocaleDateString("en-AU", { month: "short" }).slice(0, 3)}`,
+          bookings: bookings.filter((booking) => daySessions.some((session) => session.id === Number(booking.session_id))),
+          sessions: daySessions,
+        };
+      });
+      const bookingCalendarDays = calendarDays.map((day) => ({
+        ...day,
+        sessions: bookingSessions.filter((session) => String(session.date).slice(0, 10) === day.dateValue),
+      })).map((day) => ({
+        ...day,
+        bookings: bookings.filter((booking) => (
+          day.sessions.some((session) => session.id === Number(booking.session_id))
+          && (!bookingUserId || Number(booking.user_id) === Number(bookingUserId))
+        )),
+      }));
+      res.render("booking_management.ejs", {
+        bookings,
+        users,
+        sessions: availableSessions,
+        locations,
+        activities,
+        calendarDays,
+        bookingCalendarDays,
+        selectedBooking,
+        availableLocationId,
+        bookingLocationId,
+        bookingUserId,
+        canManageBookings,
+        bookingDeleted: req.query.booking_deleted === "1",
+        authenticatedUser: req.authenticatedUser,
+        role: "admin",
+      });
+      })
+      .catch((error) => {
+        console.error(error);
+        res.status(500).render("status.ejs", { status: "Database Error", message: "Bookings could not be loaded." });
+      });
   }
 
   /** @type {import("express").RequestHandler} */
-  static async handleBookingManagement(req, res) {
+  static handleBookingManagement(req, res) {
     const booking = new BookingsModel(
       req.params.id ? Number(req.params.id) : null,
       req.body.sessionId ?? req.body.session_id,
       Number(req.body.userId ?? req.body.user_id ?? 0),
-      req.body.created,
+      req.body.action === "create" ? new Date() : undefined,
     );
 
-    try {
-      if (req.body.action === "create") {
-        await BookingsModel.create(booking);
-        return res.redirect("/bookings");
-      }
-      if (req.body.action === "update") {
-        const result = await BookingsModel.update(booking);
-        return result.affectedRows > 0
+    if (req.body.action === "create") {
+      return BookingsModel.create(booking)
+        .then(() => res.redirect("/bookings"))
+        .catch((error) => {
+          console.error(error);
+          res.status(500).render("status.ejs", { status: "Database Error", message: "The booking could not be created." });
+        });
+    } else if (req.body.action === "update") {
+      return BookingsModel.update(booking)
+        .then((result) => result.affectedRows > 0
           ? res.redirect("/bookings")
-          : res.status(404).render("status.ejs", { status: "Booking Update Failed", message: "The booking could not be found." });
-      }
-      if (req.body.action === "delete") {
-        const result = await BookingsModel.delete(booking.id);
-        return result.affectedRows > 0
-          ? res.redirect("/bookings")
-          : res.status(404).render("status.ejs", { status: "Booking Deletion Failed", message: "The booking could not be found." });
-      }
-      return res.status(400).render("status.ejs", { status: "Invalid Action", message: "The form doesn't support this action." });
-    } catch (error) {
-      return res.status(500).render("status.ejs", { status: "Database Error", message: "The booking could not be saved." });
+          : res.status(404).render("status.ejs", { status: "Booking Update Failed", message: "The booking could not be found." }))
+        .catch((error) => {
+          console.error(error);
+          res.status(500).render("status.ejs", { status: "Database Error", message: "The booking could not be updated." });
+        });
+    } else if (req.body.action === "delete") {
+      return BookingsModel.delete(booking.id)
+        .then((result) => result.affectedRows > 0
+          ? res.redirect("/bookings?booking_deleted=1")
+          : res.status(404).render("status.ejs", { status: "Booking Deletion Failed", message: "The booking could not be found." }))
+        .catch((error) => {
+          console.error(error);
+          res.status(500).render("status.ejs", { status: "Database Error", message: "The booking could not be deleted." });
+        });
+    } else {
+      res.status(400).render("status.ejs", { status: "Invalid Action", message: "The form doesn't support this action." });
     }
   }
 
@@ -71,7 +151,10 @@ export class BookingsController {
 
   /** @type {import("express").RequestHandler} */
   static async create(req, res, next) {
-    try { res.status(201).json(await BookingsModel.create(req.body)); }
+    try {
+      const result = await BookingsModel.create(req.body);
+      res.status(result.duplicate ? 409 : 201).json(result);
+    }
     catch (error) { next(error); }
   }
 

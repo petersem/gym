@@ -11,8 +11,11 @@ let locationId;
 
 afterAll(async () => {
   await Promise.all(sessionIds.map((id) => SessionsModel.delete(id)));
+  await SessionsModel.query("DELETE s FROM sessions s JOIN activities a ON a.id = s.activity_id WHERE a.name LIKE ?", ["Load Session Activity %"]);
   if (locationId) await LocationModel.delete(locationId);
+  await LocationModel.query("DELETE FROM locations WHERE name LIKE ?", ["Load Session Location %"]);
   if (activityId) await ActivitiesModel.delete(activityId);
+  await ActivitiesModel.query("DELETE FROM activities WHERE name LIKE ?", ["Load Session Activity %"]);
   await SessionsModel.connection.end();
 });
 
@@ -20,7 +23,7 @@ describe('SessionsModel load test', () => {
   test(`handles ${requestCount} concurrent session lifecycles`, async () => {
     const owner = (await UsersModel.getAll())[0];
     activityId = (await ActivitiesModel.create(new ActivitiesModel(null, `Load Session Activity ${Date.now()}`, 'Load description', 0, owner.id))).insertId;
-    locationId = (await LocationModel.create(new LocationModel(null, `Load Session Location ${Date.now()}`, '555-0184', `load-sess-${Date.now()}@example.com`, 'Load Street', 'Brisbane', 4001, owner.id, 0, owner.id))).insertId;
+    locationId = (await LocationModel.create(new LocationModel(null, `Load Session Location ${Date.now()}`, '555-0184', `session-load-${Date.now()}@example.com`, 'Load Street', 'Brisbane', 4001, owner.id, 0, owner.id))).insertId;
 
     const created = await Promise.all(Array.from({ length: requestCount }, (_, index) => SessionsModel.create(
       new SessionsModel(null, activityId, locationId, owner.id, '2026-10-03', `09:${String(index).padStart(2, '0')}:00`),

@@ -87,6 +87,7 @@ jobs:
 
           CREATE TABLE IF NOT EXISTS sessions (
             id INT NOT NULL AUTO_INCREMENT,
+            title VARCHAR(200) NOT NULL,
             activity_id INT NOT NULL,
             location_id INT NOT NULL,
             trainer_id INT NOT NULL,
@@ -115,7 +116,7 @@ jobs:
             subject VARCHAR(100) NOT NULL,
             body VARCHAR(250) NOT NULL,
             PRIMARY KEY (id),
-            CONSTRAINT fk_blog_id_user FOREIGN KEY (id) REFERENCES users (id)
+            CONSTRAINT fk_blog_user FOREIGN KEY (user_id) REFERENCES users (id)
           );
 
           INSERT INTO users

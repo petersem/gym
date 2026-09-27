@@ -4,8 +4,9 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "dev": "nodemon --env-file=./src/.env src/server.mjs",
-    "prod": "nodemon --env-file=./src/.envprod src/server.mjs",
+    "build:css": "npx @tailwindcss/cli -i src/public/css/style.css -o src/dist/css/tailwind.css",
+    "dev": "npm run build:css && nodemon --env-file=./src/.env src/server.mjs",
+    "prod": "npm run build:css && nodemon --env-file=./src/.envprod src/server.mjs",
     "tailwind": "npx @tailwindcss/cli -i src/public/css/style.css -o src/dist/css/tailwind.css --watch",
     "dev-full": "npm-run-all --parallel tailwind dev",
     "doc": "node /node_modules/jsdoc/jsdoc.js -c ./jsdoc.conf.json"

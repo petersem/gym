@@ -6,13 +6,14 @@ const createdIds = [];
 
 afterAll(async () => {
   await Promise.all(createdIds.map((id) => UsersModel.delete(id)));
+  await UsersModel.query("DELETE FROM users WHERE email LIKE ?", ["model-load-%"]);
   await UsersModel.connection.end();
 });
 
 describe('UsersModel load test', () => {
   test(`handles ${requestCount} concurrent user lifecycles`, async () => {
     const created = await Promise.all(Array.from({ length: requestCount }, (_, index) => UsersModel.create(
-      new UsersModel(null, 'Load', `User ${index}`, 'member', `load-model-${Date.now()}-${index}@example.com`, 'hashed-password', '555-0180', '2000-01-01', 0, `load-key-${index}`),
+      new UsersModel(null, 'Load', `User ${index}`, 'member', `model-load-${Date.now()}-${index}@example.com`, 'hashed-password', '555-0180', '2000-01-01', 0, `load-key-${index}`),
     )));
     createdIds.push(...created.map(({ insertId }) => insertId));
 

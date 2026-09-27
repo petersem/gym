@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <%- include("partials/head.ejs") %>
+    <title>Gym - Create account</title>
+</head>
+
+<body>
+    <main>
+        <%- include("partials/header.ejs") %>
+        <%- include("partials/nav.ejs", { role: "", authenticatedUser: undefined }) %>
+        <section>
+            <h2>Register</h2>
+            <form action="/authenticate/register" method="post" class="form-grid responsive-half margin-auto">
+                <label for="first-name">First name</label>
+                <input type="text" name="firstName" id="first-name" required>
+
+                <label for="last-name">Last name</label>
+                <input type="text" name="lastName" id="last-name" required>
+
+                <label for="email">Email</label>
+                <input type="email" name="email" id="email" required>
+
+                <label for="password">Password</label>
+                <input type="password" name="password" id="password" minlength="8" required>
+
+                <label for="phone">Phone</label>
+                <input type="tel" name="phone" id="phone" required>
+
+                <label for="dob">Date of birth</label>
+                <input type="date" name="dob" id="dob">
+
+                <a href="/authenticate" class="link-button">Back to login</a>
+                <input type="submit" value="Register">
+            </form>
+        </section>
+        <%- include("partials/footer.ejs") %>
+    </main>
+</body>
+
+</html>

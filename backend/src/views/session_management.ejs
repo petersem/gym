@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <%- include("partials/head.ejs") %>
+    <title>Session Management - Gym</title>
+</head>
+
+<body>
+    <% const formatSessionDateTime = (date, time) => new Intl.DateTimeFormat('en-AU', {
+        day: '2-digit', month: '2-digit', year: 'numeric',
+        hour: 'numeric', minute: '2-digit', hour12: true,
+    }).format(new Date(`${String(date).slice(0, 10)}T${time}`)).replace(/^0/, '').replace(/\s+(am|pm)$/i, '$1'); %>
+    <% const storedTime = String(selectedSession.time || '09:00:00').slice(0, 5).split(':'); %>
+    <% const storedHour = Number(storedTime[0]) || 9; %>
+    <% const pickerHour = storedHour % 12 || 12; %>
+    <% const pickerMeridiem = storedHour >= 12 ? 'pm' : 'am'; %>
+    <main>
+        <%- include("partials/header.ejs") %>
+        <%- include("partials/nav.ejs", { role, authenticatedUser }) %>
+
+        <section>
+            <h2>Sessions</h2>
+            <div class="form-grid responsive-half">
+                <label for="location-filter">Location</label>
+                <select id="location-filter" onchange="filterSessions()">
+                    <option value="">All locations</option>
+                    <% locations.forEach((location) => { %>
+                        <option value="<%= location.id %>" <%= selectedLocationId === location.id ? 'selected' : '' %>><%= location.name %></option>
+                    <% }) %>
+                </select>
+                <label for="trainer-filter">Trainer</label>
+                <select id="trainer-filter" onchange="filterSessions()">
+                    <option value="">All trainers</option>
+                    <% users.filter((user) => user.role === 'trainer').forEach((user) => { %>
+                        <option value="<%= user.id %>" <%= selectedTrainerId === user.id ? 'selected' : '' %>><%= user.last_name %>, <%= user.first_name %></option>
+                    <% }) %>
+                </select>
+            </div>
+            <ul>
+                <% sessions.forEach((session) => { %>
+                    <% const trainer = users.find((user) => user.id === Number(session.trainer_id)); %>
+                    <li><a href="/sessions/<%= session.id %>"><%= session.title %> - <%= trainer ? `${trainer.last_name}, ${trainer.first_name}` : 'Unknown trainer' %> - <%= formatSessionDateTime(session.date, session.time) %></a></li>
+                <% }) %>
+            </ul>
+        </section>
+
+        <script>
+            function filterSessions() {
+                const location = document.getElementById('location-filter').value;
+                const trainer = document.getElementById('trainer-filter').value;
+                const params = new URLSearchParams();
+                if (location) params.set('location_id', location);
+                if (trainer) params.set('trainer_id', trainer);
+                window.location.href = `/sessions${params.toString() ? `?${params}` : ''}`;
+            }
+        </script>
+
+        <section>
+            <h2>Session management</h2>
+            <form action="/sessions<%= selectedSession.id ? '/' + selectedSession.id : '' %>" method="post" class="form-grid responsive-half">
+                <label for="title">Title</label>
+                <input id="title" name="title" value="<%= selectedSession.title %>" required>
+                <label for="activity-id">Activity</label>
+                <select id="activity-id" name="activityId" required>
+                    <% activities.forEach((activity) => { %>
+                        <option value="<%= activity.id %>" <%= Number(selectedSession.activity_id) === activity.id ? 'selected' : '' %>>
+                            <%= activity.name %>
+                        </option>
+                    <% }) %>
+                </select>
+                <label for="location-id">Location</label>
+                <select id="location-id" name="locationId" required>
+                    <% locations.forEach((location) => { %>
+                        <option value="<%= location.id %>" <%= Number(selectedSession.location_id) === location.id ? 'selected' : '' %>>
+                            <%= location.name %>
+                        </option>
+                    <% }) %>
+                </select>
+                <label for="trainer-id">Trainer</label>
+                <select id="trainer-id" name="trainerId" required>
+                    <% users.filter((user) => user.role === 'trainer').forEach((user) => { %>
+                        <option value="<%= user.id %>" <%= Number(selectedSession.trainer_id) === user.id ? 'selected' : '' %>>
+                            <%= user.last_name %>, <%= user.first_name %>
+                        </option>
+                    <% }) %>
+                </select>
+                <label for="date">Date</label>
+                <input id="date" name="date" type="date" value="<%= selectedSession.date %>" required>
+                <label for="time">Time</label>
+                <div>
+                    <select id="time-hour" aria-label="Hour" required>
+                        <% for (let hour = 1; hour <= 12; hour += 1) { %>
+                            <option value="<%= hour %>" <%= pickerHour === hour ? 'selected' : '' %>><%= hour %></option>
+                        <% } %>
+                    </select>
+                    :
+                    <select id="time-minute" aria-label="Minute" required>
+                        <% for (let minute = 0; minute < 60; minute += 5) { %>
+                            <option value="<%= String(minute).padStart(2, '0') %>" <%= storedTime[1] === String(minute).padStart(2, '0') ? 'selected' : '' %>><%= String(minute).padStart(2, '0') %></option>
+                        <% } %>
+                    </select>
+                    <select id="time-meridiem" aria-label="AM or PM" required>
+                        <option value="am" <%= pickerMeridiem === 'am' ? 'selected' : '' %>>am</option>
+                        <option value="pm" <%= pickerMeridiem === 'pm' ? 'selected' : '' %>>pm</option>
+                    </select>
+                    <input id="time" name="time" type="hidden" value="<%= String(storedHour).padStart(2, '0') %>:<%= storedTime[1] %>:00">
+                </div>
+                <button type="submit" name="action" value="<%= selectedSession.id ? 'update' : 'create' %>">
+                    <%= selectedSession.id ? 'Update session' : 'Create session' %>
+                </button>
+                <% if (selectedSession.id) { %>
+                    <button type="button" onclick="window.location.href='/sessions'">Clear</button>
+                <% } %>
+                <% if (selectedSession.id) { %>
+                    <button type="submit" name="action" value="delete">Delete session</button>
+                <% } %>
+            </form>
+        </section>
+
+        <script>
+            const updateSessionTime = () => {
+                const hour = Number(document.getElementById("time-hour").value);
+                const minute = document.getElementById("time-minute").value;
+                const meridiem = document.getElementById("time-meridiem").value;
+                let hour24 = hour % 12;
+                if (meridiem === "pm") hour24 += 12;
+                document.getElementById("time").value = `${String(hour24).padStart(2, "0")}:${minute}:00`;
+            };
+            document.querySelectorAll("#time-hour, #time-minute, #time-meridiem").forEach((picker) => picker.addEventListener("change", updateSessionTime));
+            updateSessionTime();
+        </script>
+
+        <%- include("partials/footer.ejs") %>
+    </main>
+</body>
+
+</html>

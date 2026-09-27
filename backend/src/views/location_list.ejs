@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <%- include("partials/head.ejs") %>
+    <title>Locations - Gym</title>
+</head>
+
+<body>
+    <main>
+        <%- include("partials/header.ejs") %>
+        <%- include("partials/nav.ejs", { role: role ?? "", authenticatedUser }) %>
+
+        <section aria-labelledby="locations-title">
+            <h2 id="locations-title">Gym locations</h2>
+            <form action="/locations" method="get" class="search-form">
+                <label for="search-term">Search locations</label>
+                <input type="search" name="search_term" id="search-term" value="<%= typeof searchTerm !== 'undefined' ? searchTerm : '' %>">
+                <button type="submit">Search</button>
+            </form>
+
+            <% if (locations.length === 0) { %>
+                <p>No locations matched your search.</p>
+            <% } else { %>
+                <div class="coffee-list">
+                    <% locations.forEach((location) => { %>
+                        <article class="coffee-card card bg-base-100 shadow-sm">
+                            <h3><%= location.name %></h3>
+                            <p>
+                                <%= location.street %><br>
+                                <%= location.city %> <%= location.postcode %><br>
+                                <%= location.phone %>
+                            </p>
+                            <a class="btn btn-outline" href="/locations/<%= location.id %>">View location</a>
+                        </article>
+                    <% }) %>
+                </div>
+            <% } %>
+        </section>
+
+        <%- include("partials/footer.ejs") %>
+    </main>
+</body>
+
+</html>

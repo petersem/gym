@@ -8,6 +8,7 @@ const row = {
   trainer_id: '3',
   date: '2026-09-23',
   time: '10:00:00',
+  title: 'Yoga with Trainer, Name',
 };
 
 const session = new SessionsModel(
@@ -17,6 +18,7 @@ const session = new SessionsModel(
   3,
   row.date,
   row.time,
+  row.title,
 );
 
 afterEach(() => {
@@ -37,7 +39,7 @@ describe('SessionsModel unit tests', () => {
 
     await expect(SessionsModel.getAll()).resolves.toEqual([
       session,
-      new SessionsModel(124, 7, 2, 3, row.date, row.time),
+      new SessionsModel(124, 7, 2, 3, row.date, row.time, row.title),
     ]);
     expect(query).toHaveBeenCalledWith('SELECT * FROM sessions');
   });
@@ -61,7 +63,7 @@ describe('SessionsModel unit tests', () => {
     await expect(SessionsModel.update(session)).resolves.toEqual({ affectedRows: 1 });
     expect(query).toHaveBeenCalledWith(
       expect.stringContaining('UPDATE sessions'),
-      [session.activity_id, session.location_id, session.trainer_id, session.date, session.time, session.id],
+      [session.title, session.activity_id, session.location_id, session.trainer_id, session.date, session.time, session.id],
     );
   });
 
@@ -71,7 +73,7 @@ describe('SessionsModel unit tests', () => {
     await expect(SessionsModel.create(session)).resolves.toEqual({ affectedRows: 1 });
     expect(query).toHaveBeenCalledWith(
       expect.stringContaining('INSERT INTO sessions'),
-      [session.activity_id, session.location_id, session.trainer_id, session.date, session.time],
+      [session.title, session.activity_id, session.location_id, session.trainer_id, session.date, session.time],
     );
   });
 

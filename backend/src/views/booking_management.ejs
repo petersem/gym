@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <%- include("partials/head.ejs") %>
+        <title>Booking Management - Gym</title>
+</head>
+
+<body>
+    <% const formatSessionDateTime=(date, time)=> new Intl.DateTimeFormat('en-AU', {
+        day: '2-digit', month: '2-digit', year: 'numeric',
+        hour: 'numeric', minute: '2-digit', hour12: true,
+        }).format(new Date(`${String(date).slice(0, 10)}T${time}`)).replace(/\s+(am|pm)$/i, '$1'); %>
+        <% const formatSessionTime=(time)=> { const [hour, minute] = String(time).slice(0, 5).split(':').map(Number); return `${hour % 12 || 12}:${String(minute).padStart(2, '0')}${hour >= 12 ? 'pm' : 'am'}`; }; %>
+        <% const getSessionHoverText=(session)=> { const activity = activities.find((item) => Number(item.id) === Number(session.activity_id)); const trainer = users.find((user) => Number(user.id) === Number(session.trainer_id)); return `Activity: ${activity?.name ?? 'Unknown activity'} | Trainer: ${trainer ? `${trainer.first_name} ${trainer.last_name}` : 'Unknown trainer'}`; }; %>
+            <main>
+                <%- include("partials/header.ejs") %>
+                    <%- include("partials/nav.ejs", { role, authenticatedUser }) %>
+
+                        <% if (authenticatedUser && bookingDeleted) { %>
+                            <div class="alert alert-success" role="status">Booking deleted.</div>
+                        <% } %>
+
+                        <section>
+                            <h2>Available sessions next 7 days</h2>
+                            <label for="available-location-filter">Available session location</label>
+                            <select id="available-location-filter"
+                                onchange="filterBookings('available_location_id', this.value)">
+                                <option value="">All locations</option>
+                                <% locations.forEach((location)=> { %>
+                                    <option value="<%= location.id %>" <%=availableLocationId===location.id ? 'selected'
+                                        : '' %>><%= location.name %>
+                                    </option>
+                                    <% }) %>
+                            </select>
+                            <div class="session-calendar">
+                                <% calendarDays.forEach((day)=> { %>
+                                    <article class="session-day card bg-base-100">
+                                        <h3>
+                                            <%= day.label %>
+                                        </h3>
+                                        <% if (day.sessions.length===0) { %>
+                                            <p>No sessions</p>
+                                            <% } else { %>
+                                                <ul>
+                                                    <% day.sessions.forEach((session)=> { %>
+                                                        <li class="available-session">
+                                                            <% if (authenticatedUser) { %>
+                                                            <button type="button" class="available-session-select" title="<%= getSessionHoverText(session) %>">
+                                                                <%= formatSessionTime(session.time) %>, <%= session.title %>
+                                                            </button>
+                                                            <form class="session-book-form" action="/bookings" method="post">
+                                                                <input type="hidden" name="sessionId" value="<%= session.id %>">
+                                                                <input type="hidden" name="userId" value="<%= authenticatedUser?.id ?? (users[0]?.id || '') %>">
+                                                                <button class="btn btn-primary session-book-button" type="submit" name="action" value="create" hidden>Book</button>
+                                                            </form>
+                                                            <% } else { %>
+                                                            <span class="available-session-label" title="<%= getSessionHoverText(session) %>"><%= formatSessionTime(session.time) %>, <%= session.title %></span>
+                                                            <% } %>
+                                                        </li>
+                                                        <% }) %>
+                                                </ul>
+                                                <% } %>
+                                    </article>
+                                    <% }) %>
+                            </div>
+                        </section>
+
+                        <% if (authenticatedUser) { %>
+                        <section>
+                            <h2>Bookings next 7 days</h2>
+                            <label for="booking-location-filter">Booked session location</label>
+                            <select id="booking-location-filter"
+                                onchange="filterBookings('booking_location_id', this.value)">
+                                <option value="">All locations</option>
+                                <% locations.forEach((location)=> { %>
+                                    <option value="<%= location.id %>" <%=bookingLocationId===location.id ? 'selected'
+                                        : '' %>><%= location.name %>
+                                    </option>
+                                    <% }) %>
+                            </select>
+                            <% if (canManageBookings) { %>
+                                <label for="booking-user-filter">Booked user</label>
+                                <select id="booking-user-filter" onchange="filterBookings('booking_user_id', this.value)">
+                                    <option value="" <%= bookingUserId ? '' : 'selected' %>>All users</option>
+                                    <% users.forEach((user)=> { %>
+                                        <option value="<%= user.id %>" <%=Number(bookingUserId)===Number(user.id) ? 'selected' : '' %>>
+                                            <%= user.last_name %>, <%= user.first_name %>
+                                        </option>
+                                    <% }) %>
+                                </select>
+                            <% } %>
+                            <div class="session-calendar">
+                                <% bookingCalendarDays.forEach((day)=> { %>
+                                    <article class="session-day card bg-base-100">
+                                        <h3>
+                                            <%= day.label %>
+                                        </h3>
+                                        <% if (day.bookings.length===0) { %>
+                                            <p>No bookings</p>
+                                            <% } else { %>
+                                                <ul>
+                                                    <% day.bookings.forEach((booking)=> { %>
+                                                        <% const bookingSession=day.sessions.find((session)=> session.id
+                                                            === Number(booking.session_id)); %>
+                                                            <li>
+                                                                <a href="/bookings/<%= booking.id %>" title="<%= bookingSession ? getSessionHoverText(bookingSession) : 'Session details unavailable' %>">
+                                                                    <%= bookingSession ? formatSessionTime(bookingSession.time) : '' %>,
+                                                                        <%= bookingSession ? bookingSession.title :
+                                                                            `Booking #${booking.id}` %>
+                                                                </a>
+                                                                <% if (selectedBooking.id===booking.id) { %>
+                                                                    <form action="/bookings/<%= booking.id %>"
+                                                                        method="post">
+                                                                        <button type="submit" name="action"
+                                                                            value="delete">Delete booking</button>
+                                                                    </form>
+                                                                    <% } %>
+                                                            </li>
+                                                            <% }) %>
+                                                </ul>
+                                                <% } %>
+                                    </article>
+                                    <% }) %>
+                            </div>
+                        </section>
+                        <% } %>
+
+                        <script>
+                            document.querySelectorAll(".available-session-select").forEach((sessionButton) => {
+                                sessionButton.addEventListener("click", () => {
+                                    const selectedItem = sessionButton.closest(".available-session");
+                                    document.querySelectorAll(".available-session").forEach((item) => {
+                                        const isSelected = item === selectedItem;
+                                        item.classList.toggle("is-selected", isSelected);
+                                        item.querySelector(".session-book-button").hidden = !isSelected;
+                                    });
+                                });
+                            });
+
+                            function filterBookings(key, value) {
+                                const params = new URLSearchParams(window.location.search);
+                                if (value) params.set(key, value);
+                                else params.delete(key);
+                                params.delete('session_id');
+                                window.location.href = `/bookings${params.toString() ? `?${params}` : ''}`;
+                            }
+                        </script>
+
+                        <%- include("partials/footer.ejs") %>
+            </main>
+</body>
+
+</html>

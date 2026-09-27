@@ -10,9 +10,10 @@ export class SessionsModel extends DatabaseModel {
    * @param {number} locationId Location identifier.
    * @param {number} trainerId Trainer user identifier.
    * @param {string|Date} date Session date.
-   * @param {string} time Session time.
+  * @param {string} time Session time.
+  * @param {string} title Session title.
    */
-  constructor(id, activityId, locationId, trainerId, date, time) {
+  constructor(id, activityId, locationId, trainerId, date, time, title = "") {
     super();
     this.id = id;
     this.activity_id = activityId;
@@ -20,6 +21,7 @@ export class SessionsModel extends DatabaseModel {
     this.trainer_id = trainerId;
     this.date = date;
     this.time = time;
+    this.title = title;
   }
 
   /**
@@ -35,6 +37,7 @@ export class SessionsModel extends DatabaseModel {
       Number(row.trainer_id),
       row.date,
       row.time,
+      row.title,
     );
   }
 
@@ -70,10 +73,10 @@ export class SessionsModel extends DatabaseModel {
     return this.query(
       `
             UPDATE sessions
-            SET activity_id = ?, location_id = ?, trainer_id = ?, date = ?, time = ?
+            SET title = ?, activity_id = ?, location_id = ?, trainer_id = ?, date = ?, time = ?
             WHERE id = ?
         `,
-          [session.activity_id, session.location_id, session.trainer_id, session.date, session.time, session.id],
+          [session.title, session.activity_id, session.location_id, session.trainer_id, session.date, session.time, session.id],
     );
   }
 
@@ -85,10 +88,10 @@ export class SessionsModel extends DatabaseModel {
   static create(session) {
     return this.query(
       `
-            INSERT INTO sessions (activity_id, location_id, trainer_id, date, time)
-            VALUES (?, ?, ?, ?, ?)
+            INSERT INTO sessions (title, activity_id, location_id, trainer_id, date, time)
+            VALUES (?, ?, ?, ?, ?, ?)
         `,
-          [session.activity_id, session.location_id, session.trainer_id, session.date, session.time],
+          [session.title, session.activity_id, session.location_id, session.trainer_id, session.date, session.time],
     );
   }
 

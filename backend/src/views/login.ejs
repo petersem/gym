@@ -3,12 +3,13 @@
 
 <head>
     <%- include("partials/head.ejs") %>
-    <title>Minute Coffee - Staff Login</title>
+    <title>Gym - Sign in</title>
 </head>
 
 <body>
     <main>
         <%- include("partials/header.ejs") %>
+        <%- include("partials/nav.ejs", { role: "", authenticatedUser: undefined }) %>
         <section>
             <form action="/authenticate" method="post" class="form-grid responsive-half margin-auto">
                 <label for="username">Username:</label>
@@ -18,6 +19,9 @@
                 <a href="/" class="link-button">Back</a>
                 <input type="submit" value="Login" />
             </form>
+            <p class="margin-auto responsive-half">
+                Need an account? <a href="/authenticate/register">Register here</a>
+            </p>
         </section>
         <%- include("partials/footer.ejs") %>
     </main>

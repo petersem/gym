@@ -60,6 +60,7 @@ export class UsersController {
                 res.render("user_management.ejs", {
                     users,
                     selectedUser,
+                    authenticatedUser: req.authenticatedUser,
                     role: "admin",
                 })
             })

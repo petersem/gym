@@ -55,7 +55,7 @@ describe('BlogModel unit tests', () => {
       blog,
       new BlogModel(32, 'Nutrition Basics', row.body, 7, row.create_date, 0, null),
     ]);
-    expect(query).toHaveBeenCalledWith('SELECT * FROM blog');
+    expect(query).toHaveBeenCalledWith('SELECT * FROM blog ORDER BY create_date DESC, id DESC');
   });
 
   test('getBySearch uses the term for title and content', async () => {
@@ -87,7 +87,7 @@ describe('BlogModel unit tests', () => {
     await expect(BlogModel.update(blog)).resolves.toEqual({ affectedRows: 1 });
     expect(query).toHaveBeenCalledWith(
       expect.stringContaining('UPDATE blog'),
-      [blog.title, blog.content, blog.user_id, blog.created, blog.id],
+      [blog.title, blog.content, blog.user_id, blog.id],
     );
   });
 

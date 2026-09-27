@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, jest, test } from '@jest/globals';
 import { BlogController } from '../../controllers/BlogController.mjs';
 import { BlogModel } from '../../models/BlogModel.mjs';
+import { UsersModel } from '../../models/UsersModel.mjs';
 
 const response = () => {
   const res = {
@@ -13,7 +14,7 @@ const response = () => {
   return res;
 };
 
-const request = (params = {}, query = {}, body = {}) => ({ params, query, body });
+const request = (params = {}, query = {}, body = {}, authenticatedUser = { id: 7 }) => ({ params, query, body, authenticatedUser });
 const next = () => jest.fn();
 
 afterEach(() => {
@@ -24,6 +25,7 @@ describe('BlogController', () => {
   test('renders blog management and handles load errors', async () => {
     const blogs = [{ id: 1 }];
     jest.spyOn(BlogModel, 'getAll').mockResolvedValue(blogs);
+    jest.spyOn(UsersModel, 'getAll').mockResolvedValue([]);
     const res = response();
 
     await BlogController.viewBlogManagement(request({ id: '1' }), res);
@@ -60,6 +62,11 @@ describe('BlogController', () => {
     BlogModel.create.mockRejectedValue(new Error('database error'));
     await BlogController.handleBlogManagement(request({}, {}, { action: 'create' }), res);
     expect(res.status).toHaveBeenCalledWith(500);
+
+    BlogModel.update.mockRejectedValue(new Error('database error'));
+    await BlogController.handleBlogManagement(request({ id: '2' }, {}, { action: 'update' }), res);
+    BlogModel.delete.mockRejectedValue(new Error('database error'));
+    await BlogController.handleBlogManagement(request({ id: '2' }, {}, { action: 'delete' }), res);
   });
 
   test('lists and searches blog posts', async () => {
@@ -114,5 +121,13 @@ describe('BlogController', () => {
     await BlogController.delete(request({ id: '1' }), res, errorNext);
 
     expect(errorNext).toHaveBeenCalledTimes(4);
+  });
+
+  test('rejects blog creation without an authenticated user', () => {
+    const res = response();
+
+    BlogController.handleBlogManagement(request({}, {}, { action: 'create' }, null), res);
+
+    expect(res.status).toHaveBeenCalledWith(401);
   });
 });

@@ -7,6 +7,7 @@ const createdIds = [];
 
 afterAll(async () => {
   await Promise.all(createdIds.map((id) => ActivitiesModel.delete(id)));
+  await ActivitiesModel.query("DELETE FROM activities WHERE name LIKE ?", ["Load Activity %"]);
   await ActivitiesModel.connection.end();
 });
 

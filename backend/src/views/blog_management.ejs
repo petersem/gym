@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <%- include("partials/head.ejs") %>
+    <title>Blog Management - Gym</title>
+</head>
+
+<body>
+    <% const formatCreated = (created) => new Intl.DateTimeFormat('en-AU', {
+        day: '2-digit', month: 'short', year: 'numeric',
+        hour: 'numeric', minute: '2-digit', hour12: true,
+    }).format(new Date(created)).replace(/\s+(am|pm)$/i, '$1'); %>
+    <main>
+        <%- include("partials/header.ejs") %>
+        <%- include("partials/nav.ejs", { role, authenticatedUser }) %>
+
+        <section>
+            <h2>Blog management</h2>
+            <form action="/blogs<%= selectedBlog.id ? '/' + selectedBlog.id : '' %>" method="post" class="form-grid responsive-half">
+                <label for="title">Subject</label>
+                <input id="title" name="title" value="<%= selectedBlog.title %>" required>
+                <label for="content">Body</label>
+                <textarea id="content" name="content" required><%= selectedBlog.content %></textarea>
+                <% if (selectedBlog.id) { %>
+                    <% const author = users.find((user) => user.id === Number(selectedBlog.user_id)); %>
+                    <label>Author</label>
+                    <p><%= author ? `${author.last_name}, ${author.first_name}` : 'Unknown user' %></p>
+                    <input type="hidden" name="userId" value="<%= selectedBlog.user_id %>">
+                <% } %>
+                <% if (selectedBlog.id) { %>
+                    <p class="two-col">Created: <%= selectedBlog.created %></p>
+                <% } %>
+                <input type="hidden" name="deleted" value="0">
+                <button type="submit" name="action" value="<%= selectedBlog.id ? 'update' : 'create' %>">
+                    <%= selectedBlog.id ? 'Update post' : 'Create post' %>
+                </button>
+                <% if (selectedBlog.id) { %>
+                    <button type="submit" name="action" value="delete">Delete post</button>
+                <% } %>
+            </form>
+        </section>
+
+        <section>
+            <h2>Posts</h2>
+            <ul>
+                <% blogs.forEach((blog) => { %>
+                    <% const author = users.find((user) => user.id === Number(blog.user_id)); %>
+                    <li>
+                        <article class="coffee-card">
+                            <h3><a href="/blogs/<%= blog.id %>"><%= blog.title %></a></h3>
+                            <p><strong>Created:</strong> <%= formatCreated(blog.created) %></p>
+                            <p><strong>Created by:</strong> <%= author ? `${author.last_name}, ${author.first_name}` : 'Unknown user' %></p>
+                            <p><%= blog.content %></p>
+                            <form action="/blogs/<%= blog.id %>" method="post">
+                                <button type="submit" name="action" value="delete">Delete post</button>
+                            </form>
+                        </article>
+                    </li>
+                <% }) %>
+            </ul>
+        </section>
+
+        <%- include("partials/footer.ejs") %>
+    </main>
+</body>
+
+</html>

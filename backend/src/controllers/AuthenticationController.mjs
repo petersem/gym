@@ -18,6 +18,8 @@ export class AuthenticationController {
 
         this.routes.get("/", this.viewLogin)
         this.routes.post("/", this.handleLogin)
+        this.routes.get("/register", this.viewRegister)
+        this.routes.post("/register", this.handleRegister)
 
         this.routes.delete("/", this.handleLogout)
         this.routes.get("/logout", this.handleLogout)
@@ -46,6 +48,10 @@ export class AuthenticationController {
         res.render("login.ejs")
     }
 
+    static viewRegister(req, res) {
+        res.render("register.ejs")
+    }
+
     /**
      * @type {express.RequestHandler}
      */
@@ -64,14 +70,7 @@ export class AuthenticationController {
                 // Store the authenticated user's ID into the session
                 req.session.userId = user.id
 
-                // Redirect based on role
-                if (user.role == USER_ROLE_ADMIN) {
-                    res.redirect("/products/edit")
-                } else if (user.role == USER_ROLE_TRAINER) {
-                    res.redirect("/orders/view")
-                } else if (user.role == USER_ROLE_MEMBER) {
-                    res.redirect("/products/edit")
-                }
+                res.redirect("/")
             } else {
                 res.status(400).render("status.ejs", {
                     status: "Authentication Failed.",
@@ -91,6 +90,47 @@ export class AuthenticationController {
                     message: "Server error."
                 })
             }
+        }
+    }
+
+    static async handleRegister(req, res) {
+        const {
+            firstName,
+            lastName,
+            email,
+            password,
+            phone,
+            dob,
+        } = req.body
+
+        if (!firstName || !lastName || !email || !password || !phone) {
+            return res.status(400).render("status.ejs", {
+                status: "Registration Failed.",
+                message: "All required fields must be completed.",
+            })
+        }
+
+        try {
+            const passwordHash = await bcrypt.hash(password, 10)
+            await UsersModel.create(new UsersModel(
+                null,
+                firstName,
+                lastName,
+                USER_ROLE_MEMBER,
+                email,
+                passwordHash,
+                phone,
+                dob || null,
+                0,
+                null,
+            ))
+            res.redirect("/authenticate")
+        } catch (error) {
+            console.error(error)
+            res.status(400).render("status.ejs", {
+                status: "Registration Failed.",
+                message: "The account could not be created.",
+            })
         }
     }
 

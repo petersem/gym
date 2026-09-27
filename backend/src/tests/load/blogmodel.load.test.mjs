@@ -8,19 +8,21 @@ const blogIds = [];
 
 afterAll(async () => {
   await Promise.all(blogIds.map((id) => BlogModel.delete(id)));
+  await BlogModel.query("DELETE FROM blog WHERE subject LIKE ?", ["Load Blog %"]);
   await Promise.all(userIds.map((id) => UsersModel.delete(id)));
+  await UsersModel.query("DELETE FROM users WHERE email LIKE ?", ["blog-load-%"]);
   await BlogModel.connection.end();
 });
 
 describe('BlogModel load test', () => {
   test(`handles ${requestCount} concurrent blog lifecycles`, async () => {
     const users = await Promise.all(Array.from({ length: requestCount }, (_, index) => UsersModel.create(
-      new UsersModel(null, 'Load', `Blog User ${index}`, 'member', `load-blog-${Date.now()}-${index}@example.com`, 'hashed-password', '555-0182', '2000-01-01', 0, `blog-key-${index}`),
+      new UsersModel(null, 'Load', `Blog User ${index}`, 'member', `blog-load-${Date.now()}-${index}@example.com`, 'hashed-password', '555-0182', '2000-01-01', 0, `blog-key-${index}`),
     )));
     userIds.push(...users.map(({ insertId }) => insertId));
 
     await Promise.all(userIds.map((id, index) => BlogModel.createWithExistingID(
-      new BlogModel(id, `Load Subject ${index}`, 'Load body', id, '2026-09-26 10:00:00', 0, null),
+      new BlogModel(id, `Load Blog ${index}`, 'Load body', id, '2026-09-26 10:00:00', 0, null),
     )));
     blogIds.push(...userIds);
 

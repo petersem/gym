@@ -37,7 +37,7 @@ export const sanitiser = function (action = "fail") {
                         switch (action.toLowerCase()) {
                             case "clean":
                                 display();
-                                req.body[key] = req.body[key].replace(/[$&+,:;=?@#|'<>.^*()%!-]/g, "");
+                                req.body[key] = req.body[key].replace(/[$&+,:;=?#|'<>.^*()%!-]/g, "");
                                 if (process.env.NODE_ENV === "development") {
                                     console.log(logInfo, `                Sanitised to: ${req.body[key]} `);
                                 }

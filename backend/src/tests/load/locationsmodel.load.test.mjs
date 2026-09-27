@@ -7,6 +7,7 @@ const createdIds = [];
 
 afterAll(async () => {
   await Promise.all(createdIds.map((id) => LocationModel.delete(id)));
+  await LocationModel.query("DELETE FROM locations WHERE name LIKE ?", ["Load Location %"]);
   await LocationModel.connection.end();
 });
 

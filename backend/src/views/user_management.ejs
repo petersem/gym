@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <%- include("partials/head.ejs") %>
+    <title>User Management - Gym</title>
+</head>
+
+<body>
+    <main>
+        <%- include("partials/header.ejs") %>
+        <%- include("partials/nav.ejs", { role, authenticatedUser }) %>
+
+        <section>
+            <h2>Users</h2>
+            <ul>
+                <% users.forEach((user) => { %>
+                    <li><a href="/users/<%= user.id %>"><%= user.last_name %>, <%= user.first_name %></a></li>
+                <% }) %>
+            </ul>
+        </section>
+
+        <section>
+            <h2>User management</h2>
+            <form action="/users<%= selectedUser.id ? '/' + selectedUser.id : '' %>" method="post" class="form-grid responsive-half">
+                <label for="first-name">First name</label>
+                <input id="first-name" name="firstName" value="<%= selectedUser.first_name %>" required>
+                <label for="last-name">Last name</label>
+                <input id="last-name" name="lastName" value="<%= selectedUser.last_name %>" required>
+                <label for="role">Role</label>
+                <select id="role" name="role" required>
+                    <% ['admin', 'trainer', 'member'].forEach((userRole) => { %>
+                        <option value="<%= userRole %>" <%= selectedUser.role === userRole ? 'selected' : '' %>><%= userRole %></option>
+                    <% }) %>
+                </select>
+                <label for="email">Email</label>
+                <input id="email" name="email" type="email" value="<%= selectedUser.email %>" required>
+                <label for="password">Password</label>
+                <input id="password" name="password" type="password" value="<%= selectedUser.password %>" required>
+                <label for="phone">Phone</label>
+                <input id="phone" name="phone" value="<%= selectedUser.phone %>" required>
+                <label for="dob">Date of birth</label>
+                <input id="dob" name="dob" type="date" value="<%= selectedUser.dob %>">
+                <input type="hidden" name="deleted" value="<%= selectedUser.deleted || 0 %>">
+                <input type="hidden" name="authenticationKey" value="<%= selectedUser.authentication_key || '' %>">
+                <button type="submit" name="action" value="<%= selectedUser.id ? 'update' : 'create' %>">
+                    <%= selectedUser.id ? 'Update user' : 'Create user' %>
+                </button>
+                <% if (selectedUser.id) { %>
+                    <button type="button" onclick="window.location.href='/users'">Clear</button>
+                    <button type="submit" name="action" value="delete">Delete user</button>
+                <% } %>
+            </form>
+        </section>
+
+        <%- include("partials/footer.ejs") %>
+    </main>
+</body>
+
+</html>

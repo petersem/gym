@@ -25,6 +25,7 @@ export class ActivitiesController {
       res.render("activity_management.ejs", {
         activities,
         selectedActivity,
+        authenticatedUser: req.authenticatedUser ?? {},
         role: "admin",
       });
     } catch (error) {

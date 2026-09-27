@@ -43,6 +43,17 @@ export class BookingsModel extends DatabaseModel {
   }
 
   /**
+   * Retrieve bookings belonging to one user.
+   * @param {number} userId User identifier.
+   * @returns {Promise<Array<BookingsModel>>} The user's bookings.
+   */
+  static async getByUserId(userId) {
+    return this.query("SELECT * FROM bookings WHERE user_id = ?", [userId]).then(
+      (result) => result.map((row) => this.tableToModel(row.bookings)),
+    );
+  }
+
+  /**
    * Retrieve a booking by its identifier.
    * @param {number} id Booking identifier.
    * @returns {Promise<BookingsModel>} Matching booking.
@@ -56,6 +67,20 @@ export class BookingsModel extends DatabaseModel {
   }
 
   /**
+   * Check whether a user already booked a session.
+   * @param {number|string} sessionId Session identifier.
+   * @param {number} userId User identifier.
+   * @returns {Promise<boolean>} Whether the matching booking exists.
+   */
+  static async existsForSessionUser(sessionId, userId) {
+    const result = await this.query(
+      "SELECT id FROM bookings WHERE session_id = ? AND user_id = ? LIMIT 1",
+      [sessionId, userId],
+    );
+    return result.length > 0;
+  }
+
+  /**
    * Update an existing booking.
    * @param {BookingsModel} booking Booking to update.
    * @returns {Promise<import("mysql2/promise").OkPacket>} Database result.
@@ -64,19 +89,23 @@ export class BookingsModel extends DatabaseModel {
     return this.query(
       `
             UPDATE bookings
-            SET session_id = ?, user_id = ?, created = ?
+            SET session_id = ?, user_id = ?
             WHERE id = ?
         `,
-      [booking.session_id, booking.user_id, booking.created, booking.id],
+          [booking.session_id, booking.user_id, booking.id],
     );
   }
 
   /**
    * Create a booking with a generated identifier.
    * @param {BookingsModel} booking Booking to create.
-   * @returns {Promise<import("mysql2/promise").OkPacket>} Database result.
+  * @returns {Promise<import("mysql2/promise").OkPacket | {affectedRows: 0, duplicate: true}>} Insert result or duplicate marker.
    */
-  static create(booking) {
+  static async create(booking) {
+    if (await this.existsForSessionUser(booking.session_id, booking.user_id)) {
+      return { affectedRows: 0, duplicate: true };
+    }
+
     return this.query(
       `
             INSERT INTO bookings (session_id, user_id, created)

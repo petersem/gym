@@ -33,6 +33,10 @@ export function idempotencyMiddleware(options = {}) {
 
 
   return async (req, res, next) => {
+    if (req.is('application/x-www-form-urlencoded')) {
+      return next();
+    }
+
     // Skip methods that do not need idempotency
     if (!config.requiredForMethods?.includes(req.method)) {
       return next();

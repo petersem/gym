@@ -1,58 +1,101 @@
 import express from "express";
 import { LocationModel } from "../models/LocationModel.mjs";
+import { UsersModel } from "../models/UsersModel.mjs";
 
 export class LocationController {
   static routes = express.Router();
 
   static {
-    //TODO: Setup routes
-    this.routes.get("/", this.viewLocationList); // /locations/
-    this.routes.get("/sales", this.viewLocationSales);
-    this.routes.get("/:id", this.viewLocationDetails);
+        this.routes.get(
+            "/",
+            //AuthenticationController.restrict(["admin"]),
+            this.viewLocationManagement
+        )
+
+          this.routes.get("/sales", this.viewLocationSales)
+
+        this.routes.get(
+            "/:id",
+            //AuthenticationController.restrict(["admin"]),
+            this.viewLocationManagement
+        )
+
+        this.routes.post(
+            "/",
+            //AuthenticationController.restrict(["admin"]),
+            this.handleLocationManagement
+        )
+
+        this.routes.post(
+            "/:id",
+            //AuthenticationController.restrict(["admin"]),
+            this.handleLocationManagement
+        )    
   }
 
-  /**
-   * Render the locations page, optionally filtered by a search term.
-   * @type {express.RequestHandler}
-   * Adding extra documentation for the parameters, if any
-   */
+  static viewLocationManagement(req, res) {
+    const selectedLocationId = req.params.id;
+
+    Promise.all([LocationModel.getAll(), UsersModel.getAll()])
+      .then(([locations, users]) => {
+        const selectedLocation = locations.find(
+          (location) => location.id == selectedLocationId,
+        ) ?? new LocationModel(null, "", "", "", "", "", 0, 0, 0, 0);
+
+        res.render("location_management.ejs", {
+          locations,
+          users,
+          selectedLocation,
+          authenticatedUser: req.authenticatedUser ?? {},
+          role: "admin",
+        });
+      })
+      .catch((error) => {
+        console.log(error);
+        res.status(500).render("status.ejs", {
+          status: "Database Error",
+          message: "Locations could not be loaded.",
+        });
+      });
+  }
+
   static viewLocationList(req, res) {
-    if (req.query.search_term) {
-      LocationModel.getBySearch(req.query.search_term)
-        .then((locations) => {
-          res.render("location_list.ejs", {
-            locations,
-            authenticatedUser: req.authenticatedUser,
-          });
-        })
-        .catch((error) => console.error(error));
-    } else {
-      LocationModel.getAll()
-        .then((locations) => {
-          res.render("location_list.ejs", {
-            locations,
-            authenticatedUser: req.authenticatedUser,
-          });
-        })
-        .catch((error) => console.error(error));
-    }
-    console.log("Authenticated user: " + JSON.stringify(req.authenticatedUser));
+    const loadLocations = req.query.search_term
+      ? LocationModel.getBySearch(req.query.search_term)
+      : LocationModel.getAll();
+
+    loadLocations
+      .then((locations) => {
+        res.render("location_list.ejs", {
+          locations,
+          authenticatedUser: req.authenticatedUser,
+          role: req.authenticatedUser?.role ?? "",
+        });
+      })
+      .catch((error) => {
+        console.error(error);
+        res.status(500).render("status.ejs", {
+          status: "Database Error",
+          message: "Locations could not be loaded.",
+        });
+      });
   }
 
-  /**
-   * @type {express.RequestHandler}
-   */
   static viewLocationSales(req, res) {
     res.status(501).render("status.ejs", {
-      status: "Sales Unavailable",
-      message: "Location sales are not available yet.",
+      status: "Locations Unavailable",
+      message: "Locations are not available yet.",
     });
   }
 
   static viewLocationDetails(req, res) {
     LocationModel.getById(req.params.id)
       .then((location) => {
-        res.render("location_details.ejs", { location });
+        res.render("location_details.ejs", {
+          location,
+          authenticatedUser: req.authenticatedUser,
+          role: req.authenticatedUser?.role ?? "",
+        });
       })
       .catch((error) => {
         console.error(error);
@@ -61,6 +104,78 @@ export class LocationController {
           message: "Maybe your location ID is invalid?",
         });
       });
-    //TODO: Handle errors
+  }
+
+
+  static handleLocationManagement(req, res) {
+    const authenticatedUserId = Number(req.authenticatedUser?.id);
+    if (!Number.isInteger(authenticatedUserId) || authenticatedUserId <= 0) {
+      return res.status(401).render("status.ejs", {
+        status: "Unauthenticated",
+        message: "Please log in before managing locations.",
+      });
+    }
+
+    const formData = req.body;
+    const location = new LocationModel(
+      req.params.id ? Number(req.params.id) : null,
+      formData.name,
+      formData.phone,
+      formData.email,
+      formData.street,
+      formData.city,
+      Number(formData.postcode ?? 0),
+      Number(formData.manager ?? 0),
+      Number(formData.deleted ?? 0),
+      authenticatedUserId,
+    );
+
+    if (formData.action === "create") {
+      LocationModel.create(location)
+        .then(() => res.redirect(303, "/locations"))
+        .catch((error) => {
+          console.error(error);
+          res.status(500).render("status.ejs", {
+            status: "Database Error",
+            message: "The location could not be created.",
+          });
+        });
+    } else if (formData.action === "update") {
+      LocationModel.update(location)
+        .then((result) => {
+          res.redirect(303, "/locations");
+        })
+        .catch((error) => {
+          console.error(error);
+          res.status(500).render("status.ejs", {
+            status: "Database Error",
+            message: "The location could not be updated.",
+          });
+        });
+    } else if (formData.action === "delete") {
+      LocationModel.delete(location.id)
+        .then((result) => {
+          if (result.affectedRows > 0) {
+            res.redirect(303, "/locations");
+          } else {
+            res.status(404).render("status.ejs", {
+              status: "Location Deletion Failed",
+              message: "The location could not be found.",
+            });
+          }
+        })
+        .catch((error) => {
+          console.error(error);
+          res.status(500).render("status.ejs", {
+            status: "Database Error",
+            message: "The location could not be deleted.",
+          });
+        });
+    } else {
+      res.status(400).render("status.ejs", {
+        status: "Invalid Action",
+        message: "The form doesn't support this action.",
+      });
+    }
   }
 }

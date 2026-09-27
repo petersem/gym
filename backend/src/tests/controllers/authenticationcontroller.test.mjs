@@ -64,10 +64,18 @@ describe('AuthenticationController', () => {
     expect(res.render).toHaveBeenCalledWith('login.ejs');
   });
 
+  test('renders the registration page', () => {
+    const res = response();
+
+    AuthenticationController.viewRegister({}, res);
+
+    expect(res.render).toHaveBeenCalledWith('register.ejs');
+  });
+
   test.each([
-    [USER_ROLE_ADMIN, '/products/edit'],
-    [USER_ROLE_TRAINER, '/orders/view'],
-    [USER_ROLE_MEMBER, '/products/edit'],
+    [USER_ROLE_ADMIN, '/'],
+    [USER_ROLE_TRAINER, '/'],
+    [USER_ROLE_MEMBER, '/'],
   ])('logs in a %s user', async (role, redirect) => {
     const user = { id: 7, role, password: 'hash' };
     jest.spyOn(UsersModel, 'getByUsername').mockResolvedValue(user);
@@ -81,14 +89,66 @@ describe('AuthenticationController', () => {
     expect(res.redirect).toHaveBeenCalledWith(redirect);
   });
 
-  test('does not redirect for an unknown role', async () => {
+  test('redirects an authenticated user with an unknown role to locations', async () => {
     jest.spyOn(UsersModel, 'getByUsername').mockResolvedValue({ id: 7, role: 'unknown', password: 'hash' });
     jest.spyOn(bcrypt, 'compare').mockResolvedValue(true);
     const res = response();
 
     await AuthenticationController.handleLogin(request({ username: 'ada@example.com', password: 'secret' }), res);
 
-    expect(res.redirect).not.toHaveBeenCalled();
+    expect(res.redirect).toHaveBeenCalledWith('/');
+  });
+
+  test('registers a member account', async () => {
+    const create = jest.spyOn(UsersModel, 'create').mockResolvedValue({ insertId: 8 });
+    jest.spyOn(bcrypt, 'hash').mockResolvedValue('hashed-password');
+    const res = response();
+
+    await AuthenticationController.handleRegister(request({
+      firstName: 'Ada',
+      lastName: 'Lovelace',
+      email: 'ada@example.com',
+      password: 'plain-password',
+      phone: '555-0100',
+      dob: '1815-12-10',
+    }), res);
+
+    expect(create).toHaveBeenCalledWith(expect.objectContaining({
+      role: 'member',
+      password: 'hashed-password',
+    }));
+    expect(res.redirect).toHaveBeenCalledWith('/authenticate');
+  });
+
+  test('rejects incomplete registration data', async () => {
+    const res = response();
+
+    await AuthenticationController.handleRegister(request({ email: 'ada@example.com' }), res);
+
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(res.render).toHaveBeenCalledWith('status.ejs', expect.objectContaining({
+      status: 'Registration Failed.',
+    }));
+  });
+
+  test('reports registration database errors', async () => {
+    jest.spyOn(bcrypt, 'hash').mockResolvedValue('hashed-password');
+    jest.spyOn(UsersModel, 'create').mockRejectedValue(new Error('duplicate email'));
+    jest.spyOn(console, 'error').mockImplementation(() => {});
+    const res = response();
+
+    await AuthenticationController.handleRegister(request({
+      firstName: 'Ada',
+      lastName: 'Lovelace',
+      email: 'ada@example.com',
+      password: 'plain-password',
+      phone: '555-0100',
+    }), res);
+
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(res.render).toHaveBeenCalledWith('status.ejs', expect.objectContaining({
+      message: 'The account could not be created.',
+    }));
   });
 
   test('rejects an incorrect password', async () => {

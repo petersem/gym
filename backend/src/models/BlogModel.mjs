@@ -46,7 +46,7 @@ export class BlogModel extends DatabaseModel {
    * @returns {Promise<Array<BlogModel>>} Active blog posts.
    */
   static async getAll() {
-    return this.query("SELECT * FROM blog").then(
+    return this.query("SELECT * FROM blog ORDER BY create_date DESC, id DESC").then(
       (result) => result.map((row) => this.tableToModel(row.blog)),
     );
   }
@@ -88,14 +88,13 @@ export class BlogModel extends DatabaseModel {
     return this.query(
       `
             UPDATE blog
-            SET subject = ?, body = ?, user_id = ?, create_date = ?
+            SET subject = ?, body = ?, user_id = ?
             WHERE id = ?
         `,
       [
         blog.title,
         blog.content,
         blog.user_id,
-        blog.created,
         blog.id,
       ],
     );

@@ -32,7 +32,7 @@ describe('BookingsModel end-to-end flow', () => {
       expect((await BookingsModel.getById(bookingId)).user_id).toBe(userId);
       const booking = new BookingsModel(bookingId, sessionId, userId, '2026-09-26 11:00:00');
       await BookingsModel.update(booking);
-      expect((await BookingsModel.getById(bookingId)).created).toBe('2026-09-26 11:00:00');
+      expect((await BookingsModel.getById(bookingId)).created).toBe('2026-09-26 10:00:00');
     } finally {
       if (bookingId) await BookingsModel.delete(bookingId);
       if (sessionId) await SessionsModel.delete(sessionId);

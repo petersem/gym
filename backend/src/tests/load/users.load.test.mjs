@@ -22,6 +22,7 @@ beforeAll(async () => {
 
 afterAll(async () => {
   await Promise.all(createdUserIds.map((id) => UsersModel.delete(id)));
+  await UsersModel.query("DELETE FROM users WHERE email LIKE ?", ["controller-load-%"]);
   await new Promise((resolve, reject) => {
     server.close((error) => (error ? reject(error) : resolve()));
   });
@@ -46,7 +47,7 @@ describe('UsersController load test', () => {
     const startedAt = performance.now();
     const responses = await Promise.all(
       Array.from({ length: requestCount }, (_, index) => {
-        const email = `load-${Date.now()}-${index}@example.com`;
+        const email = `controller-load-${Date.now()}-${index}@example.com`;
         return fetch(`${baseUrl}/users`, {
           method: 'POST',
           headers: { 'content-type': 'application/x-www-form-urlencoded' },

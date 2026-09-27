@@ -38,6 +38,13 @@ describe('BookingsModel unit tests', () => {
     expect(query).toHaveBeenCalledWith('SELECT * FROM bookings');
   });
 
+  test('getByUserId returns only the requested user bookings', async () => {
+    const query = jest.spyOn(BookingsModel, 'query').mockResolvedValue([{ bookings: row }]);
+
+    await expect(BookingsModel.getByUserId(7)).resolves.toEqual([booking]);
+    expect(query).toHaveBeenCalledWith('SELECT * FROM bookings WHERE user_id = ?', [7]);
+  });
+
   test('getById returns a booking when found', async () => {
     const query = jest.spyOn(BookingsModel, 'query').mockResolvedValue([{ bookings: row }]);
 
@@ -57,18 +64,31 @@ describe('BookingsModel unit tests', () => {
     await expect(BookingsModel.update(booking)).resolves.toEqual({ affectedRows: 1 });
     expect(query).toHaveBeenCalledWith(
       expect.stringContaining('UPDATE bookings'),
-      [booking.session_id, booking.user_id, booking.created, booking.id],
+      [booking.session_id, booking.user_id, booking.id],
     );
   });
 
   test('create passes booking fields without an id', async () => {
-    const query = jest.spyOn(BookingsModel, 'query').mockResolvedValue({ insertId: 21 });
+    const query = jest.spyOn(BookingsModel, 'query')
+      .mockResolvedValueOnce([])
+      .mockResolvedValueOnce({ insertId: 21 });
 
     await expect(BookingsModel.create(booking)).resolves.toEqual({ insertId: 21 });
-    expect(query).toHaveBeenCalledWith(
+    expect(query).toHaveBeenNthCalledWith(1,
+      'SELECT id FROM bookings WHERE session_id = ? AND user_id = ? LIMIT 1',
+      [booking.session_id, booking.user_id],
+    );
+    expect(query).toHaveBeenNthCalledWith(2,
       expect.stringContaining('INSERT INTO bookings'),
       [booking.session_id, booking.user_id, booking.created],
     );
+  });
+
+  test('does not insert a duplicate session and user booking', async () => {
+    const query = jest.spyOn(BookingsModel, 'query').mockResolvedValue([{ bookings: { id: 21 } }]);
+
+    await expect(BookingsModel.create(booking)).resolves.toEqual({ affectedRows: 0, duplicate: true });
+    expect(query).toHaveBeenCalledTimes(1);
   });
 
   test('createWithExistingID includes the booking id', async () => {
