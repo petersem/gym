@@ -28,13 +28,13 @@ describe('LocationController', () => {
     LocationController.viewLocationManagement(request({}, { id: '1' }), res);
     await flushPromises();
 
-    expect(res.render).toHaveBeenCalledWith('location_management.ejs', {
+    expect(res.render).toHaveBeenCalledWith('location_management.ejs', expect.objectContaining({
       locations,
       users,
       selectedLocation: locations[0],
       authenticatedUser: { id: 1 },
       role: 'admin',
-    });
+    }));
   });
 
   test('renders an empty location and logs management errors', async () => {
@@ -78,11 +78,11 @@ describe('LocationController', () => {
     LocationController.viewLocationList(request(), res);
     await flushPromises();
 
-    expect(res.render).toHaveBeenCalledWith('location_list.ejs', {
+    expect(res.render).toHaveBeenCalledWith('location_list.ejs', expect.objectContaining({
       locations,
       authenticatedUser: { id: 1 },
       role: '',
-    });
+    }));
   });
 
   test('renders searched locations', async () => {
@@ -174,7 +174,7 @@ describe('LocationController', () => {
       phone: '555-0100',
       email: 'central@example.com',
       street: '1 Main Street',
-      city: 'Brisbane',
+      suburb: 'Brisbane',
       postcode: '4000',
       manager: '1',
       updatedBy: '1',

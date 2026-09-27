@@ -22,9 +22,9 @@ describe('LocationModel end-to-end flow', () => {
       ]));
 
       location.id = locationId;
-      location.city = 'Sydney';
+      location.suburb = 'Sydney';
       await LocationModel.update(location);
-      expect((await LocationModel.getById(locationId)).city).toBe('Sydney');
+      expect((await LocationModel.getById(locationId)).suburb).toBe('Sydney');
     } finally {
       if (locationId) await LocationModel.delete(locationId);
     }

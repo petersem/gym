@@ -5,6 +5,17 @@ import { SessionsModel } from "../models/SessionsModel.mjs";
 import { LocationModel } from "../models/LocationModel.mjs";
 import { ActivitiesModel } from "../models/ActivitiesModel.mjs";
 
+const bookingPageUrl = (req, bookingDeleted = false) => {
+  const query = new URLSearchParams();
+  const bookingUserId = Number(req.query.booking_user_id);
+  if (Number.isInteger(bookingUserId) && bookingUserId > 0) {
+    query.set("booking_user_id", String(bookingUserId));
+  }
+  if (bookingDeleted) query.set("booking_deleted", "1");
+  const search = query.toString();
+  return search ? `/bookings?${search}` : "/bookings";
+};
+
 /** HTTP handlers for bookings. */
 export class BookingsController {
   /** @type {import("express").Router} */
@@ -117,7 +128,7 @@ export class BookingsController {
     } else if (req.body.action === "update") {
       return BookingsModel.update(booking)
         .then((result) => result.affectedRows > 0
-          ? res.redirect("/bookings")
+          ? res.redirect(bookingPageUrl(req))
           : res.status(404).render("status.ejs", { status: "Booking Update Failed", message: "The booking could not be found." }))
         .catch((error) => {
           console.error(error);
@@ -126,7 +137,7 @@ export class BookingsController {
     } else if (req.body.action === "delete") {
       return BookingsModel.delete(booking.id)
         .then((result) => result.affectedRows > 0
-          ? res.redirect("/bookings?booking_deleted=1")
+          ? res.redirect(bookingPageUrl(req, true))
           : res.status(404).render("status.ejs", { status: "Booking Deletion Failed", message: "The booking could not be found." }))
         .catch((error) => {
           console.error(error);

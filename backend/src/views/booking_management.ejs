@@ -45,9 +45,11 @@
                                                 <ul>
                                                     <% day.sessions.forEach((session)=> { %>
                                                         <li class="available-session">
+                                                            <% const sessionLocation = locations.find((location) => Number(location.id) === Number(session.location_id)); %>
+                                                            <% const locationSuffix = !availableLocationId && sessionLocation ? ` (${sessionLocation.name})` : ''; %>
                                                             <% if (authenticatedUser) { %>
                                                             <button type="button" class="available-session-select" title="<%= getSessionHoverText(session) %>">
-                                                                <%= formatSessionTime(session.time) %>, <%= session.title %>
+                                                                <%= formatSessionTime(session.time) %>, <%= session.title %><%= locationSuffix %>
                                                             </button>
                                                             <form class="session-book-form" action="/bookings" method="post">
                                                                 <input type="hidden" name="sessionId" value="<%= session.id %>">
@@ -55,7 +57,7 @@
                                                                 <button class="btn btn-primary session-book-button" type="submit" name="action" value="create" hidden>Book</button>
                                                             </form>
                                                             <% } else { %>
-                                                            <span class="available-session-label" title="<%= getSessionHoverText(session) %>"><%= formatSessionTime(session.time) %>, <%= session.title %></span>
+                                                            <span class="available-session-label" title="<%= getSessionHoverText(session) %>"><%= formatSessionTime(session.time) %>, <%= session.title %><%= locationSuffix %></span>
                                                             <% } %>
                                                         </li>
                                                         <% }) %>
@@ -103,14 +105,18 @@
                                                     <% day.bookings.forEach((booking)=> { %>
                                                         <% const bookingSession=day.sessions.find((session)=> session.id
                                                             === Number(booking.session_id)); %>
+                                                        <% const bookingUser=users.find((user)=> Number(user.id) === Number(booking.user_id)); %>
                                                             <li>
-                                                                <a href="/bookings/<%= booking.id %>" title="<%= bookingSession ? getSessionHoverText(bookingSession) : 'Session details unavailable' %>">
+                                                                <a href="/bookings/<%= booking.id %><%= canManageBookings && bookingUserId ? '?booking_user_id=' + bookingUserId : '' %>" title="<%= bookingSession ? getSessionHoverText(bookingSession) : 'Session details unavailable' %>">
                                                                     <%= bookingSession ? formatSessionTime(bookingSession.time) : '' %>,
                                                                         <%= bookingSession ? bookingSession.title :
                                                                             `Booking #${booking.id}` %>
+                                                                    <% if (canManageBookings && !bookingUserId) { %>
+                                                                        (<%= bookingUser ? `${bookingUser.last_name}, ${bookingUser.first_name}` : 'Unknown user' %>)
+                                                                    <% } %>
                                                                 </a>
                                                                 <% if (selectedBooking.id===booking.id) { %>
-                                                                    <form action="/bookings/<%= booking.id %>"
+                                                                    <form action="/bookings/<%= booking.id %><%= canManageBookings && bookingUserId ? '?booking_user_id=' + bookingUserId : '' %>"
                                                                         method="post">
                                                                         <button type="submit" name="action"
                                                                             value="delete">Delete booking</button>

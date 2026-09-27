@@ -22,7 +22,39 @@ const normalizeSessionTime = (value) => {
 
 const isPositiveId = (value) => Number.isInteger(Number(value)) && Number(value) > 0;
 
-/** HTTP handlers for sessions. */
+const SESSION_SORT_COLUMNS = ["title", "trainer", "date", "activity", "location"];
+
+// Compute a comparable sort value for a session given its related records.
+const sessionSortValue = (session, users, activities, locations, sortBy) => {
+  if (sortBy === "trainer") {
+    const trainer = users.find((user) => user.id === Number(session.trainer_id));
+    return trainer ? `${trainer.last_name}, ${trainer.first_name}` : "";
+  }
+  if (sortBy === "activity") {
+    return activities.find((item) => Number(item.id) === Number(session.activity_id))?.name ?? "";
+  }
+  if (sortBy === "location") {
+    return locations.find((item) => Number(item.id) === Number(session.location_id))?.name ?? "";
+  }
+  if (sortBy === "date") {
+    return `${String(session.date).slice(0, 10)} ${String(session.time).slice(0, 8)}`;
+  }
+  return session.title;
+};
+
+// Sort sessions server-side using the given column and direction.
+const sortSessions = (sessions, users, activities, locations, sortBy, sortDir) => {
+  const multiplier = sortDir === "desc" ? -1 : 1;
+  return [...sessions].sort((left, right) => (
+    String(sessionSortValue(left, users, activities, locations, sortBy)).localeCompare(
+      String(sessionSortValue(right, users, activities, locations, sortBy)),
+      undefined,
+      { numeric: true, sensitivity: "base" },
+    ) * multiplier
+  ));
+};
+
+// HTTP handlers for sessions. 
 export class SessionsController {
   /** @type {import("express").Router} */
   static routes = express.Router();
@@ -45,20 +77,43 @@ export class SessionsController {
       .then(([sessions, users, activities, locations]) => {
       const selectedLocationId = Number(req.query.location_id) || null;
       const selectedTrainerId = Number(req.query.trainer_id) || null;
+      const selectedSearchTerm = String(req.query.search_term ?? "").trim();
+      const normalizedSearchTerm = selectedSearchTerm.toLocaleLowerCase();
+      const selectedSortBy = SESSION_SORT_COLUMNS.includes(req.query.sort_by) ? req.query.sort_by : "date";
+      const selectedSortDir = req.query.sort_dir === "desc" ? "desc" : "asc";
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const lastDate = new Date(today);
+      lastDate.setDate(lastDate.getDate() + 7);
+      const toLocalDateValue = (date) => [
+        date.getFullYear(),
+        String(date.getMonth() + 1).padStart(2, "0"),
+        String(date.getDate()).padStart(2, "0"),
+      ].join("-");
+      const firstDateValue = toLocalDateValue(today);
+      const lastDateValue = toLocalDateValue(lastDate);
       const filteredSessions = sessions.filter((session) => (
+        String(session.date).slice(0, 10) >= firstDateValue
+        && String(session.date).slice(0, 10) <= lastDateValue
+        &&
         (!selectedLocationId || Number(session.location_id) === selectedLocationId)
         && (!selectedTrainerId || Number(session.trainer_id) === selectedTrainerId)
+        && (!normalizedSearchTerm || String(session.title).toLocaleLowerCase().includes(normalizedSearchTerm))
       ));
+      const sortedSessions = sortSessions(filteredSessions, users, activities, locations, selectedSortBy, selectedSortDir);
       const selectedSession = sessions.find((session) => session.id == req.params.id)
         ?? new SessionsModel(null, 0, 0, 0, "", "", "");
       res.render("session_management.ejs", {
-        sessions: filteredSessions,
+        sessions: sortedSessions,
         users,
         activities,
         locations,
         selectedSession,
         selectedLocationId,
         selectedTrainerId,
+        selectedSearchTerm,
+        selectedSortBy,
+        selectedSortDir,
         authenticatedUser: req.authenticatedUser,
         role: "admin",
       });

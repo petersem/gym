@@ -7,7 +7,7 @@ const row = {
   phone: '555-0100',
   email: 'central@example.com',
   street: '1 Main Street',
-  city: 'Brisbane',
+  suburb: 'Brisbane',
   postcode: '4000',
   manager: '7',
   deleted: 0,
@@ -20,7 +20,7 @@ const location = new LocationModel(
   row.phone,
   row.email,
   row.street,
-  row.city,
+  row.suburb,
   row.postcode,
   row.manager,
   row.deleted,
@@ -46,7 +46,7 @@ describe('LocationModel unit tests', () => {
 
     await expect(LocationModel.getAll()).resolves.toEqual([
       location,
-      new LocationModel(43, 'West Gym', row.phone, row.email, row.street, row.city, row.postcode, row.manager, row.deleted, row.updated_by),
+      new LocationModel(43, 'West Gym', row.phone, row.email, row.street, row.suburb, row.postcode, row.manager, row.deleted, row.updated_by),
     ]);
     expect(query).toHaveBeenCalledWith('SELECT * FROM locations where deleted = 0');
   });
@@ -56,7 +56,7 @@ describe('LocationModel unit tests', () => {
 
     await expect(LocationModel.getBySearch('Central')).resolves.toEqual([location]);
     expect(query).toHaveBeenCalledWith(
-      expect.stringContaining('name LIKE ? OR city LIKE ? OR postcode LIKE ?'),
+      expect.stringContaining('name LIKE ? OR suburb LIKE ? OR postcode LIKE ?'),
       ['%Central%', '%Central%', '%Central%'],
     );
   });
@@ -80,7 +80,7 @@ describe('LocationModel unit tests', () => {
     await expect(LocationModel.update(location)).resolves.toEqual({ affectedRows: 1 });
     expect(query).toHaveBeenCalledWith(
       expect.stringContaining('UPDATE locations'),
-      [location.name, location.phone, location.email, location.street, location.city, location.postcode, location.manager, location.deleted, location.updated_by, location.id],
+      [location.name, location.phone, location.email, location.street, location.suburb, location.postcode, location.manager, location.deleted, location.updated_by, location.id],
     );
   });
 
@@ -97,7 +97,7 @@ describe('LocationModel unit tests', () => {
     await expect(LocationModel.create(location)).resolves.toEqual({ insertId: 42 });
     expect(query).toHaveBeenCalledWith(
       expect.stringContaining('INSERT INTO locations'),
-      [location.name, location.phone, location.email, location.street, location.city, location.postcode, location.manager, location.deleted, location.updated_by],
+      [location.name, location.phone, location.email, location.street, location.suburb, location.postcode, location.manager, location.deleted, location.updated_by],
     );
   });
 
@@ -107,7 +107,7 @@ describe('LocationModel unit tests', () => {
     await expect(LocationModel.createWithExistingID(location)).resolves.toEqual({ insertId: 42 });
     expect(query).toHaveBeenCalledWith(
       expect.stringContaining('INSERT INTO locations'),
-      [location.id, location.name, location.phone, location.email, location.street, location.city, location.postcode, location.manager, location.deleted, location.updated_by],
+      [location.id, location.name, location.phone, location.email, location.street, location.suburb, location.postcode, location.manager, location.deleted, location.updated_by],
     );
   });
 

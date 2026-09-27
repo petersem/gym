@@ -93,6 +93,34 @@ export class UsersModel extends DatabaseModel {
     ).then((result) => result.map((row) => this.tableToModel(row.users)));
   }
 
+  /** Columns that may be used to sort user listings. */
+  static SORTABLE_COLUMNS = {
+    first_name: "first_name", last_name: "last_name", email: "email", role: "role",
+  };
+
+  /**
+   * Search and sort non-deleted users server-side.
+   * @param {Object} [options] Search and sort options.
+   * @param {string} [options.searchTerm] Optional search term for name/email.
+   * @param {string} [options.sortBy] Column to sort by (first_name|last_name|email|role).
+   * @param {string} [options.sortDir] Sort direction (asc|desc).
+   * @returns {Promise<Array<UsersModel>>} Matching users.
+   */
+  static async list({ searchTerm = "", sortBy = "last_name", sortDir = "asc" } = {}) {
+    const column = this.SORTABLE_COLUMNS[sortBy] ?? this.SORTABLE_COLUMNS.last_name;
+    const direction = sortDir === "desc" ? "DESC" : "ASC";
+    const where = ["deleted = 0"];
+    const values = [];
+    if (searchTerm) {
+      where.push("(first_name LIKE ? OR last_name LIKE ? OR email LIKE ?)");
+      values.push(`%${searchTerm}%`, `%${searchTerm}%`, `%${searchTerm}%`);
+    }
+    return this.query(
+      `SELECT * FROM users WHERE ${where.join(" AND ")} ORDER BY ${column} ${direction}`,
+      values,
+    ).then((result) => result.map((row) => this.tableToModel(row.users)));
+  }
+
   /**
    * Retrieve an active user by email address used as the login name.
    * @param {string} username Login email address.

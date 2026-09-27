@@ -182,6 +182,11 @@ describe('BookingsController', () => {
     await BookingsController.handleBookingManagement(request({ id: '2' }, {}, { action: 'delete' }), res);
     expect(res.redirect).toHaveBeenCalledWith('/bookings?booking_deleted=1');
 
+    await BookingsController.handleBookingManagement(request(
+      { id: '2' }, { booking_user_id: '8' }, { action: 'delete' },
+    ), res);
+    expect(res.redirect).toHaveBeenCalledWith('/bookings?booking_user_id=8&booking_deleted=1');
+
     BookingsModel.update.mockResolvedValue({ affectedRows: 0 });
     await BookingsController.handleBookingManagement(request({ id: '2' }, {}, { action: 'update' }), res);
     BookingsModel.delete.mockResolvedValue({ affectedRows: 0 });

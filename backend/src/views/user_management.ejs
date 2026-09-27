@@ -13,12 +13,56 @@
 
         <section>
             <h2>Users</h2>
-            <ul>
-                <% users.forEach((user) => { %>
-                    <li><a href="/users/<%= user.id %>"><%= user.last_name %>, <%= user.first_name %></a></li>
-                <% }) %>
-            </ul>
+            <div class="list-search">
+                <label for="user-search">Search users</label>
+                <div class="list-search-control">
+                    <input id="user-search" type="search" value="<%= selectedSearchTerm %>" onkeydown="if (event.key === 'Enter') { event.preventDefault(); filterUsers(); }">
+                    <button type="button" onclick="filterUsers()">Search</button>
+                </div>
+            </div>
+            <div class="list-results">
+                <table class="list-results-table">
+                    <% const userSortLink = (column) => {
+                        const params = new URLSearchParams();
+                        if (selectedSearchTerm) params.set('search_term', selectedSearchTerm);
+                        params.set('sort_by', column);
+                        params.set('sort_dir', selectedSortBy === column && selectedSortDir === 'asc' ? 'desc' : 'asc');
+                        return `/users?${params.toString()}`;
+                    }; %>
+                    <% const userSortAria = (column) => selectedSortBy === column
+                        ? (selectedSortDir === 'asc' ? 'ascending' : 'descending')
+                        : 'none'; %>
+                    <thead>
+                        <tr>
+                            <th scope="col" aria-sort="<%= userSortAria('last_name') %>"><a class="sort-link" href="<%= userSortLink('last_name') %>" aria-label="Sort by name">Name</a></th>
+                            <th scope="col" aria-sort="<%= userSortAria('email') %>"><a class="sort-link" href="<%= userSortLink('email') %>" aria-label="Sort by email">Email</a></th>
+                            <th scope="col" aria-sort="<%= userSortAria('role') %>"><a class="sort-link" href="<%= userSortLink('role') %>" aria-label="Sort by role">Role</a></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <% if (users.length === 0) { %>
+                            <tr><td colspan="3">No users match this search.</td></tr>
+                        <% } %>
+                        <% users.forEach((user) => { %>
+                            <tr>
+                                <td><a href="/users/<%= user.id %>"><%= user.last_name %>, <%= user.first_name %></a></td>
+                                <td><%= user.email %></td>
+                                <td><%= user.role %></td>
+                            </tr>
+                        <% }) %>
+                    </tbody>
+                </table>
+            </div>
         </section>
+
+        <script>
+            function filterUsers() {
+                const params = new URLSearchParams(window.location.search);
+                const searchTerm = document.getElementById('user-search').value.trim();
+                if (searchTerm) params.set('search_term', searchTerm); else params.delete('search_term');
+                window.location.href = `/users${params.toString() ? `?${params}` : ''}`;
+            }
+        </script>
 
         <section>
             <h2>User management</h2>

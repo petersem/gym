@@ -21,15 +21,15 @@
 
         <section>
             <h2>Sessions</h2>
-            <div class="form-grid responsive-half">
-                <label for="location-filter">Location</label>
+            <div class="form-grid responsive-half session-filter-controls" role="group" aria-label="Filter sessions">
+                <label for="location-filter">Filter by location</label>
                 <select id="location-filter" onchange="filterSessions()">
                     <option value="">All locations</option>
                     <% locations.forEach((location) => { %>
                         <option value="<%= location.id %>" <%= selectedLocationId === location.id ? 'selected' : '' %>><%= location.name %></option>
                     <% }) %>
                 </select>
-                <label for="trainer-filter">Trainer</label>
+                <label for="trainer-filter">Filter by trainer</label>
                 <select id="trainer-filter" onchange="filterSessions()">
                     <option value="">All trainers</option>
                     <% users.filter((user) => user.role === 'trainer').forEach((user) => { %>
@@ -37,21 +37,67 @@
                     <% }) %>
                 </select>
             </div>
-            <ul>
-                <% sessions.forEach((session) => { %>
-                    <% const trainer = users.find((user) => user.id === Number(session.trainer_id)); %>
-                    <li><a href="/sessions/<%= session.id %>"><%= session.title %> - <%= trainer ? `${trainer.last_name}, ${trainer.first_name}` : 'Unknown trainer' %> - <%= formatSessionDateTime(session.date, session.time) %></a></li>
-                <% }) %>
-            </ul>
+            <div class="session-name-search">
+                <label for="session-search">Search session names</label>
+                <div class="session-search-control">
+                    <input id="session-search" type="search" value="<%= selectedSearchTerm %>" onkeydown="if (event.key === 'Enter') { event.preventDefault(); filterSessions(); }">
+                    <button type="button" onclick="filterSessions()">Search</button>
+                </div>
+            </div>
+            <div class="session-results">
+                <table class="session-results-table">
+                    <% const sessionSortLink = (column) => {
+                        const params = new URLSearchParams();
+                        if (selectedLocationId) params.set('location_id', selectedLocationId);
+                        if (selectedTrainerId) params.set('trainer_id', selectedTrainerId);
+                        if (selectedSearchTerm) params.set('search_term', selectedSearchTerm);
+                        params.set('sort_by', column);
+                        params.set('sort_dir', selectedSortBy === column && selectedSortDir === 'asc' ? 'desc' : 'asc');
+                        return `/sessions?${params.toString()}`;
+                    }; %>
+                    <% const sessionSortAria = (column) => selectedSortBy === column
+                        ? (selectedSortDir === 'asc' ? 'ascending' : 'descending')
+                        : 'none'; %>
+                    <thead>
+                        <tr>
+                            <th scope="col" aria-sort="<%= sessionSortAria('title') %>"><a class="session-sort-button" href="<%= sessionSortLink('title') %>" aria-label="Sort by session">Session</a></th>
+                            <th scope="col" aria-sort="<%= sessionSortAria('trainer') %>"><a class="session-sort-button" href="<%= sessionSortLink('trainer') %>" aria-label="Sort by trainer">Trainer</a></th>
+                            <th scope="col" aria-sort="<%= sessionSortAria('date') %>"><a class="session-sort-button" href="<%= sessionSortLink('date') %>" aria-label="Sort by date and time">Date/Time</a></th>
+                            <th scope="col" aria-sort="<%= sessionSortAria('activity') %>"><a class="session-sort-button" href="<%= sessionSortLink('activity') %>" aria-label="Sort by activity">Activity</a></th>
+                            <th scope="col" aria-sort="<%= sessionSortAria('location') %>"><a class="session-sort-button" href="<%= sessionSortLink('location') %>" aria-label="Sort by location">Location</a></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <% if (sessions.length === 0) { %>
+                            <tr><td colspan="5">No sessions match these filters.</td></tr>
+                        <% } %>
+                        <% sessions.forEach((session) => { %>
+                            <% const trainer = users.find((user) => user.id === Number(session.trainer_id)); %>
+                            <% const activity = activities.find((item) => Number(item.id) === Number(session.activity_id)); %>
+                            <% const sessionLocation = locations.find((location) => Number(location.id) === Number(session.location_id)); %>
+                                <% const trainerName = trainer ? `${trainer.last_name}, ${trainer.first_name}` : 'Unknown trainer'; %>
+                            <tr>
+                                    <td><a href="/sessions/<%= session.id %>"><%= session.title %></a></td>
+                                    <td><%= trainerName %></td>
+                                    <td><%= formatSessionDateTime(session.date, session.time) %></td>
+                                    <td><%= activity ? activity.name : 'Unknown activity' %></td>
+                                    <td><%= sessionLocation ? sessionLocation.name : 'Unknown location' %></td>
+                            </tr>
+                        <% }) %>
+                    </tbody>
+                </table>
+            </div>
         </section>
 
         <script>
             function filterSessions() {
+                const params = new URLSearchParams(window.location.search);
                 const location = document.getElementById('location-filter').value;
                 const trainer = document.getElementById('trainer-filter').value;
-                const params = new URLSearchParams();
-                if (location) params.set('location_id', location);
-                if (trainer) params.set('trainer_id', trainer);
+                const searchTerm = document.getElementById('session-search').value.trim();
+                if (location) params.set('location_id', location); else params.delete('location_id');
+                if (trainer) params.set('trainer_id', trainer); else params.delete('trainer_id');
+                if (searchTerm) params.set('search_term', searchTerm); else params.delete('search_term');
                 window.location.href = `/sessions${params.toString() ? `?${params}` : ''}`;
             }
         </script>

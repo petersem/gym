@@ -51,11 +51,11 @@ describe('UsersController unit tests', () => {
     UsersController.viewUserManagement(request({ id: '7' }), res);
     await flushPromises();
 
-    expect(res.render).toHaveBeenCalledWith('user_management.ejs', {
+    expect(res.render).toHaveBeenCalledWith('user_management.ejs', expect.objectContaining({
       users: [existingUser],
       selectedUser: existingUser,
       role: 'admin',
-    });
+    }));
   });
 
   test('logs user-list load errors', async () => {

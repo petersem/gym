@@ -13,17 +13,54 @@
 
         <section>
             <h2>Activities</h2>
-            <ul>
-                <% activities.forEach((activity) => { %>
-                    <li>
-                        <a href="/activities/<%= activity.id %>"><%= activity.name %></a>
-                        <% if (activity.description) { %>
-                            <p><%= activity.description %></p>
+            <div class="list-search">
+                <label for="activity-search">Search activities</label>
+                <div class="list-search-control">
+                    <input id="activity-search" type="search" value="<%= selectedSearchTerm %>" onkeydown="if (event.key === 'Enter') { event.preventDefault(); filterActivities(); }">
+                    <button type="button" onclick="filterActivities()">Search</button>
+                </div>
+            </div>
+            <div class="list-results">
+                <table class="list-results-table">
+                    <% const activitySortLink = (column) => {
+                        const params = new URLSearchParams();
+                        if (selectedSearchTerm) params.set('search_term', selectedSearchTerm);
+                        params.set('sort_by', column);
+                        params.set('sort_dir', selectedSortBy === column && selectedSortDir === 'asc' ? 'desc' : 'asc');
+                        return `/activities?${params.toString()}`;
+                    }; %>
+                    <% const activitySortAria = (column) => selectedSortBy === column
+                        ? (selectedSortDir === 'asc' ? 'ascending' : 'descending')
+                        : 'none'; %>
+                    <thead>
+                        <tr>
+                            <th scope="col" aria-sort="<%= activitySortAria('name') %>"><a class="sort-link" href="<%= activitySortLink('name') %>" aria-label="Sort by name">Name</a></th>
+                            <th scope="col" aria-sort="<%= activitySortAria('description') %>"><a class="sort-link" href="<%= activitySortLink('description') %>" aria-label="Sort by description">Description</a></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <% if (activities.length === 0) { %>
+                            <tr><td colspan="2">No activities match this search.</td></tr>
                         <% } %>
-                    </li>
-                <% }) %>
-            </ul>
+                        <% activities.forEach((activity) => { %>
+                            <tr>
+                                <td><a href="/activities/<%= activity.id %>"><%= activity.name %></a></td>
+                                <td><%= activity.description %></td>
+                            </tr>
+                        <% }) %>
+                    </tbody>
+                </table>
+            </div>
         </section>
+
+        <script>
+            function filterActivities() {
+                const params = new URLSearchParams(window.location.search);
+                const searchTerm = document.getElementById('activity-search').value.trim();
+                if (searchTerm) params.set('search_term', searchTerm); else params.delete('search_term');
+                window.location.href = `/activities${params.toString() ? `?${params}` : ''}`;
+            }
+        </script>
 
         <section>
             <h2>Activity management</h2>

@@ -61,6 +61,32 @@ export class ActivitiesModel extends DatabaseModel {
     ).then((result) => result.map((row) => this.tableToModel(row.activities)));
   }
 
+  /** Columns that may be used to sort activity listings. */
+  static SORTABLE_COLUMNS = { name: "name", description: "description" };
+
+  /**
+   * Search and sort non-deleted activities server-side.
+   * @param {Object} [options] Search and sort options.
+   * @param {string} [options.searchTerm] Optional search term for name/description.
+   * @param {string} [options.sortBy] Column to sort by (name|description).
+   * @param {string} [options.sortDir] Sort direction (asc|desc).
+   * @returns {Promise<Array<ActivitiesModel>>} Matching activities.
+   */
+  static async list({ searchTerm = "", sortBy = "name", sortDir = "asc" } = {}) {
+    const column = this.SORTABLE_COLUMNS[sortBy] ?? this.SORTABLE_COLUMNS.name;
+    const direction = sortDir === "desc" ? "DESC" : "ASC";
+    const where = ["deleted = 0"];
+    const values = [];
+    if (searchTerm) {
+      where.push("(name LIKE ? OR description LIKE ?)");
+      values.push(`%${searchTerm}%`, `%${searchTerm}%`);
+    }
+    return this.query(
+      `SELECT * FROM activities WHERE ${where.join(" AND ")} ORDER BY ${column} ${direction}`,
+      values,
+    ).then((result) => result.map((row) => this.tableToModel(row.activities)));
+  }
+
   /**
    * Retrieve an activity by its identifier.
    * @param {number} id Activity identifier.

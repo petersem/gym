@@ -17,14 +17,23 @@ export class ActivitiesController {
 
   /** @type {import("express").RequestHandler} */
   static async viewActivityManagement(req, res) {
+    const selectedSearchTerm = String(req.query.search_term ?? "").trim();
+    const selectedSortBy = Object.keys(ActivitiesModel.SORTABLE_COLUMNS).includes(req.query.sort_by)
+      ? req.query.sort_by : "name";
+    const selectedSortDir = req.query.sort_dir === "desc" ? "desc" : "asc";
     try {
-      const activities = await ActivitiesModel.getAll();
+      const activities = (selectedSearchTerm || req.query.sort_by || req.query.sort_dir)
+        ? await ActivitiesModel.list({ searchTerm: selectedSearchTerm, sortBy: selectedSortBy, sortDir: selectedSortDir })
+        : await ActivitiesModel.getAll();
       const selectedActivity = activities.find(
         (activity) => activity.id == req.params.id,
       ) ?? new ActivitiesModel(null, "", "", 0, 0);
       res.render("activity_management.ejs", {
         activities,
         selectedActivity,
+        selectedSearchTerm,
+        selectedSortBy,
+        selectedSortDir,
         authenticatedUser: req.authenticatedUser ?? {},
         role: "admin",
       });

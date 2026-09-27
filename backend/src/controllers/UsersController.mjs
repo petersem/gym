@@ -38,8 +38,16 @@ export class UsersController {
      */
     static viewUserManagement(req, res) {
         const selectedUserId = req.params.id
+        const query = req.query ?? {}
+        const selectedSearchTerm = String(query.search_term ?? "").trim()
+        const selectedSortBy = Object.keys(UsersModel.SORTABLE_COLUMNS).includes(query.sort_by)
+            ? query.sort_by : "last_name"
+        const selectedSortDir = query.sort_dir === "desc" ? "desc" : "asc"
+        const usersPromise = (selectedSearchTerm || query.sort_by || query.sort_dir)
+            ? UsersModel.list({ searchTerm: selectedSearchTerm, sortBy: selectedSortBy, sortDir: selectedSortDir })
+            : UsersModel.getAll()
 
-        UsersModel.getAll()
+        usersPromise
             .then(users => {
 
                 const selectedUser = users.find(
@@ -60,6 +68,9 @@ export class UsersController {
                 res.render("user_management.ejs", {
                     users,
                     selectedUser,
+                    selectedSearchTerm,
+                    selectedSortBy,
+                    selectedSortDir,
                     authenticatedUser: req.authenticatedUser,
                     role: "admin",
                 })

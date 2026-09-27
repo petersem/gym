@@ -21,9 +21,9 @@ describe('LocationModel load test', () => {
 
     const loaded = await Promise.all(createdIds.map((id) => LocationModel.getById(id)));
     expect(loaded).toHaveLength(requestCount);
-    await Promise.all(loaded.map((location) => LocationModel.update({ ...location, city: 'Sydney' })));
+    await Promise.all(loaded.map((location) => LocationModel.update({ ...location, suburb: 'Sydney' })));
     expect((await Promise.all(createdIds.map((id) => LocationModel.getById(id))))
-      .every((location) => location.city === 'Sydney')).toBe(true);
+      .every((location) => location.suburb === 'Sydney')).toBe(true);
 
     await Promise.all(createdIds.map((id) => LocationModel.delete(id)));
     for (const id of createdIds) await expect(LocationModel.getById(id)).rejects.toBe('not found');

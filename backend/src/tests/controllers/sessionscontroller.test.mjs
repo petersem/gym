@@ -18,6 +18,12 @@ const response = () => {
 
 const request = (params = {}, query = {}, body = {}) => ({ params, query, body });
 const next = () => jest.fn();
+const dateForOffset = (dayOffset) => {
+  const date = new Date();
+  date.setHours(0, 0, 0, 0);
+  date.setDate(date.getDate() + dayOffset);
+  return [date.getFullYear(), String(date.getMonth() + 1).padStart(2, '0'), String(date.getDate()).padStart(2, '0')].join('-');
+};
 
 afterEach(() => {
   jest.restoreAllMocks();
@@ -25,7 +31,7 @@ afterEach(() => {
 
 describe('SessionsController', () => {
   test('renders session management and handles load errors', async () => {
-    const sessions = [{ id: 1, location_id: 2, trainer_id: 3 }];
+    const sessions = [{ id: 1, title: 'Morning Yoga', location_id: 2, trainer_id: 3, date: dateForOffset(0) }];
     jest.spyOn(SessionsModel, 'getAll').mockResolvedValue(sessions);
     jest.spyOn(UsersModel, 'getAll').mockResolvedValue([]);
     jest.spyOn(ActivitiesModel, 'getAll').mockResolvedValue([]);
@@ -46,6 +52,47 @@ describe('SessionsController', () => {
     SessionsModel.getAll.mockRejectedValue(new Error('database error'));
     await SessionsController.viewSessionManagement(request(), res);
     expect(res.status).toHaveBeenCalledWith(500);
+  });
+
+  test('filters sessions by name together with location and trainer', async () => {
+    const sessions = [
+      { id: 1, title: 'Morning Yoga', location_id: 2, trainer_id: 3, date: dateForOffset(0) },
+      { id: 2, title: 'Evening Yoga', location_id: 2, trainer_id: 4, date: dateForOffset(0) },
+      { id: 3, title: 'Morning Spin', location_id: 5, trainer_id: 3, date: dateForOffset(0) },
+    ];
+    jest.spyOn(SessionsModel, 'getAll').mockResolvedValue(sessions);
+    jest.spyOn(UsersModel, 'getAll').mockResolvedValue([]);
+    jest.spyOn(ActivitiesModel, 'getAll').mockResolvedValue([]);
+    jest.spyOn(LocationModel, 'getAll').mockResolvedValue([]);
+    const res = response();
+
+    await SessionsController.viewSessionManagement(request({}, {
+      search_term: 'MORNING',
+      location_id: '2',
+      trainer_id: '3',
+    }), res);
+
+    const viewData = res.render.mock.calls[0][1];
+    expect(viewData.sessions).toEqual([sessions[0]]);
+    expect(viewData.selectedSearchTerm).toBe('MORNING');
+  });
+
+  test('shows sessions from today through seven days ahead only', async () => {
+    const sessions = [
+      { id: 1, title: 'Today', date: dateForOffset(0) },
+      { id: 2, title: 'Last included day', date: dateForOffset(7) },
+      { id: 3, title: 'Outside range', date: dateForOffset(8) },
+      { id: 4, title: 'Yesterday', date: dateForOffset(-1) },
+    ];
+    jest.spyOn(SessionsModel, 'getAll').mockResolvedValue(sessions);
+    jest.spyOn(UsersModel, 'getAll').mockResolvedValue([]);
+    jest.spyOn(ActivitiesModel, 'getAll').mockResolvedValue([]);
+    jest.spyOn(LocationModel, 'getAll').mockResolvedValue([]);
+    const res = response();
+
+    await SessionsController.viewSessionManagement(request(), res);
+
+    expect(res.render.mock.calls[0][1].sessions).toEqual(sessions.slice(0, 2));
   });
 
   test('handles session CRUD requests', async () => {

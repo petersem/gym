@@ -66,6 +66,33 @@ export class BlogModel extends DatabaseModel {
     ).then((result) => result.map((row) => this.tableToModel(row.blog)));
   }
 
+  /** Columns that may be used to sort blog listings. */
+  static SORTABLE_COLUMNS = { title: "subject", created: "create_date" };
+
+  /**
+   * Search and sort blog posts server-side.
+   * @param {Object} [options] Search and sort options.
+   * @param {string} [options.searchTerm] Optional search term for title/content.
+   * @param {string} [options.sortBy] Column to sort by (title|created).
+   * @param {string} [options.sortDir] Sort direction (asc|desc).
+   * @returns {Promise<Array<BlogModel>>} Matching blog posts.
+   */
+  static async list({ searchTerm = "", sortBy = "created", sortDir = "desc" } = {}) {
+    const column = this.SORTABLE_COLUMNS[sortBy] ?? this.SORTABLE_COLUMNS.created;
+    const direction = sortDir === "asc" ? "ASC" : "DESC";
+    const where = [];
+    const values = [];
+    if (searchTerm) {
+      where.push("(subject LIKE ? OR body LIKE ?)");
+      values.push(`%${searchTerm}%`, `%${searchTerm}%`);
+    }
+    const whereClause = where.length ? `WHERE ${where.join(" AND ")}` : "";
+    return this.query(
+      `SELECT * FROM blog ${whereClause} ORDER BY ${column} ${direction}, id ${direction}`,
+      values,
+    ).then((result) => result.map((row) => this.tableToModel(row.blog)));
+  }
+
   /**
    * Retrieve a blog post by its identifier.
    * @param {number} id Blog post identifier.

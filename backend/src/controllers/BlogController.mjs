@@ -16,11 +16,27 @@ export class BlogController {
 
   /** @type {import("express").RequestHandler} */
   static viewBlogManagement(req, res) {
-    return Promise.all([BlogModel.getAll(), UsersModel.getAll()])
+    const selectedSearchTerm = String(req.query.search_term ?? "").trim();
+    const selectedSortBy = Object.keys(BlogModel.SORTABLE_COLUMNS).includes(req.query.sort_by)
+      ? req.query.sort_by : "created";
+    const selectedSortDir = req.query.sort_dir === "asc" ? "asc" : "desc";
+    const blogsPromise = (selectedSearchTerm || req.query.sort_by || req.query.sort_dir)
+      ? BlogModel.list({ searchTerm: selectedSearchTerm, sortBy: selectedSortBy, sortDir: selectedSortDir })
+      : BlogModel.getAll();
+    return Promise.all([blogsPromise, UsersModel.getAll()])
       .then(([blogs, users]) => {
       const selectedBlog = blogs.find((blog) => blog.id == req.params.id)
         ?? new BlogModel(null, "", "", 0, "", 0, 0);
-      res.render("blog_management.ejs", { blogs, users, selectedBlog, authenticatedUser: req.authenticatedUser, role: "admin" });
+      res.render("blog_management.ejs", {
+        blogs,
+        users,
+        selectedBlog,
+        selectedSearchTerm,
+        selectedSortBy,
+        selectedSortDir,
+        authenticatedUser: req.authenticatedUser,
+        role: "admin",
+      });
       })
       .catch((error) => {
         console.error(error);
@@ -67,11 +83,29 @@ export class BlogController {
           res.status(500).render("status.ejs", { status: "Database Error", message: "The blog post could not be updated." });
         });
     } else if (req.body.action === "delete") {
-      return BlogModel.delete(blog.id)
-        .then((result) => result.affectedRows > 0
-          ? res.redirect("/blogs")
-          : res.status(404).render("status.ejs", { status: "Blog Deletion Failed", message: "The blog post could not be found." }))
+      return BlogModel.getById(blog.id)
+        .then((existingBlog) => {
+          const canDelete = req.authenticatedUser && (
+            req.authenticatedUser.role === "admin"
+            || Number(req.authenticatedUser.id) === Number(existingBlog.user_id)
+          );
+          if (!canDelete) {
+            return res.status(req.authenticatedUser ? 403 : 401).render("status.ejs", {
+              status: req.authenticatedUser ? "Access Forbidden" : "Unauthenticated",
+              message: req.authenticatedUser
+                ? "You can only delete your own posts."
+                : "Please log in before deleting a blog post.",
+            });
+          }
+          return BlogModel.delete(blog.id)
+            .then((result) => result.affectedRows > 0
+              ? res.redirect("/blogs")
+              : res.status(404).render("status.ejs", { status: "Blog Deletion Failed", message: "The blog post could not be found." }));
+        })
         .catch((error) => {
+          if (error === "not found") {
+            return res.status(404).render("status.ejs", { status: "Blog Deletion Failed", message: "The blog post could not be found." });
+          }
           console.error(error);
           res.status(500).render("status.ejs", { status: "Database Error", message: "The blog post could not be deleted." });
         });

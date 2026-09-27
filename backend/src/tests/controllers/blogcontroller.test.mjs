@@ -44,6 +44,7 @@ describe('BlogController', () => {
   test('handles blog management actions and failures', async () => {
     const res = response();
     jest.spyOn(BlogModel, 'create').mockResolvedValue({});
+    jest.spyOn(BlogModel, 'getById').mockResolvedValue(new BlogModel(2, 'Post', 'Body', 7, new Date(), 0, 0));
     jest.spyOn(BlogModel, 'update').mockResolvedValue({ affectedRows: 1 });
     jest.spyOn(BlogModel, 'delete').mockResolvedValue({ affectedRows: 1 });
 
@@ -67,6 +68,35 @@ describe('BlogController', () => {
     await BlogController.handleBlogManagement(request({ id: '2' }, {}, { action: 'update' }), res);
     BlogModel.delete.mockRejectedValue(new Error('database error'));
     await BlogController.handleBlogManagement(request({ id: '2' }, {}, { action: 'delete' }), res);
+  });
+
+  test('allows authors and admins to delete posts but rejects other users', async () => {
+    const existingBlog = new BlogModel(2, 'Post', 'Body', 7, new Date(), 0, 0);
+    jest.spyOn(BlogModel, 'getById').mockResolvedValue(existingBlog);
+    const deletePost = jest.spyOn(BlogModel, 'delete').mockResolvedValue({ affectedRows: 1 });
+    const authorResponse = response();
+    const otherUserResponse = response();
+    const adminResponse = response();
+
+    await BlogController.handleBlogManagement(
+      request({ id: '2' }, {}, { action: 'delete' }, { id: 7, role: 'member' }),
+      authorResponse,
+    );
+    const callsAfterAuthorDelete = deletePost.mock.calls.length;
+
+    await BlogController.handleBlogManagement(
+      request({ id: '2' }, {}, { action: 'delete' }, { id: 8, role: 'member' }),
+      otherUserResponse,
+    );
+    expect(otherUserResponse.status).toHaveBeenCalledWith(403);
+    expect(deletePost).toHaveBeenCalledTimes(callsAfterAuthorDelete);
+
+    await BlogController.handleBlogManagement(
+      request({ id: '2' }, {}, { action: 'delete' }, { id: 8, role: 'admin' }),
+      adminResponse,
+    );
+    expect(authorResponse.redirect).toHaveBeenCalledWith('/blogs');
+    expect(adminResponse.redirect).toHaveBeenCalledWith('/blogs');
   });
 
   test('lists and searches blog posts', async () => {

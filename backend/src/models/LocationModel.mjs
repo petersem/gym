@@ -9,7 +9,7 @@ export class LocationModel extends DatabaseModel {
     phone,
     email,
     street,
-    city,
+    suburb,
     postcode,
     manager,
     deleted,
@@ -21,7 +21,7 @@ export class LocationModel extends DatabaseModel {
     this.phone = phone;
     this.email = email;
     this.street = street;
-    this.city = city;
+    this.suburb = suburb;
     this.postcode = postcode;
     this.manager = manager;
     this.deleted = deleted;
@@ -37,7 +37,7 @@ export class LocationModel extends DatabaseModel {
       row["phone"],
       row["email"],
       row["street"],
-      row["city"],
+      row["suburb"],
       row["postcode"],
       row["manager"],
       row["deleted"],
@@ -65,9 +65,35 @@ export class LocationModel extends DatabaseModel {
       `
             SELECT * FROM locations 
             WHERE deleted = 0 
-            AND (name LIKE ? OR city LIKE ? OR postcode LIKE ?)
+            AND (name LIKE ? OR suburb LIKE ? OR postcode LIKE ?)
         `,
           [`%${term}%`, `%${term}%`, `%${term}%`],
+    ).then((result) => result.map((row) => this.tableToModel(row.locations)));
+  }
+
+  /** Columns that may be used to sort location listings. */
+  static SORTABLE_COLUMNS = { name: "name", suburb: "suburb", postcode: "postcode" };
+
+  /**
+   * Search and sort non-deleted locations server-side.
+   * @param {Object} [options] Search and sort options.
+   * @param {string} [options.searchTerm] Optional search term for name/suburb/postcode.
+   * @param {string} [options.sortBy] Column to sort by (name|suburb|postcode).
+   * @param {string} [options.sortDir] Sort direction (asc|desc).
+   * @returns {Promise<Array<LocationModel>>} Matching locations.
+   */
+  static async list({ searchTerm = "", sortBy = "name", sortDir = "asc" } = {}) {
+    const column = this.SORTABLE_COLUMNS[sortBy] ?? this.SORTABLE_COLUMNS.name;
+    const direction = sortDir === "desc" ? "DESC" : "ASC";
+    const where = ["deleted = 0"];
+    const values = [];
+    if (searchTerm) {
+      where.push("(name LIKE ? OR suburb LIKE ? OR postcode LIKE ?)");
+      values.push(`%${searchTerm}%`, `%${searchTerm}%`, `%${searchTerm}%`);
+    }
+    return this.query(
+      `SELECT * FROM locations WHERE ${where.join(" AND ")} ORDER BY ${column} ${direction}`,
+      values,
     ).then((result) => result.map((row) => this.tableToModel(row.locations)));
   }
 
@@ -92,7 +118,7 @@ export class LocationModel extends DatabaseModel {
     return this.query(
       `
             UPDATE locations
-            SET name = ?, phone = ?, email = ?, street = ?, city = ?, postcode = ?, manager = ?, deleted = ?, updated_by = ?
+            SET name = ?, phone = ?, email = ?, street = ?, suburb = ?, postcode = ?, manager = ?, deleted = ?, updated_by = ?
             WHERE id = ?
         `,
       [
@@ -100,7 +126,7 @@ export class LocationModel extends DatabaseModel {
         location.phone,
         location.email,
         location.street,
-        location.city,
+        location.suburb,
         location.postcode,
         location.manager,
         location.deleted,
@@ -135,7 +161,7 @@ export class LocationModel extends DatabaseModel {
     return this.query(
       `
             INSERT INTO locations
-            (name, phone, email, street, city, postcode, manager, deleted, updated_by)
+            (name, phone, email, street, suburb, postcode, manager, deleted, updated_by)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
         `,
       [
@@ -143,7 +169,7 @@ export class LocationModel extends DatabaseModel {
         location.phone,
         location.email,
         location.street,
-        location.city,
+        location.suburb,
         location.postcode,
         location.manager,
         location.deleted,
@@ -160,7 +186,7 @@ export class LocationModel extends DatabaseModel {
     return this.query(
       `
             INSERT INTO locations
-            (id, name, phone, email, street, city, postcode, manager, deleted, updated_by)
+            (id, name, phone, email, street, suburb, postcode, manager, deleted, updated_by)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         `,
       [
@@ -169,7 +195,7 @@ export class LocationModel extends DatabaseModel {
         location.phone,
         location.email,
         location.street,
-        location.city,
+        location.suburb,
         location.postcode,
         location.manager,
         location.deleted,

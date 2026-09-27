@@ -6,13 +6,32 @@
             <small>Management portal</small>
         </span>
     </a>
-    <span class="site-kicker">Training / Members / Locations</span>
-    <% if (typeof authenticatedUser !== 'undefined' && authenticatedUser) { %>
-        <span
-            class="badge badge-neutral authenticated-user role-badge role-<%= authenticatedUser.role %>"
-            title="<%= authenticatedUser.role %>"
-            aria-label="<%= authenticatedUser.first_name + ' ' + authenticatedUser.last_name + ', ' + authenticatedUser.role %>">
-            <%= authenticatedUser.first_name %> <%= authenticatedUser.last_name %>
-        </span>
-    <% } %>
+    <span class="site-kicker">When you want results, fast!</span>
+    <div class="user-controls">
+        <label class="theme-toggle-control" for="theme-toggle" title="Switch between light and dark themes">
+            <span>Light</span>
+            <input class="toggle toggle-sm" id="theme-toggle" type="checkbox" aria-label="Use dark theme">
+            <span>Dark</span>
+        </label>
+        <% if (typeof authenticatedUser !== 'undefined' && authenticatedUser) { %>
+            <span
+                class="badge badge-neutral authenticated-user role-badge role-<%= authenticatedUser.role %>"
+                title="<%= authenticatedUser.role %>"
+                aria-label="<%= authenticatedUser.first_name + ' ' + authenticatedUser.last_name + ', ' + authenticatedUser.role %>">
+                <%= authenticatedUser.first_name %> <%= authenticatedUser.last_name %>
+            </span>
+        <% } %>
+    </div>
+    <script>
+        const themeToggle = document.getElementById("theme-toggle");
+        themeToggle.checked = document.documentElement.dataset.theme === "dark";
+        themeToggle.addEventListener("change", () => {
+            const theme = themeToggle.checked ? "dark" : "light";
+            document.documentElement.dataset.theme = theme;
+            themeToggle.setAttribute("aria-label", theme === "dark" ? "Use light theme" : "Use dark theme");
+            try {
+                window.localStorage.setItem("gym-theme", theme);
+            } catch {}
+        });
+    </script>
 </header>
