@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, jest, test } from '@jest/globals';
+import { afterEach, beforeEach, describe, expect, jest, test } from '@jest/globals';
 import { SessionsController } from '../../controllers/SessionsController.mjs';
 import { SessionsModel } from '../../models/SessionsModel.mjs';
 import { UsersModel } from '../../models/UsersModel.mjs';
@@ -25,6 +25,12 @@ const dateForOffset = (dayOffset) => {
   date.setDate(date.getDate() + dayOffset);
   return [date.getFullYear(), String(date.getMonth() + 1).padStart(2, '0'), String(date.getDate()).padStart(2, '0')].join('-');
 };
+
+// Unmocked model calls open a real MySQL pool that keeps Jest from exiting.
+beforeEach(() => {
+  jest.spyOn(BookingsModel, 'getAll').mockResolvedValue([]);
+  jest.spyOn(BookingsModel, 'getBySessionId').mockResolvedValue([]);
+});
 
 afterEach(() => {
   jest.restoreAllMocks();
