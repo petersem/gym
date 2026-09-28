@@ -158,6 +158,7 @@ describe('BookingsController', () => {
     const getAll = jest.spyOn(BookingsModel, 'getAll').mockResolvedValue([]);
     const getByUserId = jest.spyOn(BookingsModel, 'getByUserId').mockResolvedValue([]);
     jest.spyOn(BookingsModel, 'create').mockResolvedValue({ insertId: 1 });
+    jest.spyOn(BookingsModel, 'delete').mockResolvedValue({ affectedRows: 1 });
     jest.spyOn(UsersModel, 'getAll').mockResolvedValue([]);
     jest.spyOn(SessionsModel, 'getAll').mockResolvedValue([]);
     jest.spyOn(LocationModel, 'getAll').mockResolvedValue([]);
@@ -204,6 +205,11 @@ describe('BookingsController', () => {
       booking_trainer_id: '0',
     }, { action: 'create' }), res);
     expect(res.redirect).toHaveBeenLastCalledWith('/bookings?booking_created=1');
+
+    await BookingsController.handleBookingManagement(request({}, {
+      booking_user_id: 'all',
+    }, { action: 'delete' }), res);
+    expect(res.redirect).toHaveBeenLastCalledWith('/bookings?booking_user_id=all&booking_deleted=1');
   });
 
   test('groups sessions by their local calendar date', async () => {

@@ -72,7 +72,7 @@
   --gym-coral: #d96e4c;
   --gym-muted: #65736b;
   --gym-line: #dfe7e0;
-  --gym-paper: #f3f6f2;
+  --gym-paper: #ebeeea;
   --gym-surface: #ffffff;
   --gym-control-border: #cbd6cd;
   --gym-link: #1d4a38;
@@ -178,7 +178,7 @@ main {
   gap: 8px;
   color: var(--gym-muted);
   font-size: 12px;
-  font-weight: 600;
+  font-weight: 400;
   white-space: nowrap;
   cursor: pointer;
 }
@@ -815,8 +815,9 @@ section > ul:not(.menu) > li {
   min-height: 0;
   padding: 0;
   color: var(--gym-forest);
-  font-size: 13px;
-  font-weight: 600;
+  font-family: inherit;
+  font-size: inherit;
+  font-weight: 400;
   text-align: left;
   text-decoration: none;
   text-underline-offset: 0;
@@ -841,7 +842,7 @@ section > ul:not(.menu) > li {
 
 .available-session.is-selected .available-session-select {
   color: var(--gym-ink);
-  font-weight: 700;
+  font-weight: 400;
 }
 
 .available-session .session-book-button {

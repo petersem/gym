@@ -7,9 +7,13 @@ import { ActivitiesModel } from "../models/ActivitiesModel.mjs";
 
 const bookingPageUrl = (req, { bookingDeleted = false, bookingCreated = false } = {}) => {
   const query = new URLSearchParams();
-  const bookingUserId = Number(req.query.booking_user_id);
-  if (Number.isInteger(bookingUserId) && bookingUserId > 0) {
-    query.set("booking_user_id", String(bookingUserId));
+  if (req.query.booking_user_id === "all") {
+    query.set("booking_user_id", "all");
+  } else {
+    const bookingUserId = Number(req.query.booking_user_id);
+    if (Number.isInteger(bookingUserId) && bookingUserId > 0) {
+      query.set("booking_user_id", String(bookingUserId));
+    }
   }
   const bookingTrainerId = Number(req.query.booking_trainer_id);
   if (Number.isInteger(bookingTrainerId) && bookingTrainerId > 0) {

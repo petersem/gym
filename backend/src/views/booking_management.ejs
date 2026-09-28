@@ -12,7 +12,7 @@
         hour: 'numeric', minute: '2-digit', hour12: true,
         }).format(new Date(`${String(date).slice(0, 10)}T${time}`)).replace(/\s+(am|pm)$/i, '$1'); %>
         <% const formatSessionTime=(time)=> { const [hour, minute] = String(time).slice(0, 5).split(':').map(Number); return `${hour % 12 || 12}:${String(minute).padStart(2, '0')}${hour >= 12 ? 'pm' : 'am'}`; }; %>
-        <% const getSessionHoverText=(session)=> { const activity = activities.find((item) => Number(item.id) === Number(session.activity_id)); const trainer = users.find((user) => Number(user.id) === Number(session.trainer_id)); return `Activity: ${activity?.name ?? 'Unknown activity'} | Trainer: ${trainer ? `${trainer.first_name} ${trainer.last_name}` : 'Unknown trainer'}`; }; %>
+        <% const getSessionHoverText=(session)=> { const activity = activities.find((item) => Number(item.id) === Number(session.activity_id)); const trainer = users.find((user) => Number(user.id) === Number(session.trainer_id)); return `${activity?.name ?? 'Unknown activity'} | ${activity?.description ?? 'No description available'} | ${trainer ? `${trainer.first_name} ${trainer.last_name}` : 'Unknown trainer'}`; }; %>
         <% const sortedLocations=[...locations].sort((a, b) => a.name.localeCompare(b.name)); %>
             <main>
                 <%- include("partials/header.ejs") %>
@@ -137,16 +137,16 @@
                                                             === Number(booking.session_id)); %>
                                                         <% const bookingUser=users.find((user)=> Number(user.id) === Number(booking.user_id)); %>
                                                             <li>
-                                                                <a href="/bookings/<%= booking.id %><%= canManageBookings && bookingUserId ? '?booking_user_id=' + bookingUserId : '' %>#bookings-next-7-days" title="<%= bookingSession ? getSessionHoverText(bookingSession) : 'Session details unavailable' %>">
+                                                                <a href="/bookings/<%= booking.id %><%= canManageBookings ? '?booking_user_id=' + (bookingUserId ?? 'all') : '' %>#bookings-next-7-days" title="<%= bookingSession ? getSessionHoverText(bookingSession) : 'Session details unavailable' %>">
                                                                     <%= bookingSession ? formatSessionTime(bookingSession.time) : '' %>
                                                                         <%= bookingSession ? bookingSession.title :
                                                                             `Booking #${booking.id}` %>
-                                                                    <% if (canManageBookings && authenticatedUser?.role === 'trainer' && bookingUserId === null) { %>
+                                                                    <% if (canManageBookings && (authenticatedUser?.role === 'trainer' || authenticatedUser?.role === 'admin') && bookingUserId === null) { %>
                                                                         (<%= bookingUser ? `${bookingUser.last_name}, ${bookingUser.first_name}` : 'Unknown user' %>)
                                                                     <% } %>
                                                                 </a>
                                                                 <% if (selectedBooking.id===booking.id) { %>
-                                                                    <form action="/bookings/<%= booking.id %><%= canManageBookings && bookingUserId ? '?booking_user_id=' + bookingUserId : '' %>"
+                                                                    <form action="/bookings/<%= booking.id %><%= canManageBookings ? '?booking_user_id=' + (bookingUserId ?? 'all') : '' %>"
                                                                         method="post">
                                                                         <button type="submit" name="action"
                                                                             value="delete">Delete booking</button>

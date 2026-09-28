@@ -42,6 +42,15 @@
                     <% const userSortAria = (column) => selectedSortBy === column
                         ? (selectedSortDir === 'asc' ? 'ascending' : 'descending')
                         : 'none'; %>
+                    <% const userListQuery = (page) => {
+                        const params = new URLSearchParams();
+                        if (selectedSearchTerm) params.set('search_term', selectedSearchTerm);
+                        if (selectedRole) params.set('role', selectedRole);
+                        params.set('sort_by', selectedSortBy);
+                        params.set('sort_dir', selectedSortDir);
+                        params.set('page', page);
+                        return params.toString();
+                    }; %>
                     <thead>
                         <tr>
                             <th scope="col" aria-sort="<%= userSortAria('last_name') %>"><a class="sort-link" href="<%= userSortLink('last_name') %>" aria-label="Sort by name">Name</a></th>
@@ -55,7 +64,7 @@
                         <% } %>
                         <% users.forEach((user) => { %>
                             <tr>
-                                <td><a href="/users/<%= user.id %>#user-management"><%= user.last_name %>, <%= user.first_name %></a></td>
+                                <td><a href="/users/<%= user.id %>?<%= userListQuery(selectedPage) %>#user-management"><%= user.last_name %>, <%= user.first_name %></a></td>
                                 <td><%= user.email %></td>
                                 <td><%= user.role %></td>
                             </tr>
@@ -64,19 +73,10 @@
                 </table>
             </div>
             <% if (totalPages > 1) { %>
-                <% const userPageLink = (page) => {
-                    const params = new URLSearchParams();
-                    if (selectedSearchTerm) params.set('search_term', selectedSearchTerm);
-                    if (selectedRole) params.set('role', selectedRole);
-                    params.set('sort_by', selectedSortBy);
-                    params.set('sort_dir', selectedSortDir);
-                    params.set('page', page);
-                    return `/users?${params.toString()}`;
-                }; %>
                 <nav class="pagination" aria-label="Users pagination">
-                    <a class="btn-outline<%= selectedPage <= 1 ? ' is-disabled' : '' %>" href="<%= selectedPage > 1 ? userPageLink(selectedPage - 1) : '#' %>" aria-disabled="<%= selectedPage <= 1 %>">Previous</a>
+                    <a class="btn-outline<%= selectedPage <= 1 ? ' is-disabled' : '' %>" href="<%= selectedPage > 1 ? `/users?${userListQuery(selectedPage - 1)}` : '#' %>" aria-disabled="<%= selectedPage <= 1 %>">Previous</a>
                     <span>Page <%= selectedPage %> of <%= totalPages %></span>
-                    <a class="btn-outline<%= selectedPage >= totalPages ? ' is-disabled' : '' %>" href="<%= selectedPage < totalPages ? userPageLink(selectedPage + 1) : '#' %>" aria-disabled="<%= selectedPage >= totalPages %>">Next</a>
+                    <a class="btn-outline<%= selectedPage >= totalPages ? ' is-disabled' : '' %>" href="<%= selectedPage < totalPages ? `/users?${userListQuery(selectedPage + 1)}` : '#' %>" aria-disabled="<%= selectedPage >= totalPages %>">Next</a>
                 </nav>
             <% } %>
         </section>
