@@ -88,6 +88,27 @@ describe('SessionsController', () => {
     expect(viewData.selectedSearchTerm).toBe('MORNING');
   });
 
+  test('limits a trainer to their own sessions regardless of the requested trainer filter', async () => {
+    const sessions = [
+      { id: 1, title: 'Own session', trainer_id: 3, date: dateForOffset(0) },
+      { id: 2, title: 'Other session', trainer_id: 4, date: dateForOffset(0) },
+    ];
+    jest.spyOn(SessionsModel, 'getAll').mockResolvedValue(sessions);
+    jest.spyOn(UsersModel, 'getAll').mockResolvedValue([]);
+    jest.spyOn(ActivitiesModel, 'getAll').mockResolvedValue([]);
+    jest.spyOn(LocationModel, 'getAll').mockResolvedValue([]);
+    const req = request({}, { trainer_id: '4' });
+    req.authenticatedUser = { id: 3, role: 'trainer' };
+    const res = response();
+
+    await SessionsController.viewSessionManagement(req, res);
+
+    expect(res.render).toHaveBeenCalledWith('session_management.ejs', expect.objectContaining({
+      sessions: [expect.objectContaining(sessions[0])],
+      selectedTrainerId: 3,
+    }));
+  });
+
   test('shows sessions from today through seven days ahead only', async () => {
     const sessions = [
       { id: 1, title: 'Today', date: dateForOffset(0) },

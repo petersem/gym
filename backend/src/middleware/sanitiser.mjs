@@ -21,7 +21,7 @@ export const sanitiser = function (action = "fail") {
             } else {
                 // Remove potentially dangerous characters
                 for (let [key, value] of Object.entries(req.body)) {
-                    const testBad = /[$&+:;=?@#|<>{}^*%!]/.test(req.body[key]);
+                    const testBad = /[$&+:;=?#|<>{}^*%!]/.test(req.body[key]);
                     // if bad characters found, print to the log and santisise bad data
                     if (testBad) {
                         const display = () => {

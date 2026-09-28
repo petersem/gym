@@ -31,8 +31,13 @@
                 </select>
                 <label for="trainer-filter">Filter by trainer</label>
                 <select id="trainer-filter" onchange="filterSessions()">
-                    <option value="">All trainers</option>
-                    <% users.filter((user) => user.role === 'trainer').forEach((user) => { %>
+                    <% const isTrainerUser = authenticatedUser?.role === 'trainer'; %>
+                    <% const trainerFilterOptions = users.filter((user) => user.role === 'trainer'
+                        && (!isTrainerUser || Number(user.id) === Number(authenticatedUser.id))); %>
+                    <% if (!isTrainerUser) { %>
+                        <option value="">All trainers</option>
+                    <% } %>
+                    <% trainerFilterOptions.forEach((user) => { %>
                         <option value="<%= user.id %>" <%= selectedTrainerId === user.id ? 'selected' : '' %>><%= user.last_name %>, <%= user.first_name %></option>
                     <% }) %>
                 </select>

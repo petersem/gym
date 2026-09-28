@@ -81,7 +81,9 @@ export class SessionsController {
     ])
       .then(([sessions, users, activities, locations, bookings]) => {
       const selectedLocationId = Number(req.query.location_id) || null;
-      const selectedTrainerId = Number(req.query.trainer_id) || null;
+      const selectedTrainerId = req.authenticatedUser?.role === "trainer"
+        ? Number(req.authenticatedUser.id)
+        : Number(req.query.trainer_id) || null;
       const selectedSearchTerm = String(req.query.search_term ?? "").trim();
       const normalizedSearchTerm = selectedSearchTerm.toLocaleLowerCase();
       const selectedSortBy = SESSION_SORT_COLUMNS.includes(req.query.sort_by) ? req.query.sort_by : "date";
