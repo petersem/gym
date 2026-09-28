@@ -60,6 +60,49 @@ describe('UsersModel unit tests', () => {
     );
   });
 
+  test('list returns active users with default sorting and no pagination', async () => {
+    const query = jest.spyOn(UsersModel, 'query')
+      .mockResolvedValueOnce([{ '': { total: '1' } }])
+      .mockResolvedValueOnce([{ users: row }]);
+
+    await expect(UsersModel.list()).resolves.toEqual({ users: [user], total: 1 });
+    expect(query).toHaveBeenNthCalledWith(1,
+      'SELECT COUNT(*) AS total FROM users WHERE deleted = 0', []);
+    expect(query).toHaveBeenNthCalledWith(2,
+      'SELECT * FROM users WHERE deleted = 0 ORDER BY last_name ASC ', []);
+  });
+
+  test('list searches, filters by role, sorts, and paginates users', async () => {
+    const query = jest.spyOn(UsersModel, 'query')
+      .mockResolvedValueOnce([{ '': { total: 4 } }])
+      .mockResolvedValueOnce([{ users: row }]);
+
+    await expect(UsersModel.list({
+      searchTerm: 'Ada', role: 'member', sortBy: 'email', sortDir: 'desc', page: 3, pageSize: 2,
+    })).resolves.toEqual({ users: [user], total: 4 });
+    expect(query).toHaveBeenNthCalledWith(1,
+      'SELECT COUNT(*) AS total FROM users WHERE deleted = 0 AND (first_name LIKE ? OR last_name LIKE ? OR email LIKE ?) AND role = ?',
+      ['%Ada%', '%Ada%', '%Ada%', 'member']);
+    expect(query).toHaveBeenNthCalledWith(2,
+      'SELECT * FROM users WHERE deleted = 0 AND (first_name LIKE ? OR last_name LIKE ? OR email LIKE ?) AND role = ? ORDER BY email DESC LIMIT ? OFFSET ?',
+      ['%Ada%', '%Ada%', '%Ada%', 'member', 2, 4]);
+  });
+
+  test.each([
+    { countResult: [] },
+    { countResult: [{}] },
+    { countResult: [{ '': {} }] },
+  ])('list handles a missing count value and invalid options: $countResult', async ({ countResult }) => {
+    const query = jest.spyOn(UsersModel, 'query')
+      .mockResolvedValueOnce(countResult)
+      .mockResolvedValueOnce([]);
+
+    await expect(UsersModel.list({ sortBy: 'invalid', sortDir: 'invalid', page: 0, pageSize: 0 }))
+      .resolves.toEqual({ users: [], total: 0 });
+    expect(query).toHaveBeenNthCalledWith(2,
+      'SELECT * FROM users WHERE deleted = 0 ORDER BY last_name ASC ', []);
+  });
+
   test('getByUsername returns an active user by email', async () => {
     const query = jest.spyOn(UsersModel, 'query').mockResolvedValue([{ users: row }]);
 

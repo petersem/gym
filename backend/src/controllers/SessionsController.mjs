@@ -23,7 +23,7 @@ const normalizeSessionTime = (value) => {
 
 const isPositiveId = (value) => Number.isInteger(Number(value)) && Number(value) > 0;
 
-const SESSION_SORT_COLUMNS = ["title", "trainer", "date", "activity", "location"];
+const SESSION_SORT_COLUMNS = ["title", "trainer", "date", "activity", "location", "bookings"];
 
 // Compute a comparable sort value for a session given its related records.
 const sessionSortValue = (session, users, activities, locations, sortBy) => {
@@ -39,6 +39,9 @@ const sessionSortValue = (session, users, activities, locations, sortBy) => {
   }
   if (sortBy === "date") {
     return `${String(session.date).slice(0, 10)} ${String(session.time).slice(0, 8)}`;
+  }
+  if (sortBy === "bookings") {
+    return Number(session.totalBookedUsers);
   }
   return session.title;
 };
@@ -74,8 +77,9 @@ export class SessionsController {
       UsersModel.getAll(),
       ActivitiesModel.getAll(),
       LocationModel.getAll(),
+      BookingsModel.getAll(),
     ])
-      .then(([sessions, users, activities, locations]) => {
+      .then(([sessions, users, activities, locations, bookings]) => {
       const selectedLocationId = Number(req.query.location_id) || null;
       const selectedTrainerId = Number(req.query.trainer_id) || null;
       const selectedSearchTerm = String(req.query.search_term ?? "").trim();
@@ -101,7 +105,17 @@ export class SessionsController {
         && (!selectedTrainerId || Number(session.trainer_id) === selectedTrainerId)
         && (!normalizedSearchTerm || String(session.title).toLocaleLowerCase().includes(normalizedSearchTerm))
       ));
-      const sortedSessions = sortSessions(filteredSessions, users, activities, locations, selectedSortBy, selectedSortDir);
+      const sessionBookingCounts = bookings.reduce((counts, booking) => {
+        const sessionId = Number(booking.session_id);
+        if (!Number.isFinite(sessionId)) return counts;
+        counts.set(sessionId, (counts.get(sessionId) ?? 0) + 1);
+        return counts;
+      }, new Map());
+      const sessionsWithBookingCounts = filteredSessions.map((session) => ({
+        ...session,
+        totalBookedUsers: sessionBookingCounts.get(Number(session.id)) ?? 0,
+      }));
+      const sortedSessions = sortSessions(sessionsWithBookingCounts, users, activities, locations, selectedSortBy, selectedSortDir);
       const pageSize = 7;
       const selectedPage = Math.max(1, Number(req.query.page) || 1);
       const totalPages = Math.max(1, Math.ceil(sortedSessions.length / pageSize));

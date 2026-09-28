@@ -68,6 +68,48 @@ describe('BlogModel unit tests', () => {
     );
   });
 
+  test('list returns blog posts with default sorting and no pagination', async () => {
+    const query = jest.spyOn(BlogModel, 'query')
+      .mockResolvedValueOnce([{ '': { total: '1' } }])
+      .mockResolvedValueOnce([{ blog: row }]);
+
+    await expect(BlogModel.list()).resolves.toEqual({ blogs: [blog], total: 1 });
+    expect(query).toHaveBeenNthCalledWith(1, 'SELECT COUNT(*) AS total FROM blog ', []);
+    expect(query).toHaveBeenNthCalledWith(2,
+      'SELECT * FROM blog  ORDER BY create_date DESC, id DESC ', []);
+  });
+
+  test('list searches, sorts, and paginates blog posts', async () => {
+    const query = jest.spyOn(BlogModel, 'query')
+      .mockResolvedValueOnce([{ '': { total: 4 } }])
+      .mockResolvedValueOnce([{ blog: row }]);
+
+    await expect(BlogModel.list({
+      searchTerm: 'Training', sortBy: 'title', sortDir: 'asc', page: 3, pageSize: 2,
+    })).resolves.toEqual({ blogs: [blog], total: 4 });
+    expect(query).toHaveBeenNthCalledWith(1,
+      'SELECT COUNT(*) AS total FROM blog WHERE (subject LIKE ? OR body LIKE ?)',
+      ['%Training%', '%Training%']);
+    expect(query).toHaveBeenNthCalledWith(2,
+      'SELECT * FROM blog WHERE (subject LIKE ? OR body LIKE ?) ORDER BY subject ASC, id ASC LIMIT ? OFFSET ?',
+      ['%Training%', '%Training%', 2, 4]);
+  });
+
+  test.each([
+    { countResult: [] },
+    { countResult: [{}] },
+    { countResult: [{ '': {} }] },
+  ])('list handles a missing count value and invalid options: $countResult', async ({ countResult }) => {
+    const query = jest.spyOn(BlogModel, 'query')
+      .mockResolvedValueOnce(countResult)
+      .mockResolvedValueOnce([]);
+
+    await expect(BlogModel.list({ sortBy: 'invalid', sortDir: 'invalid', page: 0, pageSize: 0 }))
+      .resolves.toEqual({ blogs: [], total: 0 });
+    expect(query).toHaveBeenNthCalledWith(2,
+      'SELECT * FROM blog  ORDER BY create_date DESC, id DESC ', []);
+  });
+
   test('getById returns a blog post when found', async () => {
     const query = jest.spyOn(BlogModel, 'query').mockResolvedValue([{ blog: row }]);
 

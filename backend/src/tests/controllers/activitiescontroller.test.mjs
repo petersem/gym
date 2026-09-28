@@ -39,6 +39,18 @@ describe('ActivitiesController', () => {
     expect(res.status).toHaveBeenCalledWith(500);
   });
 
+  test('passes selected activity sorting options to the listing model', async () => {
+    const list = jest.spyOn(ActivitiesModel, 'list').mockResolvedValue({ activities: [], total: 0 });
+
+    await ActivitiesController.viewActivityManagement(request({}, {
+      sort_by: 'description', sort_dir: 'desc', page: '2',
+    }), response());
+
+    expect(list).toHaveBeenCalledWith(expect.objectContaining({
+      sortBy: 'description', sortDir: 'desc', page: 2,
+    }));
+  });
+
   test('handles activity management actions and failures', async () => {
     const res = response();
     jest.spyOn(ActivitiesModel, 'create').mockResolvedValue({});

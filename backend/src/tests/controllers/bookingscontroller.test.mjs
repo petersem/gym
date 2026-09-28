@@ -94,11 +94,12 @@ describe('BookingsController', () => {
     const getAll = jest.spyOn(BookingsModel, 'getAll').mockResolvedValue(bookings);
     const getByUserId = jest.spyOn(BookingsModel, 'getByUserId');
     jest.spyOn(UsersModel, 'getAll').mockResolvedValue([
+      { id: 1, first_name: 'Taylor', last_name: 'Trainer', role: 'trainer' },
       { id: 7, first_name: 'Alex', last_name: 'Member' },
       { id: 8, first_name: 'Sam', last_name: 'Member' },
     ]);
     jest.spyOn(SessionsModel, 'getAll').mockResolvedValue([
-      { id: 4, location_id: 9, date: sessionDate, time: '10:00:00' },
+      { id: 4, location_id: 9, trainer_id: 1, date: sessionDate, time: '10:00:00' },
     ]);
     jest.spyOn(LocationModel, 'getAll').mockResolvedValue([]);
     jest.spyOn(ActivitiesModel, 'getAll').mockResolvedValue([]);
@@ -108,14 +109,22 @@ describe('BookingsController', () => {
     await BookingsController.viewBookingManagement(request({}, {}, {}, authenticatedUser), res);
     expect(getAll).toHaveBeenCalled();
     expect(getByUserId).not.toHaveBeenCalled();
-    expect(res.render).toHaveBeenCalledWith('booking_management.ejs', expect.objectContaining({
+
+    const defaultExpectations = {
       canManageBookings: true,
-      bookingUserId: authenticatedUser.id,
-    }));
-    expect(res.render.mock.calls.at(-1)[1].bookingCalendarDays[0].bookings).toEqual([]);
+      bookingUserId: role === 'admin' ? authenticatedUser.id : null,
+      ...(role === 'trainer' ? { bookingTrainerId: authenticatedUser.id } : {}),
+    };
+    expect(res.render).toHaveBeenCalledWith('booking_management.ejs', expect.objectContaining(defaultExpectations));
+    expect(res.render.mock.calls.at(-1)[1].bookingCalendarDays[0].bookings).toEqual(
+      role === 'trainer' ? bookings : [],
+    );
 
     await BookingsController.viewBookingManagement(request({}, { booking_user_id: 'all' }, {}, authenticatedUser), res);
-    expect(res.render.mock.calls.at(-1)[1]).toEqual(expect.objectContaining({ bookingUserId: null }));
+    expect(res.render.mock.calls.at(-1)[1]).toEqual(expect.objectContaining({
+      bookingUserId: null,
+      ...(role === 'trainer' ? { bookingTrainerId: authenticatedUser.id } : {}),
+    }));
     expect(res.render.mock.calls.at(-1)[1].bookingCalendarDays[0].bookings).toEqual(bookings);
 
     await BookingsController.viewBookingManagement(request({}, { booking_user_id: '8' }, {}, authenticatedUser), res);
@@ -123,8 +132,78 @@ describe('BookingsController', () => {
     expect(selectedUserData.bookingUserId).toBe(8);
     expect(selectedUserData.bookingCalendarDays[0].bookings).toEqual([bookings[1]]);
 
+    if (role === 'trainer') {
+      const trainerUsers = [
+        { id: 12, first_name: 'Taylor', last_name: 'Trainer', role: 'trainer' },
+        { id: 13, first_name: 'Jamie', last_name: 'Coach', role: 'trainer' },
+      ];
+      jest.spyOn(UsersModel, 'getAll').mockResolvedValue(trainerUsers);
+      jest.spyOn(SessionsModel, 'getAll').mockResolvedValue([
+        { id: 4, location_id: 9, trainer_id: 12, date: sessionDate, time: '10:00:00' },
+        { id: 5, location_id: 9, trainer_id: 13, date: sessionDate, time: '11:00:00' },
+      ]);
+      await BookingsController.viewBookingManagement(request({}, { booking_trainer_id: '13' }, {}, authenticatedUser), res);
+      const selectedTrainerData = res.render.mock.calls.at(-1)[1];
+      expect(selectedTrainerData.bookingTrainerId).toBe(13);
+      expect(selectedTrainerData.bookingCalendarDays[0].sessions).toEqual([
+        { id: 5, location_id: 9, trainer_id: 13, date: sessionDate, time: '11:00:00' },
+      ]);
+    }
+
     await BookingsController.viewBookingManagement(request({ id: '2' }, { booking_user_id: '8' }, {}, authenticatedUser), res);
     expect(res.render.mock.calls.at(-1)[1].selectedBooking.id).toBe(2);
+  });
+
+  test('handles empty and all trainer filters and preserves positive filters in redirects', async () => {
+    const getAll = jest.spyOn(BookingsModel, 'getAll').mockResolvedValue([]);
+    const getByUserId = jest.spyOn(BookingsModel, 'getByUserId').mockResolvedValue([]);
+    jest.spyOn(BookingsModel, 'create').mockResolvedValue({ insertId: 1 });
+    jest.spyOn(UsersModel, 'getAll').mockResolvedValue([]);
+    jest.spyOn(SessionsModel, 'getAll').mockResolvedValue([]);
+    jest.spyOn(LocationModel, 'getAll').mockResolvedValue([]);
+    jest.spyOn(ActivitiesModel, 'getAll').mockResolvedValue([]);
+    const res = response();
+
+    await BookingsController.viewBookingManagement(request({}, {
+      booking_user_id: '0', booking_trainer_id: 'all',
+    }, {}, { role: 'admin' }), res);
+    expect(res.render.mock.calls.at(-1)[1]).toEqual(expect.objectContaining({
+      bookingUserId: null,
+      bookingTrainerId: null,
+    }));
+
+    await BookingsController.viewBookingManagement(request({}, {}, {}, { role: 'admin' }), res);
+    expect(res.render.mock.calls.at(-1)[1].bookingUserId).toBeNull();
+
+    await BookingsController.viewBookingManagement(request({}, {
+      booking_trainer_id: 'all',
+    }, {}, { role: 'trainer' }), res);
+    expect(res.render.mock.calls.at(-1)[1].bookingTrainerId).toBeNull();
+
+    await BookingsController.viewBookingManagement(request({}, {
+      booking_trainer_id: '0',
+    }, {}, { id: 1, role: 'trainer' }), res);
+    expect(res.render.mock.calls.at(-1)[1].bookingTrainerId).toBeNull();
+
+    await BookingsController.viewBookingManagement(request(), res);
+    await BookingsController.viewBookingManagement(request({}, {}, {}, { role: 'member' }), res);
+    expect(getByUserId).not.toHaveBeenCalled();
+    expect(res.render.mock.calls.at(-1)[1].bookingUserId).toBeNull();
+
+    await BookingsController.viewBookingManagement(request({}, {}, {}, { role: 'trainer' }), res);
+    expect(res.render.mock.calls.at(-1)[1].bookingTrainerId).toBeNull();
+    expect(getAll).toHaveBeenCalledTimes(5);
+
+    await BookingsController.handleBookingManagement(request({}, {
+      booking_user_id: '8', booking_trainer_id: '5',
+    }, { action: 'create' }), res);
+    expect(res.redirect).toHaveBeenCalledWith(
+      '/bookings?booking_user_id=8&booking_trainer_id=5&booking_created=1',
+    );
+    await BookingsController.handleBookingManagement(request({}, {
+      booking_trainer_id: '0',
+    }, { action: 'create' }), res);
+    expect(res.redirect).toHaveBeenLastCalledWith('/bookings?booking_created=1');
   });
 
   test('groups sessions by their local calendar date', async () => {

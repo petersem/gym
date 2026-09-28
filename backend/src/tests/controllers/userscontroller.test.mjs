@@ -58,6 +58,22 @@ describe('UsersController unit tests', () => {
     }));
   });
 
+  test('passes valid role, sorting, and pagination filters to the model', async () => {
+    const list = jest.spyOn(UsersModel, 'list').mockResolvedValue({ users: [], total: 0 });
+    const res = response();
+
+    UsersController.viewUserManagement({
+      params: {},
+      query: { search_term: 'Ada', role: 'trainer', sort_by: 'email', sort_dir: 'desc', page: '2' },
+    }, res);
+    await flushPromises();
+
+    expect(list).toHaveBeenCalledWith(expect.objectContaining({
+      searchTerm: 'Ada', role: 'trainer', sortBy: 'email', sortDir: 'desc', page: 2,
+    }));
+    expect(res.render.mock.calls[0][1].selectedRole).toBe('trainer');
+  });
+
   test('logs user-list load errors', async () => {
     const error = new Error('database error');
     jest.spyOn(UsersModel, 'list').mockRejectedValue(error);

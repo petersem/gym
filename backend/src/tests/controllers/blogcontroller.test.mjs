@@ -41,6 +41,19 @@ describe('BlogController', () => {
     expect(res.status).toHaveBeenCalledWith(500);
   });
 
+  test('passes selected blog sorting options to the listing model', async () => {
+    const list = jest.spyOn(BlogModel, 'list').mockResolvedValue({ blogs: [], total: 0 });
+    jest.spyOn(UsersModel, 'getAll').mockResolvedValue([]);
+
+    await BlogController.viewBlogManagement(request({}, {
+      sort_by: 'title', sort_dir: 'asc', page: '2',
+    }), response());
+
+    expect(list).toHaveBeenCalledWith(expect.objectContaining({
+      sortBy: 'title', sortDir: 'asc', page: 2,
+    }));
+  });
+
   test('handles blog management actions and failures', async () => {
     const res = response();
     jest.spyOn(BlogModel, 'create').mockResolvedValue({});
@@ -97,6 +110,28 @@ describe('BlogController', () => {
     );
     expect(authorResponse.redirect).toHaveBeenCalledWith('/blogs');
     expect(adminResponse.redirect).toHaveBeenCalledWith('/blogs');
+  });
+
+  test('returns not found for unauthenticated deletion and missing posts', async () => {
+    const getById = jest.spyOn(BlogModel, 'getById');
+    const log = jest.spyOn(console, 'error').mockImplementation(() => {});
+    const unauthenticatedResponse = response();
+    const missingResponse = response();
+
+    getById.mockResolvedValue(new BlogModel(2, 'Post', 'Body', 7, new Date(), 0, 0));
+    await BlogController.handleBlogManagement(
+      request({ id: '2' }, {}, { action: 'delete' }, null),
+      unauthenticatedResponse,
+    );
+    expect(unauthenticatedResponse.status).toHaveBeenCalledWith(401);
+
+    getById.mockRejectedValue('not found');
+    await BlogController.handleBlogManagement(
+      request({ id: '999' }, {}, { action: 'delete' }, { id: 7, role: 'member' }),
+      missingResponse,
+    );
+    expect(missingResponse.status).toHaveBeenCalledWith(404);
+    expect(log).not.toHaveBeenCalled();
   });
 
   test('lists and searches blog posts', async () => {

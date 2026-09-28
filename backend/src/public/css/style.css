@@ -818,8 +818,8 @@ section > ul:not(.menu) > li {
   font-size: 13px;
   font-weight: 600;
   text-align: left;
-  text-decoration: underline;
-  text-underline-offset: 3px;
+  text-decoration: none;
+  text-underline-offset: 0;
 }
 
 .available-session-select {

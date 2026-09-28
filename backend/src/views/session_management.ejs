@@ -65,11 +65,12 @@
                             <th scope="col" aria-sort="<%= sessionSortAria('date') %>"><a class="session-sort-button" href="<%= sessionSortLink('date') %>" aria-label="Sort by date and time">Date/Time</a></th>
                             <th scope="col" aria-sort="<%= sessionSortAria('activity') %>"><a class="session-sort-button" href="<%= sessionSortLink('activity') %>" aria-label="Sort by activity">Activity</a></th>
                             <th scope="col" aria-sort="<%= sessionSortAria('location') %>"><a class="session-sort-button" href="<%= sessionSortLink('location') %>" aria-label="Sort by location">Location</a></th>
+                            <th scope="col" aria-sort="<%= sessionSortAria('bookings') %>"><a class="session-sort-button" href="<%= sessionSortLink('bookings') %>" aria-label="Sort by bookings">Bookings</a></th>
                         </tr>
                     </thead>
                     <tbody>
                         <% if (sessions.length === 0) { %>
-                            <tr><td colspan="5">No sessions match these filters.</td></tr>
+                            <tr><td colspan="6">No sessions match these filters.</td></tr>
                         <% } %>
                         <% sessions.forEach((session) => { %>
                             <% const trainer = users.find((user) => user.id === Number(session.trainer_id)); %>
@@ -82,6 +83,7 @@
                                     <td><%= formatSessionDateTime(session.date, session.time) %></td>
                                     <td><%= activity ? activity.name : 'Unknown activity' %></td>
                                     <td><%= sessionLocation ? sessionLocation.name : 'Unknown location' %></td>
+                                    <td><%= session.totalBookedUsers ?? 0 %></td>
                             </tr>
                         <% }) %>
                     </tbody>

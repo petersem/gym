@@ -50,6 +50,49 @@ describe('ActivitiesModel unit tests', () => {
     );
   });
 
+  test('list returns active activities with default sorting and no pagination', async () => {
+    const query = jest.spyOn(ActivitiesModel, 'query')
+      .mockResolvedValueOnce([{ '': { total: '1' } }])
+      .mockResolvedValueOnce([{ activities: row }]);
+
+    await expect(ActivitiesModel.list()).resolves.toEqual({ activities: [activity], total: 1 });
+    expect(query).toHaveBeenNthCalledWith(1,
+      'SELECT COUNT(*) AS total FROM activities WHERE deleted = 0', []);
+    expect(query).toHaveBeenNthCalledWith(2,
+      'SELECT * FROM activities WHERE deleted = 0 ORDER BY name ASC ', []);
+  });
+
+  test('list searches, sorts, and paginates activities', async () => {
+    const query = jest.spyOn(ActivitiesModel, 'query')
+      .mockResolvedValueOnce([{ '': { total: 4 } }])
+      .mockResolvedValueOnce([{ activities: row }]);
+
+    await expect(ActivitiesModel.list({
+      searchTerm: 'Yoga', sortBy: 'description', sortDir: 'desc', page: 3, pageSize: 2,
+    })).resolves.toEqual({ activities: [activity], total: 4 });
+    expect(query).toHaveBeenNthCalledWith(1,
+      'SELECT COUNT(*) AS total FROM activities WHERE deleted = 0 AND (name LIKE ? OR description LIKE ?)',
+      ['%Yoga%', '%Yoga%']);
+    expect(query).toHaveBeenNthCalledWith(2,
+      'SELECT * FROM activities WHERE deleted = 0 AND (name LIKE ? OR description LIKE ?) ORDER BY description DESC LIMIT ? OFFSET ?',
+      ['%Yoga%', '%Yoga%', 2, 4]);
+  });
+
+  test.each([
+    { countResult: [] },
+    { countResult: [{}] },
+    { countResult: [{ '': {} }] },
+  ])('list handles a missing count value and invalid options: $countResult', async ({ countResult }) => {
+    const query = jest.spyOn(ActivitiesModel, 'query')
+      .mockResolvedValueOnce(countResult)
+      .mockResolvedValueOnce([]);
+
+    await expect(ActivitiesModel.list({ sortBy: 'invalid', sortDir: 'invalid', page: 0, pageSize: 0 }))
+      .resolves.toEqual({ activities: [], total: 0 });
+    expect(query).toHaveBeenNthCalledWith(2,
+      'SELECT * FROM activities WHERE deleted = 0 ORDER BY name ASC ', []);
+  });
+
   test('getById returns an activity when found', async () => {
     const query = jest.spyOn(ActivitiesModel, 'query').mockResolvedValue([{ activities: row }]);
 

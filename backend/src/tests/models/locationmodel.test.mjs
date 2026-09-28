@@ -61,6 +61,49 @@ describe('LocationModel unit tests', () => {
     );
   });
 
+  test('list returns active locations with default sorting and no pagination', async () => {
+    const query = jest.spyOn(LocationModel, 'query')
+      .mockResolvedValueOnce([{ '': { total: '1' } }])
+      .mockResolvedValueOnce([{ locations: row }]);
+
+    await expect(LocationModel.list()).resolves.toEqual({ locations: [location], total: 1 });
+    expect(query).toHaveBeenNthCalledWith(1,
+      'SELECT COUNT(*) AS total FROM locations WHERE deleted = 0', []);
+    expect(query).toHaveBeenNthCalledWith(2,
+      'SELECT * FROM locations WHERE deleted = 0 ORDER BY name ASC ', []);
+  });
+
+  test('list searches, sorts, and paginates locations', async () => {
+    const query = jest.spyOn(LocationModel, 'query')
+      .mockResolvedValueOnce([{ '': { total: 4 } }])
+      .mockResolvedValueOnce([{ locations: row }]);
+
+    await expect(LocationModel.list({
+      searchTerm: 'Central', sortBy: 'suburb', sortDir: 'desc', page: 3, pageSize: 2,
+    })).resolves.toEqual({ locations: [location], total: 4 });
+    expect(query).toHaveBeenNthCalledWith(1,
+      'SELECT COUNT(*) AS total FROM locations WHERE deleted = 0 AND (name LIKE ? OR suburb LIKE ? OR postcode LIKE ?)',
+      ['%Central%', '%Central%', '%Central%']);
+    expect(query).toHaveBeenNthCalledWith(2,
+      'SELECT * FROM locations WHERE deleted = 0 AND (name LIKE ? OR suburb LIKE ? OR postcode LIKE ?) ORDER BY suburb DESC LIMIT ? OFFSET ?',
+      ['%Central%', '%Central%', '%Central%', 2, 4]);
+  });
+
+  test.each([
+    { countResult: [] },
+    { countResult: [{}] },
+    { countResult: [{ '': {} }] },
+  ])('list handles a missing count value and invalid options: $countResult', async ({ countResult }) => {
+    const query = jest.spyOn(LocationModel, 'query')
+      .mockResolvedValueOnce(countResult)
+      .mockResolvedValueOnce([]);
+
+    await expect(LocationModel.list({ sortBy: 'invalid', sortDir: 'invalid', page: 0, pageSize: 0 }))
+      .resolves.toEqual({ locations: [], total: 0 });
+    expect(query).toHaveBeenNthCalledWith(2,
+      'SELECT * FROM locations WHERE deleted = 0 ORDER BY name ASC ', []);
+  });
+
   test('getById returns a mapped location when found', async () => {
     const query = jest.spyOn(LocationModel, 'query').mockResolvedValue([{ locations: row }]);
 

@@ -40,7 +40,9 @@ describe('SessionsController', () => {
     const res = response();
 
     await SessionsController.viewSessionManagement(request({ sid: 'abc' }), res);
-    expect(res.render).toHaveBeenCalledWith('session_management.ejs', expect.objectContaining({ sessions }));
+    expect(res.render).toHaveBeenCalledWith('session_management.ejs', expect.objectContaining({
+      sessions: [expect.objectContaining(sessions[0])],
+    }));
 
     await SessionsController.viewSessionManagement(request({ id: 'missing' }), res);
     expect(res.render).toHaveBeenCalledWith('session_management.ejs', expect.objectContaining({
@@ -48,7 +50,9 @@ describe('SessionsController', () => {
     }));
 
     await SessionsController.viewSessionManagement(request({}, { location_id: '2', trainer_id: '3' }), res);
-    expect(res.render).toHaveBeenCalledWith('session_management.ejs', expect.objectContaining({ sessions }));
+    expect(res.render).toHaveBeenCalledWith('session_management.ejs', expect.objectContaining({
+      sessions: [expect.objectContaining(sessions[0])],
+    }));
 
     SessionsModel.getAll.mockRejectedValue(new Error('database error'));
     await SessionsController.viewSessionManagement(request(), res);
@@ -74,7 +78,7 @@ describe('SessionsController', () => {
     }), res);
 
     const viewData = res.render.mock.calls[0][1];
-    expect(viewData.sessions).toEqual([sessions[0]]);
+    expect(viewData.sessions).toEqual([expect.objectContaining(sessions[0])]);
     expect(viewData.selectedSearchTerm).toBe('MORNING');
   });
 
@@ -93,7 +97,80 @@ describe('SessionsController', () => {
 
     await SessionsController.viewSessionManagement(request(), res);
 
-    expect(res.render.mock.calls[0][1].sessions).toEqual(sessions.slice(0, 2));
+    expect(res.render.mock.calls[0][1].sessions).toEqual([
+      expect.objectContaining(sessions[0]),
+      expect.objectContaining(sessions[1]),
+    ]);
+  });
+
+  test('includes the total booked users for each session', async () => {
+    const sessions = [
+      { id: 1, title: 'Morning Yoga', location_id: 2, trainer_id: 3, date: dateForOffset(0), time: '10:00:00' },
+      { id: 2, title: 'Evening Yoga', location_id: 2, trainer_id: 3, date: dateForOffset(1), time: '18:00:00' },
+    ];
+    const bookings = [
+      { id: 1, session_id: 1, user_id: 7 },
+      { id: 2, session_id: 1, user_id: 8 },
+      { id: 3, session_id: 2, user_id: 9 },
+    ];
+    jest.spyOn(SessionsModel, 'getAll').mockResolvedValue(sessions);
+    jest.spyOn(UsersModel, 'getAll').mockResolvedValue([]);
+    jest.spyOn(ActivitiesModel, 'getAll').mockResolvedValue([]);
+    jest.spyOn(LocationModel, 'getAll').mockResolvedValue([]);
+    jest.spyOn(BookingsModel, 'getAll').mockResolvedValue(bookings);
+    const res = response();
+
+    await SessionsController.viewSessionManagement(request(), res);
+
+    const renderedSessions = res.render.mock.calls[0][1].sessions;
+    expect(renderedSessions).toEqual([
+      expect.objectContaining({ id: 1, totalBookedUsers: 2 }),
+      expect.objectContaining({ id: 2, totalBookedUsers: 1 }),
+    ]);
+  });
+
+  test('sorts sessions by title, trainer, activity, location, date, and bookings', async () => {
+    const sessions = [
+      { id: 1, title: 'Zeta', activity_id: 5, location_id: 10, trainer_id: 3, date: dateForOffset(0), time: '10:00:00' },
+      { id: 2, title: 'Alpha', activity_id: 6, location_id: 20, trainer_id: 4, date: dateForOffset(0), time: '11:00:00' },
+      { id: 3, title: 'Middle', activity_id: 99, location_id: 99, trainer_id: 99, date: dateForOffset(1), time: '09:00:00' },
+    ];
+    jest.spyOn(SessionsModel, 'getAll').mockResolvedValue(sessions);
+    jest.spyOn(UsersModel, 'getAll').mockResolvedValue([
+      { id: 3, first_name: 'Zed', last_name: 'Zulu' },
+      { id: 4, first_name: 'Ada', last_name: 'Able' },
+    ]);
+    jest.spyOn(ActivitiesModel, 'getAll').mockResolvedValue([
+      { id: 5, name: 'Yoga' },
+      { id: 6, name: 'Boxing' },
+    ]);
+    jest.spyOn(LocationModel, 'getAll').mockResolvedValue([
+      { id: 10, name: 'West Gym' },
+      { id: 20, name: 'Central Gym' },
+    ]);
+    jest.spyOn(BookingsModel, 'getAll').mockResolvedValue([
+      { session_id: 1 },
+      { session_id: 1 },
+      { session_id: 2 },
+      { session_id: 'invalid' },
+    ]);
+    const res = response();
+
+    for (const [sortBy, expectedIds] of [
+      ['title', [2, 3, 1]],
+      ['trainer', [3, 2, 1]],
+      ['activity', [3, 2, 1]],
+      ['location', [3, 2, 1]],
+      ['date', [1, 2, 3]],
+      ['bookings', [3, 2, 1]],
+    ]) {
+      await SessionsController.viewSessionManagement(request({}, { sort_by: sortBy }), res);
+      expect(res.render.mock.calls.at(-1)[1].sessions.map(({ id }) => id)).toEqual(expectedIds);
+    }
+
+    await SessionsController.viewSessionManagement(request({}, { sort_by: 'invalid', sort_dir: 'desc' }), res);
+    expect(res.render.mock.calls.at(-1)[1].selectedSortBy).toBe('date');
+    expect(res.render.mock.calls.at(-1)[1].sessions.map(({ id }) => id)).toEqual([3, 2, 1]);
   });
 
   test('handles session CRUD requests', async () => {

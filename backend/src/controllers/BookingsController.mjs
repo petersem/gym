@@ -11,6 +11,10 @@ const bookingPageUrl = (req, { bookingDeleted = false, bookingCreated = false } 
   if (Number.isInteger(bookingUserId) && bookingUserId > 0) {
     query.set("booking_user_id", String(bookingUserId));
   }
+  const bookingTrainerId = Number(req.query.booking_trainer_id);
+  if (Number.isInteger(bookingTrainerId) && bookingTrainerId > 0) {
+    query.set("booking_trainer_id", String(bookingTrainerId));
+  }
   if (bookingDeleted) query.set("booking_deleted", "1");
   if (bookingCreated) query.set("booking_created", "1");
   const search = query.toString();
@@ -52,17 +56,33 @@ export class BookingsController {
       const bookingUserIdParam = req.query.booking_user_id;
       const bookingUserId = canManageBookings
         ? bookingUserIdParam === undefined
-          ? req.authenticatedUser?.id ?? null
+          ? req.authenticatedUser?.role === "trainer"
+            ? null
+            : req.authenticatedUser?.id ?? null
           : bookingUserIdParam === "all"
             ? null
             : Number(bookingUserIdParam) || null
         : req.authenticatedUser?.id ?? null;
+      const bookingTrainerIdParam = req.query.booking_trainer_id;
+      const bookingTrainerId = canManageBookings
+        ? bookingTrainerIdParam === undefined
+          ? req.authenticatedUser?.role === "trainer"
+            ? req.authenticatedUser.id ?? null
+            : null
+          : bookingTrainerIdParam === "all"
+            ? req.authenticatedUser?.role === "trainer"
+              ? req.authenticatedUser.id ?? null
+              : null
+            : Number(bookingTrainerIdParam) || null
+        : null;
       const availableSessions = availableLocationId
         ? sessions.filter((session) => Number(session.location_id) === availableLocationId)
         : sessions;
-      const bookingSessions = bookingLocationId
-        ? sessions.filter((session) => Number(session.location_id) === bookingLocationId)
-        : sessions;
+      const bookingSessions = sessions.filter((session) => {
+        const matchesLocation = !bookingLocationId || Number(session.location_id) === bookingLocationId;
+        const matchesTrainer = !bookingTrainerId || Number(session.trainer_id) === Number(bookingTrainerId);
+        return matchesLocation && matchesTrainer;
+      });
       const today = new Date();
       today.setHours(0, 0, 0, 0);
       const byTime = (left, right) => String(left.time).localeCompare(String(right.time));
@@ -117,6 +137,7 @@ export class BookingsController {
         selectedBooking,
         availableLocationId,
         bookingLocationId,
+        bookingTrainerId,
         bookingUserId,
         canManageBookings,
         bookingDeleted: req.query.booking_deleted === "1",

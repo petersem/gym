@@ -45,6 +45,20 @@ describe('BookingsModel unit tests', () => {
     expect(query).toHaveBeenCalledWith('SELECT * FROM bookings WHERE user_id = ?', [7]);
   });
 
+  test('getBySessionId returns only the requested session bookings', async () => {
+    const query = jest.spyOn(BookingsModel, 'query').mockResolvedValue([{ bookings: row }]);
+
+    await expect(BookingsModel.getBySessionId(row.session_id)).resolves.toEqual([booking]);
+    expect(query).toHaveBeenCalledWith('SELECT * FROM bookings WHERE session_id = ?', [row.session_id]);
+  });
+
+  test('deleteBySessionId deletes all bookings for a session', async () => {
+    const query = jest.spyOn(BookingsModel, 'query').mockResolvedValue({ affectedRows: 2 });
+
+    await expect(BookingsModel.deleteBySessionId(row.session_id)).resolves.toEqual({ affectedRows: 2 });
+    expect(query).toHaveBeenCalledWith('DELETE FROM bookings WHERE session_id = ?', [row.session_id]);
+  });
+
   test('getById returns a booking when found', async () => {
     const query = jest.spyOn(BookingsModel, 'query').mockResolvedValue([{ bookings: row }]);
 

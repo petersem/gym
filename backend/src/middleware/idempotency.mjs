@@ -1,4 +1,4 @@
-import { logDanger, logWarning, logInfo } from "../../../../housebuilder/src/utilities/logger.mjs";
+import { logDanger, logWarning, logInfo } from "../utilities/logger.mjs";
 //import { Request, Response, next } from 'express';
 import crypto from 'crypto';
 import { InMemoryIdempotencyStore } from './InMemoryIdempotencyStore.mjs';

@@ -3,9 +3,9 @@ export { sanitiser } from './sanitiser.mjs';
 export { errorMiddleware } from './errorMiddleware.mjs';
 export { idempotencyMiddleware } from './idempotency.mjs';
 export { rateLimit } from 'express-rate-limit'
-export { swaggerSpec } from '../../../../housebuilder/src/swagger.config.mjs';
+export { swaggerSpec } from '../swagger.config.mjs';
 export { fileURLToPath } from "url";
-import { logDanger, logWarning, logInfo } from "../../../../gym/backend/src/utilities/logger.mjs";
+import { logDanger, logWarning, logInfo } from "../utilities/logger.mjs";
 
 // express limiter
 // if prod, 200 calls per 15 minutes

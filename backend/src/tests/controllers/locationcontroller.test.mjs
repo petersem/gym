@@ -37,6 +37,24 @@ describe('LocationController', () => {
     }));
   });
 
+  test('uses selected location sort options in management and list views', async () => {
+    const list = jest.spyOn(LocationModel, 'list').mockResolvedValue({ locations: [], total: 0 });
+    jest.spyOn(UsersModel, 'getAll').mockResolvedValue([]);
+    const res = response();
+
+    LocationController.viewLocationManagement({
+      params: {}, query: { sort_by: 'suburb', sort_dir: 'desc' }, authenticatedUser: { id: 1 },
+    }, res);
+    await flushPromises();
+    expect(list).toHaveBeenCalledWith(expect.objectContaining({ sortBy: 'suburb', sortDir: 'desc' }));
+
+    LocationController.viewLocationList({
+      params: {}, query: { sort_by: 'postcode', sort_dir: 'desc' }, authenticatedUser: { id: 1 },
+    }, res);
+    await flushPromises();
+    expect(list).toHaveBeenLastCalledWith({ searchTerm: '', sortBy: 'postcode', sortDir: 'desc' });
+  });
+
   test('renders an empty location and logs management errors', async () => {
     jest.spyOn(LocationModel, 'list').mockResolvedValue({ locations: [], total: 0 });
     jest.spyOn(UsersModel, 'getAll').mockResolvedValue([]);
