@@ -3,6 +3,7 @@ import { SessionsModel } from "../models/SessionsModel.mjs";
 import { UsersModel } from "../models/UsersModel.mjs";
 import { ActivitiesModel } from "../models/ActivitiesModel.mjs";
 import { LocationModel } from "../models/LocationModel.mjs";
+import { BookingsModel } from "../models/BookingsModel.mjs";
 
 const normalizeSessionTime = (value) => {
   const normalizedValue = String(value).trim();
@@ -101,22 +102,32 @@ export class SessionsController {
         && (!normalizedSearchTerm || String(session.title).toLocaleLowerCase().includes(normalizedSearchTerm))
       ));
       const sortedSessions = sortSessions(filteredSessions, users, activities, locations, selectedSortBy, selectedSortDir);
+      const pageSize = 7;
+      const selectedPage = Math.max(1, Number(req.query.page) || 1);
+      const totalPages = Math.max(1, Math.ceil(sortedSessions.length / pageSize));
+      const paginatedSessions = sortedSessions.slice((selectedPage - 1) * pageSize, selectedPage * pageSize);
       const selectedSession = sessions.find((session) => session.id == req.params.id)
         ?? new SessionsModel(null, 0, 0, 0, "", "", "");
-      res.render("session_management.ejs", {
-        sessions: sortedSessions,
-        users,
-        activities,
-        locations,
-        selectedSession,
-        selectedLocationId,
-        selectedTrainerId,
-        selectedSearchTerm,
-        selectedSortBy,
-        selectedSortDir,
-        authenticatedUser: req.authenticatedUser,
-        role: "admin",
-      });
+      return (selectedSession.id ? BookingsModel.getBySessionId(selectedSession.id) : Promise.resolve([]))
+        .then((selectedSessionBookings) => {
+          res.render("session_management.ejs", {
+            sessions: paginatedSessions,
+            users,
+            activities,
+            locations,
+            selectedSession,
+            selectedSessionHasBookings: selectedSessionBookings.length > 0,
+            selectedLocationId,
+            selectedTrainerId,
+            selectedSearchTerm,
+            selectedSortBy,
+            selectedSortDir,
+            selectedPage,
+            totalPages,
+            authenticatedUser: req.authenticatedUser,
+            role: "admin",
+          });
+        });
       })
       .catch((error) => {
         console.error(error);
@@ -178,7 +189,8 @@ export class SessionsController {
           res.status(500).render("status.ejs", { status: "Database Error", message: "The session could not be updated." });
         });
     } else if (req.body.action === "delete") {
-      return SessionsModel.delete(session.id)
+      return BookingsModel.deleteBySessionId(session.id)
+        .then(() => SessionsModel.delete(session.id))
         .then(() => res.redirect("/sessions"))
         .catch((error) => {
           console.error(error);

@@ -21,7 +21,7 @@ describe('LocationController', () => {
   test('renders location management and selected location', async () => {
     const locations = [{ id: 1, name: 'Central Gym' }];
     const users = [{ id: 1, first_name: 'Ada', last_name: 'Lovelace' }];
-    jest.spyOn(LocationModel, 'getAll').mockResolvedValue(locations);
+    jest.spyOn(LocationModel, 'list').mockResolvedValue({ locations, total: 1 });
     jest.spyOn(UsersModel, 'getAll').mockResolvedValue(users);
     const res = response();
 
@@ -38,7 +38,7 @@ describe('LocationController', () => {
   });
 
   test('renders an empty location and logs management errors', async () => {
-    jest.spyOn(LocationModel, 'getAll').mockResolvedValue([]);
+    jest.spyOn(LocationModel, 'list').mockResolvedValue({ locations: [], total: 0 });
     jest.spyOn(UsersModel, 'getAll').mockResolvedValue([]);
     const res = response();
 
@@ -49,7 +49,7 @@ describe('LocationController', () => {
     }));
 
     const error = new Error('database error');
-    LocationModel.getAll.mockRejectedValue(error);
+    LocationModel.list.mockRejectedValue(error);
     const log = jest.spyOn(console, 'log').mockImplementation(() => {});
     LocationController.viewLocationManagement(request(), res);
     await flushPromises();
@@ -58,7 +58,7 @@ describe('LocationController', () => {
   });
 
   test('renders management without an authenticated user', async () => {
-    jest.spyOn(LocationModel, 'getAll').mockResolvedValue([]);
+    jest.spyOn(LocationModel, 'list').mockResolvedValue({ locations: [], total: 0 });
     jest.spyOn(UsersModel, 'getAll').mockResolvedValue([]);
     const res = response();
 

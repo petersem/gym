@@ -102,11 +102,16 @@ export class UsersModel extends DatabaseModel {
    * Search and sort non-deleted users server-side.
    * @param {Object} [options] Search and sort options.
    * @param {string} [options.searchTerm] Optional search term for name/email.
+   * @param {string} [options.role] Optional exact role to filter by (admin|trainer|member).
    * @param {string} [options.sortBy] Column to sort by (first_name|last_name|email|role).
    * @param {string} [options.sortDir] Sort direction (asc|desc).
-   * @returns {Promise<Array<UsersModel>>} Matching users.
+   * @param {number} [options.page] 1-indexed page number for pagination.
+   * @param {number} [options.pageSize] Number of rows per page.
+   * @returns {Promise<{ users: Array<UsersModel>, total: number }>} Matching users and total match count.
    */
-  static async list({ searchTerm = "", sortBy = "last_name", sortDir = "asc" } = {}) {
+  static async list({
+    searchTerm = "", role = "", sortBy = "last_name", sortDir = "asc", page = 1, pageSize = null,
+  } = {}) {
     const column = this.SORTABLE_COLUMNS[sortBy] ?? this.SORTABLE_COLUMNS.last_name;
     const direction = sortDir === "desc" ? "DESC" : "ASC";
     const where = ["deleted = 0"];
@@ -115,10 +120,20 @@ export class UsersModel extends DatabaseModel {
       where.push("(first_name LIKE ? OR last_name LIKE ? OR email LIKE ?)");
       values.push(`%${searchTerm}%`, `%${searchTerm}%`, `%${searchTerm}%`);
     }
-    return this.query(
-      `SELECT * FROM users WHERE ${where.join(" AND ")} ORDER BY ${column} ${direction}`,
-      values,
+    if (role) {
+      where.push("role = ?");
+      values.push(role);
+    }
+    const whereClause = where.join(" AND ");
+    const countResult = await this.query(`SELECT COUNT(*) AS total FROM users WHERE ${whereClause}`, values);
+    const total = Number(countResult[0]?.[""]?.total ?? 0);
+    const limitClause = pageSize ? "LIMIT ? OFFSET ?" : "";
+    const limitValues = pageSize ? [pageSize, (Math.max(1, page) - 1) * pageSize] : [];
+    const users = await this.query(
+      `SELECT * FROM users WHERE ${whereClause} ORDER BY ${column} ${direction} ${limitClause}`,
+      [...values, ...limitValues],
     ).then((result) => result.map((row) => this.tableToModel(row.users)));
+    return { users, total };
   }
 
   /**

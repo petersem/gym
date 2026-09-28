@@ -70,9 +70,13 @@ export class ActivitiesModel extends DatabaseModel {
    * @param {string} [options.searchTerm] Optional search term for name/description.
    * @param {string} [options.sortBy] Column to sort by (name|description).
    * @param {string} [options.sortDir] Sort direction (asc|desc).
-   * @returns {Promise<Array<ActivitiesModel>>} Matching activities.
+   * @param {number} [options.page] 1-indexed page number for pagination.
+   * @param {number} [options.pageSize] Number of rows per page.
+   * @returns {Promise<{ activities: Array<ActivitiesModel>, total: number }>} Matching activities and total match count.
    */
-  static async list({ searchTerm = "", sortBy = "name", sortDir = "asc" } = {}) {
+  static async list({
+    searchTerm = "", sortBy = "name", sortDir = "asc", page = 1, pageSize = null,
+  } = {}) {
     const column = this.SORTABLE_COLUMNS[sortBy] ?? this.SORTABLE_COLUMNS.name;
     const direction = sortDir === "desc" ? "DESC" : "ASC";
     const where = ["deleted = 0"];
@@ -81,10 +85,16 @@ export class ActivitiesModel extends DatabaseModel {
       where.push("(name LIKE ? OR description LIKE ?)");
       values.push(`%${searchTerm}%`, `%${searchTerm}%`);
     }
-    return this.query(
-      `SELECT * FROM activities WHERE ${where.join(" AND ")} ORDER BY ${column} ${direction}`,
-      values,
+    const whereClause = where.join(" AND ");
+    const countResult = await this.query(`SELECT COUNT(*) AS total FROM activities WHERE ${whereClause}`, values);
+    const total = Number(countResult[0]?.[""]?.total ?? 0);
+    const limitClause = pageSize ? "LIMIT ? OFFSET ?" : "";
+    const limitValues = pageSize ? [pageSize, (Math.max(1, page) - 1) * pageSize] : [];
+    const activities = await this.query(
+      `SELECT * FROM activities WHERE ${whereClause} ORDER BY ${column} ${direction} ${limitClause}`,
+      [...values, ...limitValues],
     ).then((result) => result.map((row) => this.tableToModel(row.activities)));
+    return { activities, total };
   }
 
   /**

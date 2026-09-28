@@ -14,10 +14,19 @@
         <section>
             <h2>Users</h2>
             <div class="list-search">
+                <label for="role-filter">Filter by role</label>
+                <select id="role-filter" onchange="filterUsers()">
+                    <option value="" <%= selectedRole === '' ? 'selected' : '' %>>All roles</option>
+                    <option value="admin" <%= selectedRole === 'admin' ? 'selected' : '' %>>Admin</option>
+                    <option value="trainer" <%= selectedRole === 'trainer' ? 'selected' : '' %>>Trainer</option>
+                    <option value="member" <%= selectedRole === 'member' ? 'selected' : '' %>>Member</option>
+                </select>
+            </div>
+            <div class="list-search">
                 <label for="user-search">Search users</label>
                 <div class="list-search-control">
                     <input id="user-search" type="search" value="<%= selectedSearchTerm %>" onkeydown="if (event.key === 'Enter') { event.preventDefault(); filterUsers(); }">
-                    <button type="button" onclick="filterUsers()">Search</button>
+                    <button type="button" class="btn-accent" onclick="filterUsers()">Search</button>
                 </div>
             </div>
             <div class="list-results">
@@ -25,6 +34,7 @@
                     <% const userSortLink = (column) => {
                         const params = new URLSearchParams();
                         if (selectedSearchTerm) params.set('search_term', selectedSearchTerm);
+                        if (selectedRole) params.set('role', selectedRole);
                         params.set('sort_by', column);
                         params.set('sort_dir', selectedSortBy === column && selectedSortDir === 'asc' ? 'desc' : 'asc');
                         return `/users?${params.toString()}`;
@@ -45,7 +55,7 @@
                         <% } %>
                         <% users.forEach((user) => { %>
                             <tr>
-                                <td><a href="/users/<%= user.id %>"><%= user.last_name %>, <%= user.first_name %></a></td>
+                                <td><a href="/users/<%= user.id %>#user-management"><%= user.last_name %>, <%= user.first_name %></a></td>
                                 <td><%= user.email %></td>
                                 <td><%= user.role %></td>
                             </tr>
@@ -53,19 +63,38 @@
                     </tbody>
                 </table>
             </div>
+            <% if (totalPages > 1) { %>
+                <% const userPageLink = (page) => {
+                    const params = new URLSearchParams();
+                    if (selectedSearchTerm) params.set('search_term', selectedSearchTerm);
+                    if (selectedRole) params.set('role', selectedRole);
+                    params.set('sort_by', selectedSortBy);
+                    params.set('sort_dir', selectedSortDir);
+                    params.set('page', page);
+                    return `/users?${params.toString()}`;
+                }; %>
+                <nav class="pagination" aria-label="Users pagination">
+                    <a class="btn-outline<%= selectedPage <= 1 ? ' is-disabled' : '' %>" href="<%= selectedPage > 1 ? userPageLink(selectedPage - 1) : '#' %>" aria-disabled="<%= selectedPage <= 1 %>">Previous</a>
+                    <span>Page <%= selectedPage %> of <%= totalPages %></span>
+                    <a class="btn-outline<%= selectedPage >= totalPages ? ' is-disabled' : '' %>" href="<%= selectedPage < totalPages ? userPageLink(selectedPage + 1) : '#' %>" aria-disabled="<%= selectedPage >= totalPages %>">Next</a>
+                </nav>
+            <% } %>
         </section>
 
         <script>
             function filterUsers() {
                 const params = new URLSearchParams(window.location.search);
                 const searchTerm = document.getElementById('user-search').value.trim();
+                const role = document.getElementById('role-filter').value;
                 if (searchTerm) params.set('search_term', searchTerm); else params.delete('search_term');
+                if (role) params.set('role', role); else params.delete('role');
+                params.delete('page');
                 window.location.href = `/users${params.toString() ? `?${params}` : ''}`;
             }
         </script>
 
-        <section>
-            <h2>User management</h2>
+        <section id="user-management">
+            <h2>User management - <%= selectedUser.id ? 'Edit' : 'Create' %></h2>
             <form action="/users<%= selectedUser.id ? '/' + selectedUser.id : '' %>" method="post" class="form-grid responsive-half">
                 <label for="first-name">First name</label>
                 <input id="first-name" name="firstName" value="<%= selectedUser.first_name %>" required>
@@ -91,7 +120,7 @@
                     <%= selectedUser.id ? 'Update user' : 'Create user' %>
                 </button>
                 <% if (selectedUser.id) { %>
-                    <button type="button" onclick="window.location.href='/users'">Clear</button>
+                    <button type="button" onclick="window.location.href='/users#user-management'">Clear</button>
                     <button type="submit" name="action" value="delete">Delete user</button>
                 <% } %>
             </form>

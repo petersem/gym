@@ -45,7 +45,7 @@ afterEach(() => {
 
 describe('UsersController unit tests', () => {
   test('renders users and the selected user', async () => {
-    jest.spyOn(UsersModel, 'getAll').mockResolvedValue([existingUser]);
+    jest.spyOn(UsersModel, 'list').mockResolvedValue({ users: [existingUser], total: 1 });
     const res = response();
 
     UsersController.viewUserManagement(request({ id: '7' }), res);
@@ -60,7 +60,7 @@ describe('UsersController unit tests', () => {
 
   test('logs user-list load errors', async () => {
     const error = new Error('database error');
-    jest.spyOn(UsersModel, 'getAll').mockRejectedValue(error);
+    jest.spyOn(UsersModel, 'list').mockRejectedValue(error);
     const log = jest.spyOn(console, 'log').mockImplementation(() => {});
 
     UsersController.viewUserManagement(request(), response());
@@ -70,7 +70,7 @@ describe('UsersController unit tests', () => {
   });
 
   test('renders a complete empty user when no user is selected', async () => {
-    jest.spyOn(UsersModel, 'getAll').mockResolvedValue([]);
+    jest.spyOn(UsersModel, 'list').mockResolvedValue({ users: [], total: 0 });
     const res = response();
 
     UsersController.viewUserManagement(request({}), res);

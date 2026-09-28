@@ -17,7 +17,7 @@
                 <label for="activity-search">Search activities</label>
                 <div class="list-search-control">
                     <input id="activity-search" type="search" value="<%= selectedSearchTerm %>" onkeydown="if (event.key === 'Enter') { event.preventDefault(); filterActivities(); }">
-                    <button type="button" onclick="filterActivities()">Search</button>
+                    <button type="button" class="btn-accent" onclick="filterActivities()">Search</button>
                 </div>
             </div>
             <div class="list-results">
@@ -44,13 +44,28 @@
                         <% } %>
                         <% activities.forEach((activity) => { %>
                             <tr>
-                                <td><a href="/activities/<%= activity.id %>"><%= activity.name %></a></td>
+                                <td><a href="/activities/<%= activity.id %>#activity-management"><%= activity.name %></a></td>
                                 <td><%= activity.description %></td>
                             </tr>
                         <% }) %>
                     </tbody>
                 </table>
             </div>
+            <% if (totalPages > 1) { %>
+                <% const activityPageLink = (page) => {
+                    const params = new URLSearchParams();
+                    if (selectedSearchTerm) params.set('search_term', selectedSearchTerm);
+                    params.set('sort_by', selectedSortBy);
+                    params.set('sort_dir', selectedSortDir);
+                    params.set('page', page);
+                    return `/activities?${params.toString()}`;
+                }; %>
+                <nav class="pagination" aria-label="Activities pagination">
+                    <a class="btn-outline<%= selectedPage <= 1 ? ' is-disabled' : '' %>" href="<%= selectedPage > 1 ? activityPageLink(selectedPage - 1) : '#' %>" aria-disabled="<%= selectedPage <= 1 %>">Previous</a>
+                    <span>Page <%= selectedPage %> of <%= totalPages %></span>
+                    <a class="btn-outline<%= selectedPage >= totalPages ? ' is-disabled' : '' %>" href="<%= selectedPage < totalPages ? activityPageLink(selectedPage + 1) : '#' %>" aria-disabled="<%= selectedPage >= totalPages %>">Next</a>
+                </nav>
+            <% } %>
         </section>
 
         <script>
@@ -58,12 +73,13 @@
                 const params = new URLSearchParams(window.location.search);
                 const searchTerm = document.getElementById('activity-search').value.trim();
                 if (searchTerm) params.set('search_term', searchTerm); else params.delete('search_term');
+                params.delete('page');
                 window.location.href = `/activities${params.toString() ? `?${params}` : ''}`;
             }
         </script>
 
-        <section>
-            <h2>Activity management</h2>
+        <section id="activity-management">
+            <h2>Activity management - <%= selectedActivity.id ? 'Edit' : 'Create' %></h2>
             <form action="/activities<%= selectedActivity.id ? '/' + selectedActivity.id : '' %>" method="post" class="form-grid responsive-half">
                 <label for="name">Name</label>
                 <input id="name" name="name" value="<%= selectedActivity.name %>" required>
@@ -77,7 +93,7 @@
                 </button>
 
                 <% if (selectedActivity.id) { %>
-                    <button type="button" onclick="window.location.href='/activities'">Clear</button>
+                    <button type="button" onclick="window.location.href='/activities#activity-management'">Clear</button>
                     <button type="submit" name="action" value="delete">Delete activity</button>
                 <% } %>
             </form>

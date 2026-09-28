@@ -23,7 +23,7 @@ afterEach(() => {
 describe('ActivitiesController', () => {
   test('renders activity management and handles load errors', async () => {
     const activities = [{ id: 1 }];
-    jest.spyOn(ActivitiesModel, 'getAll').mockResolvedValue(activities);
+    jest.spyOn(ActivitiesModel, 'list').mockResolvedValue({ activities, total: 1 });
     const res = response();
 
     await ActivitiesController.viewActivityManagement(request({ id: '1' }), res);
@@ -34,7 +34,7 @@ describe('ActivitiesController', () => {
       selectedActivity: expect.objectContaining({ id: null }),
     }));
 
-    ActivitiesModel.getAll.mockRejectedValue(new Error('database error'));
+    ActivitiesModel.list.mockRejectedValue(new Error('database error'));
     await ActivitiesController.viewActivityManagement(request(), res);
     expect(res.status).toHaveBeenCalledWith(500);
   });

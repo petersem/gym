@@ -5,13 +5,14 @@ import { SessionsModel } from "../models/SessionsModel.mjs";
 import { LocationModel } from "../models/LocationModel.mjs";
 import { ActivitiesModel } from "../models/ActivitiesModel.mjs";
 
-const bookingPageUrl = (req, bookingDeleted = false) => {
+const bookingPageUrl = (req, { bookingDeleted = false, bookingCreated = false } = {}) => {
   const query = new URLSearchParams();
   const bookingUserId = Number(req.query.booking_user_id);
   if (Number.isInteger(bookingUserId) && bookingUserId > 0) {
     query.set("booking_user_id", String(bookingUserId));
   }
   if (bookingDeleted) query.set("booking_deleted", "1");
+  if (bookingCreated) query.set("booking_created", "1");
   const search = query.toString();
   return search ? `/bookings?${search}` : "/bookings";
 };
@@ -48,8 +49,13 @@ export class BookingsController {
         ?? new BookingsModel(null, req.query.session_id ?? "", 0, "");
       const availableLocationId = Number(req.query.available_location_id) || null;
       const bookingLocationId = Number(req.query.booking_location_id) || null;
+      const bookingUserIdParam = req.query.booking_user_id;
       const bookingUserId = canManageBookings
-        ? Number(req.query.booking_user_id) || null
+        ? bookingUserIdParam === undefined
+          ? req.authenticatedUser?.id ?? null
+          : bookingUserIdParam === "all"
+            ? null
+            : Number(bookingUserIdParam) || null
         : req.authenticatedUser?.id ?? null;
       const availableSessions = availableLocationId
         ? sessions.filter((session) => Number(session.location_id) === availableLocationId)
@@ -59,6 +65,7 @@ export class BookingsController {
         : sessions;
       const today = new Date();
       today.setHours(0, 0, 0, 0);
+      const byTime = (left, right) => String(left.time).localeCompare(String(right.time));
       const calendarDays = Array.from({ length: 7 }, (_, index) => {
         const date = new Date(today);
         date.setDate(today.getDate() + index);
@@ -67,23 +74,37 @@ export class BookingsController {
           String(date.getMonth() + 1).padStart(2, "0"),
           String(date.getDate()).padStart(2, "0"),
         ].join("-");
-        const daySessions = availableSessions.filter((session) => String(session.date).slice(0, 10) === dateValue);
+        const daySessions = availableSessions
+          .filter((session) => String(session.date).slice(0, 10) === dateValue)
+          .sort(byTime);
         return {
           dateValue,
           label: `${date.toLocaleDateString("en-AU", { weekday: "short" }).slice(0, 3)} ${date.getDate()} ${date.toLocaleDateString("en-AU", { month: "short" }).slice(0, 3)}`,
-          bookings: bookings.filter((booking) => daySessions.some((session) => session.id === Number(booking.session_id))),
+          bookings: bookings
+            .filter((booking) => daySessions.some((session) => session.id === Number(booking.session_id)))
+            .sort((left, right) => byTime(
+              daySessions.find((session) => session.id === Number(left.session_id)),
+              daySessions.find((session) => session.id === Number(right.session_id)),
+            )),
           sessions: daySessions,
         };
       });
       const bookingCalendarDays = calendarDays.map((day) => ({
         ...day,
-        sessions: bookingSessions.filter((session) => String(session.date).slice(0, 10) === day.dateValue),
+        sessions: bookingSessions
+          .filter((session) => String(session.date).slice(0, 10) === day.dateValue)
+          .sort(byTime),
       })).map((day) => ({
         ...day,
-        bookings: bookings.filter((booking) => (
-          day.sessions.some((session) => session.id === Number(booking.session_id))
-          && (!bookingUserId || Number(booking.user_id) === Number(bookingUserId))
-        )),
+        bookings: bookings
+          .filter((booking) => (
+            day.sessions.some((session) => session.id === Number(booking.session_id))
+            && (!bookingUserId || Number(booking.user_id) === Number(bookingUserId))
+          ))
+          .sort((left, right) => byTime(
+            day.sessions.find((session) => session.id === Number(left.session_id)),
+            day.sessions.find((session) => session.id === Number(right.session_id)),
+          )),
       }));
       res.render("booking_management.ejs", {
         bookings,
@@ -99,6 +120,7 @@ export class BookingsController {
         bookingUserId,
         canManageBookings,
         bookingDeleted: req.query.booking_deleted === "1",
+        bookingCreated: req.query.booking_created === "1",
         authenticatedUser: req.authenticatedUser,
         role: "admin",
       });
@@ -120,7 +142,7 @@ export class BookingsController {
 
     if (req.body.action === "create") {
       return BookingsModel.create(booking)
-        .then(() => res.redirect("/bookings"))
+        .then(() => res.redirect(bookingPageUrl(req, { bookingCreated: true })))
         .catch((error) => {
           console.error(error);
           res.status(500).render("status.ejs", { status: "Database Error", message: "The booking could not be created." });
@@ -137,7 +159,7 @@ export class BookingsController {
     } else if (req.body.action === "delete") {
       return BookingsModel.delete(booking.id)
         .then((result) => result.affectedRows > 0
-          ? res.redirect(bookingPageUrl(req, true))
+          ? res.redirect(bookingPageUrl(req, { bookingDeleted: true }))
           : res.status(404).render("status.ejs", { status: "Booking Deletion Failed", message: "The booking could not be found." }))
         .catch((error) => {
           console.error(error);

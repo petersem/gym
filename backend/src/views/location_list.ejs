@@ -26,7 +26,7 @@
                     <option value="asc" <%= typeof selectedSortDir === 'undefined' || selectedSortDir === 'asc' ? 'selected' : '' %>>Ascending</option>
                     <option value="desc" <%= typeof selectedSortDir !== 'undefined' && selectedSortDir === 'desc' ? 'selected' : '' %>>Descending</option>
                 </select>
-                <button type="submit">Search</button>
+                <button type="submit" class="btn-accent">Search</button>
             </form>
 
             <% if (locations.length === 0) { %>

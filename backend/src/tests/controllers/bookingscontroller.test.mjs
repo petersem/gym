@@ -110,8 +110,12 @@ describe('BookingsController', () => {
     expect(getByUserId).not.toHaveBeenCalled();
     expect(res.render).toHaveBeenCalledWith('booking_management.ejs', expect.objectContaining({
       canManageBookings: true,
-      bookingUserId: null,
+      bookingUserId: authenticatedUser.id,
     }));
+    expect(res.render.mock.calls.at(-1)[1].bookingCalendarDays[0].bookings).toEqual([]);
+
+    await BookingsController.viewBookingManagement(request({}, { booking_user_id: 'all' }, {}, authenticatedUser), res);
+    expect(res.render.mock.calls.at(-1)[1]).toEqual(expect.objectContaining({ bookingUserId: null }));
     expect(res.render.mock.calls.at(-1)[1].bookingCalendarDays[0].bookings).toEqual(bookings);
 
     await BookingsController.viewBookingManagement(request({}, { booking_user_id: '8' }, {}, authenticatedUser), res);

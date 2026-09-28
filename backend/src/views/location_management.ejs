@@ -17,7 +17,7 @@
                 <label for="location-search">Search locations</label>
                 <div class="list-search-control">
                     <input id="location-search" type="search" value="<%= selectedSearchTerm %>" onkeydown="if (event.key === 'Enter') { event.preventDefault(); filterLocations(); }">
-                    <button type="button" onclick="filterLocations()">Search</button>
+                    <button type="button" class="btn-accent" onclick="filterLocations()">Search</button>
                 </div>
             </div>
             <div class="list-results">
@@ -45,7 +45,7 @@
                         <% } %>
                         <% locations.forEach((location) => { %>
                             <tr>
-                                <td><a href="/locations/<%= location.id %>"><%= location.name %></a></td>
+                                <td><a href="/locations/<%= location.id %>#location-management"><%= location.name %></a></td>
                                 <td><%= location.suburb %></td>
                                 <td><%= location.postcode %></td>
                             </tr>
@@ -53,6 +53,21 @@
                     </tbody>
                 </table>
             </div>
+            <% if (totalPages > 1) { %>
+                <% const locationPageLink = (page) => {
+                    const params = new URLSearchParams();
+                    if (selectedSearchTerm) params.set('search_term', selectedSearchTerm);
+                    params.set('sort_by', selectedSortBy);
+                    params.set('sort_dir', selectedSortDir);
+                    params.set('page', page);
+                    return `/locations?${params.toString()}`;
+                }; %>
+                <nav class="pagination" aria-label="Locations pagination">
+                    <a class="btn-outline<%= selectedPage <= 1 ? ' is-disabled' : '' %>" href="<%= selectedPage > 1 ? locationPageLink(selectedPage - 1) : '#' %>" aria-disabled="<%= selectedPage <= 1 %>">Previous</a>
+                    <span>Page <%= selectedPage %> of <%= totalPages %></span>
+                    <a class="btn-outline<%= selectedPage >= totalPages ? ' is-disabled' : '' %>" href="<%= selectedPage < totalPages ? locationPageLink(selectedPage + 1) : '#' %>" aria-disabled="<%= selectedPage >= totalPages %>">Next</a>
+                </nav>
+            <% } %>
         </section>
 
         <script>
@@ -60,12 +75,13 @@
                 const params = new URLSearchParams(window.location.search);
                 const searchTerm = document.getElementById('location-search').value.trim();
                 if (searchTerm) params.set('search_term', searchTerm); else params.delete('search_term');
+                params.delete('page');
                 window.location.href = `/locations${params.toString() ? `?${params}` : ''}`;
             }
         </script>
 
-        <section>
-            <h2>Location management</h2>
+        <section id="location-management">
+            <h2>Location management - <%= selectedLocation.id ? 'Edit' : 'Create' %></h2>
             <form action="/locations<%= selectedLocation.id ? '/' + selectedLocation.id : '' %>" method="post" class="form-grid responsive-half">
                 <label for="name">Name</label>
                 <input id="name" name="name" value="<%= selectedLocation.name %>" required>
@@ -100,7 +116,7 @@
                 </button>
 
                 <% if (selectedLocation.id) { %>
-                    <button type="button" onclick="window.location.href='/locations'">Clear</button>
+                    <button type="button" onclick="window.location.href='/locations#location-management'">Clear</button>
                     <button type="submit" name="action" value="delete">Delete location</button>
                 <% } %>
             </form>

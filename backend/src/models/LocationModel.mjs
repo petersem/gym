@@ -80,9 +80,13 @@ export class LocationModel extends DatabaseModel {
    * @param {string} [options.searchTerm] Optional search term for name/suburb/postcode.
    * @param {string} [options.sortBy] Column to sort by (name|suburb|postcode).
    * @param {string} [options.sortDir] Sort direction (asc|desc).
-   * @returns {Promise<Array<LocationModel>>} Matching locations.
+   * @param {number} [options.page] 1-indexed page number for pagination.
+   * @param {number} [options.pageSize] Number of rows per page.
+   * @returns {Promise<{ locations: Array<LocationModel>, total: number }>} Matching locations and total match count.
    */
-  static async list({ searchTerm = "", sortBy = "name", sortDir = "asc" } = {}) {
+  static async list({
+    searchTerm = "", sortBy = "name", sortDir = "asc", page = 1, pageSize = null,
+  } = {}) {
     const column = this.SORTABLE_COLUMNS[sortBy] ?? this.SORTABLE_COLUMNS.name;
     const direction = sortDir === "desc" ? "DESC" : "ASC";
     const where = ["deleted = 0"];
@@ -91,10 +95,16 @@ export class LocationModel extends DatabaseModel {
       where.push("(name LIKE ? OR suburb LIKE ? OR postcode LIKE ?)");
       values.push(`%${searchTerm}%`, `%${searchTerm}%`, `%${searchTerm}%`);
     }
-    return this.query(
-      `SELECT * FROM locations WHERE ${where.join(" AND ")} ORDER BY ${column} ${direction}`,
-      values,
+    const whereClause = where.join(" AND ");
+    const countResult = await this.query(`SELECT COUNT(*) AS total FROM locations WHERE ${whereClause}`, values);
+    const total = Number(countResult[0]?.[""]?.total ?? 0);
+    const limitClause = pageSize ? "LIMIT ? OFFSET ?" : "";
+    const limitValues = pageSize ? [pageSize, (Math.max(1, page) - 1) * pageSize] : [];
+    const locations = await this.query(
+      `SELECT * FROM locations WHERE ${whereClause} ORDER BY ${column} ${direction} ${limitClause}`,
+      [...values, ...limitValues],
     ).then((result) => result.map((row) => this.tableToModel(row.locations)));
+    return { locations, total };
   }
 
   /**

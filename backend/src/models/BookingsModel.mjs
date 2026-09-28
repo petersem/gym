@@ -54,6 +54,26 @@ export class BookingsModel extends DatabaseModel {
   }
 
   /**
+   * Retrieve bookings belonging to one session.
+   * @param {number} sessionId Session identifier.
+   * @returns {Promise<Array<BookingsModel>>} The session's bookings.
+   */
+  static async getBySessionId(sessionId) {
+    return this.query("SELECT * FROM bookings WHERE session_id = ?", [sessionId]).then(
+      (result) => result.map((row) => this.tableToModel(row.bookings)),
+    );
+  }
+
+  /**
+   * Delete every booking belonging to one session.
+   * @param {number} sessionId Session identifier.
+   * @returns {Promise<import("mysql2/promise").OkPacket>} Database result.
+   */
+  static deleteBySessionId(sessionId) {
+    return this.query("DELETE FROM bookings WHERE session_id = ?", [sessionId]);
+  }
+
+  /**
    * Retrieve a booking by its identifier.
    * @param {number} id Booking identifier.
    * @returns {Promise<BookingsModel>} Matching booking.

@@ -4,6 +4,7 @@ import { SessionsModel } from '../../models/SessionsModel.mjs';
 import { UsersModel } from '../../models/UsersModel.mjs';
 import { ActivitiesModel } from '../../models/ActivitiesModel.mjs';
 import { LocationModel } from '../../models/LocationModel.mjs';
+import { BookingsModel } from '../../models/BookingsModel.mjs';
 
 const response = () => {
   const res = {
@@ -120,6 +121,7 @@ describe('SessionsController', () => {
     jest.spyOn(SessionsModel, 'create').mockResolvedValue({});
     jest.spyOn(SessionsModel, 'update').mockResolvedValue({});
     jest.spyOn(SessionsModel, 'delete').mockResolvedValue({});
+    jest.spyOn(BookingsModel, 'deleteBySessionId').mockResolvedValue({});
     jest.spyOn(ActivitiesModel, 'getById').mockResolvedValue({ name: 'Yoga' });
     jest.spyOn(UsersModel, 'getById').mockResolvedValue({ first_name: 'Ada', last_name: 'Lovelace' });
 
@@ -153,6 +155,36 @@ describe('SessionsController', () => {
     await SessionsController.handleSessionManagement(request({ id: '1' }, {}, { ...completeSession, action: 'update' }), res);
     SessionsModel.delete.mockRejectedValue(new Error('database error'));
     await SessionsController.handleSessionManagement(request({ id: '1' }, {}, { ...completeSession, action: 'delete' }), res);
+  });
+
+  test('cascades booking deletion before deleting a session', async () => {
+    const res = response();
+    const completeSession = { activityId: 1, locationId: 2, trainerId: 3, date: '2026-09-26', time: '10:00', title: 'Test session' };
+    const deleteBookings = jest.spyOn(BookingsModel, 'deleteBySessionId').mockResolvedValue({});
+    const deleteSession = jest.spyOn(SessionsModel, 'delete').mockResolvedValue({});
+
+    await SessionsController.handleSessionManagement(request({ id: '1' }, {}, { ...completeSession, action: 'delete' }), res);
+
+    expect(deleteBookings).toHaveBeenCalledWith(1);
+    expect(deleteSession).toHaveBeenCalledWith(1);
+    expect(res.redirect).toHaveBeenCalledWith('/sessions');
+  });
+
+  test('prompts to confirm deletion when the selected session has bookings', async () => {
+    const sessions = [{ id: 1, title: 'Morning Yoga', location_id: 2, trainer_id: 3, date: dateForOffset(0) }];
+    jest.spyOn(SessionsModel, 'getAll').mockResolvedValue(sessions);
+    jest.spyOn(UsersModel, 'getAll').mockResolvedValue([]);
+    jest.spyOn(ActivitiesModel, 'getAll').mockResolvedValue([]);
+    jest.spyOn(LocationModel, 'getAll').mockResolvedValue([]);
+    jest.spyOn(BookingsModel, 'getBySessionId').mockResolvedValue([{ id: 9, session_id: 1 }]);
+    const res = response();
+
+    await SessionsController.viewSessionManagement(request({ id: '1' }), res);
+
+    expect(BookingsModel.getBySessionId).toHaveBeenCalledWith(1);
+    expect(res.render).toHaveBeenCalledWith('session_management.ejs', expect.objectContaining({
+      selectedSessionHasBookings: true,
+    }));
   });
 
   test('rejects incomplete session data', () => {

@@ -13,21 +13,28 @@
         }).format(new Date(`${String(date).slice(0, 10)}T${time}`)).replace(/\s+(am|pm)$/i, '$1'); %>
         <% const formatSessionTime=(time)=> { const [hour, minute] = String(time).slice(0, 5).split(':').map(Number); return `${hour % 12 || 12}:${String(minute).padStart(2, '0')}${hour >= 12 ? 'pm' : 'am'}`; }; %>
         <% const getSessionHoverText=(session)=> { const activity = activities.find((item) => Number(item.id) === Number(session.activity_id)); const trainer = users.find((user) => Number(user.id) === Number(session.trainer_id)); return `Activity: ${activity?.name ?? 'Unknown activity'} | Trainer: ${trainer ? `${trainer.first_name} ${trainer.last_name}` : 'Unknown trainer'}`; }; %>
+        <% const sortedLocations=[...locations].sort((a, b) => a.name.localeCompare(b.name)); %>
             <main>
                 <%- include("partials/header.ejs") %>
                     <%- include("partials/nav.ejs", { role, authenticatedUser }) %>
 
-                        <% if (authenticatedUser && bookingDeleted) { %>
-                            <div class="alert alert-success" role="status">Booking deleted.</div>
-                        <% } %>
-
                         <section>
-                            <h2>Available sessions next 7 days</h2>
+                            <div class="section-heading-row">
+                                <h2>Available sessions next 7 days</h2>
+                                <div class="alert-stack">
+                                    <% if (authenticatedUser && bookingCreated) { %>
+                                        <div class="alert alert-brand fade-out-alert" role="status">Booking added.</div>
+                                    <% } %>
+                                    <% if (authenticatedUser && bookingDeleted) { %>
+                                        <div class="alert alert-error fade-out-alert" role="status">Booking deleted.</div>
+                                    <% } %>
+                                </div>
+                            </div>
                             <label for="available-location-filter">Available session location</label>
                             <select id="available-location-filter"
                                 onchange="filterBookings('available_location_id', this.value)">
                                 <option value="">All locations</option>
-                                <% locations.forEach((location)=> { %>
+                                <% sortedLocations.forEach((location)=> { %>
                                     <option value="<%= location.id %>" <%=availableLocationId===location.id ? 'selected'
                                         : '' %>><%= location.name %>
                                     </option>
@@ -49,7 +56,7 @@
                                                             <% const locationSuffix = !availableLocationId && sessionLocation ? ` (${sessionLocation.name})` : ''; %>
                                                             <% if (authenticatedUser) { %>
                                                             <button type="button" class="available-session-select" title="<%= getSessionHoverText(session) %>">
-                                                                <%= formatSessionTime(session.time) %>, <%= session.title %><%= locationSuffix %>
+                                                                <%= formatSessionTime(session.time) %> <%= session.title %><%= locationSuffix %>
                                                             </button>
                                                             <form class="session-book-form" action="/bookings" method="post">
                                                                 <input type="hidden" name="sessionId" value="<%= session.id %>">
@@ -57,7 +64,7 @@
                                                                 <button class="btn btn-primary session-book-button" type="submit" name="action" value="create" hidden>Book</button>
                                                             </form>
                                                             <% } else { %>
-                                                            <span class="available-session-label" title="<%= getSessionHoverText(session) %>"><%= formatSessionTime(session.time) %>, <%= session.title %><%= locationSuffix %></span>
+                                                            <span class="available-session-label" title="<%= getSessionHoverText(session) %>"><%= formatSessionTime(session.time) %> <%= session.title %><%= locationSuffix %></span>
                                                             <% } %>
                                                         </li>
                                                         <% }) %>
@@ -69,23 +76,24 @@
                         </section>
 
                         <% if (authenticatedUser) { %>
-                        <section>
+                        <section id="bookings-next-7-days">
                             <h2>Bookings next 7 days</h2>
                             <label for="booking-location-filter">Booked session location</label>
                             <select id="booking-location-filter"
                                 onchange="filterBookings('booking_location_id', this.value)">
                                 <option value="">All locations</option>
-                                <% locations.forEach((location)=> { %>
+                                <% sortedLocations.forEach((location)=> { %>
                                     <option value="<%= location.id %>" <%=bookingLocationId===location.id ? 'selected'
                                         : '' %>><%= location.name %>
                                     </option>
                                     <% }) %>
                             </select>
                             <% if (canManageBookings) { %>
+                                <% const sortedUsers=[...users].sort((a, b) => a.last_name.localeCompare(b.last_name) || a.first_name.localeCompare(b.first_name)); %>
                                 <label for="booking-user-filter">Booked user</label>
                                 <select id="booking-user-filter" onchange="filterBookings('booking_user_id', this.value)">
-                                    <option value="" <%= bookingUserId ? '' : 'selected' %>>All users</option>
-                                    <% users.forEach((user)=> { %>
+                                    <option value="all" <%= bookingUserId ? '' : 'selected' %>>All users</option>
+                                    <% sortedUsers.forEach((user)=> { %>
                                         <option value="<%= user.id %>" <%=Number(bookingUserId)===Number(user.id) ? 'selected' : '' %>>
                                             <%= user.last_name %>, <%= user.first_name %>
                                         </option>
@@ -107,8 +115,8 @@
                                                             === Number(booking.session_id)); %>
                                                         <% const bookingUser=users.find((user)=> Number(user.id) === Number(booking.user_id)); %>
                                                             <li>
-                                                                <a href="/bookings/<%= booking.id %><%= canManageBookings && bookingUserId ? '?booking_user_id=' + bookingUserId : '' %>" title="<%= bookingSession ? getSessionHoverText(bookingSession) : 'Session details unavailable' %>">
-                                                                    <%= bookingSession ? formatSessionTime(bookingSession.time) : '' %>,
+                                                                <a href="/bookings/<%= booking.id %><%= canManageBookings && bookingUserId ? '?booking_user_id=' + bookingUserId : '' %>#bookings-next-7-days" title="<%= bookingSession ? getSessionHoverText(bookingSession) : 'Session details unavailable' %>">
+                                                                    <%= bookingSession ? formatSessionTime(bookingSession.time) : '' %>
                                                                         <%= bookingSession ? bookingSession.title :
                                                                             `Booking #${booking.id}` %>
                                                                     <% if (canManageBookings && !bookingUserId) { %>
@@ -144,6 +152,13 @@
                                 });
                             });
 
+                            if (window.location.hash) {
+                                const scrollTarget = document.querySelector(window.location.hash);
+                                if (scrollTarget) {
+                                    window.addEventListener("load", () => scrollTarget.scrollIntoView());
+                                }
+                            }
+
                             function filterBookings(key, value) {
                                 const params = new URLSearchParams(window.location.search);
                                 if (value) params.set(key, value);
@@ -151,6 +166,10 @@
                                 params.delete('session_id');
                                 window.location.href = `/bookings${params.toString() ? `?${params}` : ''}`;
                             }
+
+                            document.querySelectorAll(".fade-out-alert").forEach((alert) => {
+                                setTimeout(() => alert.classList.add("is-hidden"), 3000);
+                            });
                         </script>
 
                         <%- include("partials/footer.ejs") %>

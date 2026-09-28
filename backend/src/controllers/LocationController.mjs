@@ -39,12 +39,15 @@ export class LocationController {
     const selectedSortBy = Object.keys(LocationModel.SORTABLE_COLUMNS).includes(req.query.sort_by)
       ? req.query.sort_by : "name";
     const selectedSortDir = req.query.sort_dir === "desc" ? "desc" : "asc";
-    const locationsPromise = (selectedSearchTerm || req.query.sort_by || req.query.sort_dir)
-      ? LocationModel.list({ searchTerm: selectedSearchTerm, sortBy: selectedSortBy, sortDir: selectedSortDir })
-      : LocationModel.getAll();
+    const pageSize = 7;
+    const selectedPage = Math.max(1, Number(req.query.page) || 1);
+    const locationsPromise = LocationModel.list({
+      searchTerm: selectedSearchTerm, sortBy: selectedSortBy, sortDir: selectedSortDir,
+      page: selectedPage, pageSize,
+    });
 
     Promise.all([locationsPromise, UsersModel.getAll()])
-      .then(([locations, users]) => {
+      .then(([{ locations, total }, users]) => {
         const selectedLocation = locations.find(
           (location) => location.id == selectedLocationId,
         ) ?? new LocationModel(null, "", "", "", "", "", 0, 0, 0, 0);
@@ -56,6 +59,8 @@ export class LocationController {
           selectedSearchTerm,
           selectedSortBy,
           selectedSortDir,
+          selectedPage,
+          totalPages: Math.max(1, Math.ceil(total / pageSize)),
           authenticatedUser: req.authenticatedUser ?? {},
           role: "admin",
         });
@@ -76,6 +81,7 @@ export class LocationController {
     const selectedSortDir = req.query.sort_dir === "desc" ? "desc" : "asc";
     const loadLocations = (req.query.sort_by || req.query.sort_dir)
       ? LocationModel.list({ searchTerm: selectedSearchTerm, sortBy: selectedSortBy, sortDir: selectedSortDir })
+          .then((result) => result.locations)
       : req.query.search_term
         ? LocationModel.getBySearch(req.query.search_term)
         : LocationModel.getAll();

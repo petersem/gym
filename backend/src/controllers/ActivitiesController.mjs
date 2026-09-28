@@ -21,10 +21,13 @@ export class ActivitiesController {
     const selectedSortBy = Object.keys(ActivitiesModel.SORTABLE_COLUMNS).includes(req.query.sort_by)
       ? req.query.sort_by : "name";
     const selectedSortDir = req.query.sort_dir === "desc" ? "desc" : "asc";
+    const pageSize = 7;
+    const selectedPage = Math.max(1, Number(req.query.page) || 1);
     try {
-      const activities = (selectedSearchTerm || req.query.sort_by || req.query.sort_dir)
-        ? await ActivitiesModel.list({ searchTerm: selectedSearchTerm, sortBy: selectedSortBy, sortDir: selectedSortDir })
-        : await ActivitiesModel.getAll();
+      const { activities, total } = await ActivitiesModel.list({
+        searchTerm: selectedSearchTerm, sortBy: selectedSortBy, sortDir: selectedSortDir,
+        page: selectedPage, pageSize,
+      });
       const selectedActivity = activities.find(
         (activity) => activity.id == req.params.id,
       ) ?? new ActivitiesModel(null, "", "", 0, 0);
@@ -34,6 +37,8 @@ export class ActivitiesController {
         selectedSearchTerm,
         selectedSortBy,
         selectedSortDir,
+        selectedPage,
+        totalPages: Math.max(1, Math.ceil(total / pageSize)),
         authenticatedUser: req.authenticatedUser ?? {},
         role: "admin",
       });

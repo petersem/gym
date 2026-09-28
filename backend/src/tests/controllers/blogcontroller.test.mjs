@@ -24,7 +24,7 @@ afterEach(() => {
 describe('BlogController', () => {
   test('renders blog management and handles load errors', async () => {
     const blogs = [{ id: 1 }];
-    jest.spyOn(BlogModel, 'getAll').mockResolvedValue(blogs);
+    jest.spyOn(BlogModel, 'list').mockResolvedValue({ blogs, total: 1 });
     jest.spyOn(UsersModel, 'getAll').mockResolvedValue([]);
     const res = response();
 
@@ -36,7 +36,7 @@ describe('BlogController', () => {
       selectedBlog: expect.objectContaining({ id: null }),
     }));
 
-    BlogModel.getAll.mockRejectedValue(new Error('database error'));
+    BlogModel.list.mockRejectedValue(new Error('database error'));
     await BlogController.viewBlogManagement(request(), res);
     expect(res.status).toHaveBeenCalledWith(500);
   });

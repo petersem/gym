@@ -41,7 +41,7 @@
                 <label for="session-search">Search session names</label>
                 <div class="session-search-control">
                     <input id="session-search" type="search" value="<%= selectedSearchTerm %>" onkeydown="if (event.key === 'Enter') { event.preventDefault(); filterSessions(); }">
-                    <button type="button" onclick="filterSessions()">Search</button>
+                    <button type="button" class="btn-accent" onclick="filterSessions()">Search</button>
                 </div>
             </div>
             <div class="session-results">
@@ -77,7 +77,7 @@
                             <% const sessionLocation = locations.find((location) => Number(location.id) === Number(session.location_id)); %>
                                 <% const trainerName = trainer ? `${trainer.last_name}, ${trainer.first_name}` : 'Unknown trainer'; %>
                             <tr>
-                                    <td><a href="/sessions/<%= session.id %>"><%= session.title %></a></td>
+                                    <td><a href="/sessions/<%= session.id %>#session-management"><%= session.title %></a></td>
                                     <td><%= trainerName %></td>
                                     <td><%= formatSessionDateTime(session.date, session.time) %></td>
                                     <td><%= activity ? activity.name : 'Unknown activity' %></td>
@@ -87,6 +87,23 @@
                     </tbody>
                 </table>
             </div>
+            <% if (totalPages > 1) { %>
+                <% const sessionPageLink = (page) => {
+                    const params = new URLSearchParams();
+                    if (selectedLocationId) params.set('location_id', selectedLocationId);
+                    if (selectedTrainerId) params.set('trainer_id', selectedTrainerId);
+                    if (selectedSearchTerm) params.set('search_term', selectedSearchTerm);
+                    params.set('sort_by', selectedSortBy);
+                    params.set('sort_dir', selectedSortDir);
+                    params.set('page', page);
+                    return `/sessions?${params.toString()}`;
+                }; %>
+                <nav class="pagination" aria-label="Sessions pagination">
+                    <a class="btn-outline<%= selectedPage <= 1 ? ' is-disabled' : '' %>" href="<%= selectedPage > 1 ? sessionPageLink(selectedPage - 1) : '#' %>" aria-disabled="<%= selectedPage <= 1 %>">Previous</a>
+                    <span>Page <%= selectedPage %> of <%= totalPages %></span>
+                    <a class="btn-outline<%= selectedPage >= totalPages ? ' is-disabled' : '' %>" href="<%= selectedPage < totalPages ? sessionPageLink(selectedPage + 1) : '#' %>" aria-disabled="<%= selectedPage >= totalPages %>">Next</a>
+                </nav>
+            <% } %>
         </section>
 
         <script>
@@ -98,12 +115,13 @@
                 if (location) params.set('location_id', location); else params.delete('location_id');
                 if (trainer) params.set('trainer_id', trainer); else params.delete('trainer_id');
                 if (searchTerm) params.set('search_term', searchTerm); else params.delete('search_term');
+                params.delete('page');
                 window.location.href = `/sessions${params.toString() ? `?${params}` : ''}`;
             }
         </script>
 
-        <section>
-            <h2>Session management</h2>
+        <section id="session-management">
+            <h2>Session management - <%= selectedSession.id ? 'Edit' : 'Create' %></h2>
             <form action="/sessions<%= selectedSession.id ? '/' + selectedSession.id : '' %>" method="post" class="form-grid responsive-half">
                 <label for="title">Title</label>
                 <input id="title" name="title" value="<%= selectedSession.title %>" required>
@@ -156,10 +174,17 @@
                     <%= selectedSession.id ? 'Update session' : 'Create session' %>
                 </button>
                 <% if (selectedSession.id) { %>
-                    <button type="button" onclick="window.location.href='/sessions'">Clear</button>
+                    <button type="button" onclick="window.location.href='/sessions#session-management'">Clear</button>
                 <% } %>
                 <% if (selectedSession.id) { %>
-                    <button type="submit" name="action" value="delete">Delete session</button>
+                    <button
+                        type="submit"
+                        name="action"
+                        value="delete"
+                        <%- selectedSessionHasBookings
+                            ? `onclick="return confirm('This session has existing bookings. Deleting it will also delete those bookings. Continue?')"`
+                            : '' %>
+                    >Delete session</button>
                 <% } %>
             </form>
         </section>

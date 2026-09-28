@@ -146,7 +146,12 @@ overrides. When adding a new DaisyUI element, follow the same pairing convention
 - `button`, `input[type="submit"]`, `.link-button`, `.btn` all share one base style
   (forest-green filled button). `button[type="button"]` renders as a neutral/outline
   button. `button[value="delete"]` is red. `.btn-outline` / `.link-button.btn-outline`
-  render as outline/ghost buttons.
+  render as outline/ghost buttons. `.btn-accent` renders the same forest-green fill as
+  the base button (uses `--gym-forest`, so it adapts automatically in dark mode) — it
+  exists purely to force type="button" search buttons to match the green save/create
+  buttons instead of falling back to the neutral `button[type="button"]` style. Used for
+  the search buttons on every search+sort list page (Activities, Locations, Users,
+  Sessions, Blog, and the public locations list).
 
 ### Forms
 - `.form-grid` — 2-column label/field grid (label ~130px, field flexible), used for every
@@ -238,7 +243,7 @@ wraps, and multi-column layouts (`.checkout-layout`, `.half-half-layout`,
 | Status/error page | [status.ejs](../backend/src/views/status.ejs) | `.link-button` only |
 | Activities | [activity_management.ejs](../backend/src/views/activity_management.ejs) | `.list-search(-control)`, `.list-results(-table)`, `.sort-link`, `.form-grid.responsive-half` |
 | Locations (admin) | [location_management.ejs](../backend/src/views/location_management.ejs) | Same `.list-*` pattern as Activities, `.two-col` |
-| Locations (public list) | [location_list.ejs](../backend/src/views/location_list.ejs) | `.search-form`, `.card-list`, `.card-tile card bg-base-100 shadow-sm`, `.btn-outline` |
+| Locations (public list) | [location_list.ejs](../backend/src/views/location_list.ejs) | `.search-form`, `.card-list`, `.card-tile card bg-base-100 shadow-sm`, `.btn-outline`, `.btn-accent` (search button) |
 | Location details | [location_details.ejs](../backend/src/views/location_details.ejs) | `.data-list`, `.data-list-heading` |
 | Sessions | [session_management.ejs](../backend/src/views/session_management.ejs) | `.session-filter-controls` (`.form-grid.responsive-half`), `.session-name-search(-control)`, `.session-results(-table)`, `.session-sort-button` — **do not rename, see §4** |
 | Bookings | [booking_management.ejs](../backend/src/views/booking_management.ejs) | `.alert.alert-success`, `.session-calendar`, `.session-day card bg-base-100`, `.available-session*`, `.btn.btn-primary` |

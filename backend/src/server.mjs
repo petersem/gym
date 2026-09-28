@@ -9,6 +9,11 @@ import { BlogController } from "./controllers/BlogController.mjs";
 import { BookingsController } from "./controllers/BookingsController.mjs";
 import { SessionsController } from "./controllers/SessionsController.mjs";
 import { ActivitiesController } from "./controllers/ActivitiesController.mjs";
+import { UsersModel } from "./models/UsersModel.mjs";
+import { LocationModel } from "./models/LocationModel.mjs";
+import { ActivitiesModel } from "./models/ActivitiesModel.mjs";
+import { SessionsModel } from "./models/SessionsModel.mjs";
+import { BookingsModel } from "./models/BookingsModel.mjs";
 import {
   sanitiser,
   errorMiddleware,
@@ -51,11 +56,91 @@ app.use("/activities", ActivitiesController.routes);
 app.use("/authenticate", AuthenticationController.routes);
 app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
-app.get("/", (req, res) => {
-  res.render("dashboard.ejs", {
-    authenticatedUser: req.authenticatedUser,
-    role: req.authenticatedUser?.role ?? "",
-  });
+// Date range string boundaries covering today through seven days ahead.
+const nextSevenDaysRange = () => {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const lastDate = new Date(today);
+  lastDate.setDate(lastDate.getDate() + 7);
+  const toLocalDateValue = (date) => [
+    date.getFullYear(),
+    String(date.getMonth() + 1).padStart(2, "0"),
+    String(date.getDate()).padStart(2, "0"),
+  ].join("-");
+  return { firstDateValue: toLocalDateValue(today), lastDateValue: toLocalDateValue(lastDate) };
+};
+
+// Build the role-specific dashboard summary stats for the logged-in user.
+const buildDashboardSummary = async (authenticatedUser) => {
+  const { firstDateValue, lastDateValue } = nextSevenDaysRange();
+  const isInNextSevenDays = (session) => {
+    const dateValue = String(session.date).slice(0, 10);
+    return dateValue >= firstDateValue && dateValue <= lastDateValue;
+  };
+
+  if (authenticatedUser.role === "admin") {
+    const [users, locations, activities, sessions, bookings] = await Promise.all([
+      UsersModel.getAll(), LocationModel.getAll(), ActivitiesModel.getAll(), SessionsModel.getAll(), BookingsModel.getAll(),
+    ]);
+    const upcomingSessions = sessions.filter(isInNextSevenDays);
+    const upcomingSessionIds = new Set(upcomingSessions.map((session) => session.id));
+    return {
+      totalMembers: users.filter((user) => user.role === "member").length,
+      totalTrainers: users.filter((user) => user.role === "trainer").length,
+      totalLocations: locations.length,
+      totalActivities: activities.length,
+      upcomingSessions: upcomingSessions.length,
+      upcomingBookings: bookings.filter((booking) => upcomingSessionIds.has(Number(booking.session_id))).length,
+    };
+  }
+
+  if (authenticatedUser.role === "trainer") {
+    const [sessions, bookings] = await Promise.all([SessionsModel.getAll(), BookingsModel.getAll()]);
+    const mySessions = sessions.filter((session) => (
+      Number(session.trainer_id) === Number(authenticatedUser.id) && isInNextSevenDays(session)
+    ));
+    const mySessionIds = new Set(mySessions.map((session) => session.id));
+    return {
+      upcomingSessions: mySessions.length,
+      upcomingBookings: bookings.filter((booking) => mySessionIds.has(Number(booking.session_id))).length,
+    };
+  }
+
+  if (authenticatedUser.role === "member") {
+    const [bookings, sessions, locations] = await Promise.all([
+      BookingsModel.getByUserId(authenticatedUser.id), SessionsModel.getAll(), LocationModel.getAll(),
+    ]);
+    const sessionsById = new Map(sessions.map((session) => [session.id, session]));
+    const locationsById = new Map(locations.map((location) => [location.id, location]));
+    const upcomingBookings = bookings
+      .map((booking) => sessionsById.get(Number(booking.session_id)))
+      .filter((session) => session && isInNextSevenDays(session))
+      .sort((left, right) => `${left.date}${left.time}`.localeCompare(`${right.date}${right.time}`));
+    const nextSession = upcomingBookings[0] ?? null;
+    return {
+      upcomingBookings: upcomingBookings.length,
+      nextSession: nextSession && {
+        ...nextSession,
+        locationName: locationsById.get(Number(nextSession.location_id))?.name ?? "Unknown location",
+      },
+    };
+  }
+
+  return null;
+};
+
+app.get("/", async (req, res) => {
+  const authenticatedUser = req.authenticatedUser;
+  const role = authenticatedUser?.role ?? "";
+  let summary = null;
+  if (authenticatedUser) {
+    try {
+      summary = await buildDashboardSummary(authenticatedUser);
+    } catch (error) {
+      console.error(error);
+    }
+  }
+  res.render("dashboard.ejs", { authenticatedUser, role, summary });
 });
 
 app.use(express.static(path.join(import.meta.dirname, "public")));

@@ -20,11 +20,14 @@ export class BlogController {
     const selectedSortBy = Object.keys(BlogModel.SORTABLE_COLUMNS).includes(req.query.sort_by)
       ? req.query.sort_by : "created";
     const selectedSortDir = req.query.sort_dir === "asc" ? "asc" : "desc";
-    const blogsPromise = (selectedSearchTerm || req.query.sort_by || req.query.sort_dir)
-      ? BlogModel.list({ searchTerm: selectedSearchTerm, sortBy: selectedSortBy, sortDir: selectedSortDir })
-      : BlogModel.getAll();
+    const pageSize = 20;
+    const selectedPage = Math.max(1, Number(req.query.page) || 1);
+    const blogsPromise = BlogModel.list({
+      searchTerm: selectedSearchTerm, sortBy: selectedSortBy, sortDir: selectedSortDir,
+      page: selectedPage, pageSize,
+    });
     return Promise.all([blogsPromise, UsersModel.getAll()])
-      .then(([blogs, users]) => {
+      .then(([{ blogs, total }, users]) => {
       const selectedBlog = blogs.find((blog) => blog.id == req.params.id)
         ?? new BlogModel(null, "", "", 0, "", 0, 0);
       res.render("blog_management.ejs", {
@@ -34,6 +37,8 @@ export class BlogController {
         selectedSearchTerm,
         selectedSortBy,
         selectedSortDir,
+        selectedPage,
+        totalPages: Math.max(1, Math.ceil(total / pageSize)),
         authenticatedUser: req.authenticatedUser,
         role: "admin",
       });

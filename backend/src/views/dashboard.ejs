@@ -7,6 +7,10 @@
 </head>
 
 <body>
+    <% const formatSessionDateTime = (date, time) => new Intl.DateTimeFormat('en-AU', {
+        day: '2-digit', month: '2-digit', year: 'numeric',
+        hour: 'numeric', minute: '2-digit', hour12: true,
+    }).format(new Date(`${String(date).slice(0, 10)}T${time}`)).replace(/^0/, '').replace(/\s+(am|pm)$/i, '$1'); %>
     <main>
         <%- include("partials/header.ejs") %>
         <%- include("partials/nav.ejs", { role, authenticatedUser }) %>
@@ -20,6 +24,61 @@
                     Welcome to the gym management portal.
                 <% } %>
             </p>
+            <% if (role) { %>
+                <p>
+                    <% switch (role) {
+                        case "admin":
+                            %>
+                            You have administrative privileges.
+                        <%
+                            break;
+                        case "trainer":
+                            %>
+                            You are logged in as a trainer.
+                        <%
+                            break;
+                        case "member":
+                            %>
+                            You are logged in as a member.
+                        <%
+                            break;
+                        default:
+                            %>
+                            You are logged in with an unrecognized role.
+                        <%
+                            break;
+                    } %>
+                </p>
+            <% } else { %>
+                <p>Log in or register to view your dashboard.</p>
+                <br><br>
+                <p>For now, you can view available sessions on the bookings page and also read the blogs.</p>
+            <% } %>
+
+            <% if (summary) { %>
+                <div class="dashboard-summary-grid">
+                    <% if (role === 'admin') { %>
+                        <div class="dashboard-summary-card"><strong><%= summary.totalMembers %></strong><span>Members</span></div>
+                        <div class="dashboard-summary-card"><strong><%= summary.totalTrainers %></strong><span>Trainers</span></div>
+                        <div class="dashboard-summary-card"><strong><%= summary.totalLocations %></strong><span>Locations</span></div>
+                        <div class="dashboard-summary-card"><strong><%= summary.totalActivities %></strong><span>Activities</span></div>
+                        <div class="dashboard-summary-card"><strong><%= summary.upcomingSessions %></strong><span>Sessions next 7 days</span></div>
+                        <div class="dashboard-summary-card"><strong><%= summary.upcomingBookings %></strong><span>Bookings next 7 days</span></div>
+                    <% } else if (role === 'trainer') { %>
+                        <div class="dashboard-summary-card"><strong><%= summary.upcomingSessions %></strong><span>Your sessions next 7 days</span></div>
+                        <div class="dashboard-summary-card"><strong><%= summary.upcomingBookings %></strong><span>Bookings for your sessions</span></div>
+                    <% } else if (role === 'member') { %>
+                        <div class="dashboard-summary-card"><strong><%= summary.upcomingBookings %></strong><span>Your bookings next 7 days</span></div>
+                        <% if (summary.nextSession) { %>
+                            <div class="dashboard-summary-card">
+                                <strong><%= summary.nextSession.title %></strong>
+                                <span>Your next session</span>
+                                <span><%= formatSessionDateTime(summary.nextSession.date, summary.nextSession.time) %>, <%= summary.nextSession.locationName %></span>
+                            </div>
+                        <% } %>
+                    <% } %>
+                </div>
+            <% } %>
 
             <div class="dashboard-links">
                 <% if (authenticatedUser) { %>
@@ -28,7 +87,7 @@
                     <a class="btn btn-primary" href="/authenticate">Log in</a>
                     <a class="btn btn-secondary" href="/authenticate/register">Register</a>
                 <% } %>
-                <a class="btn btn-outline" href="/api-docs">API documentation</a>
+
             </div>
         </section>
 

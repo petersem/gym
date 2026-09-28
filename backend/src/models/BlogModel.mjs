@@ -75,9 +75,13 @@ export class BlogModel extends DatabaseModel {
    * @param {string} [options.searchTerm] Optional search term for title/content.
    * @param {string} [options.sortBy] Column to sort by (title|created).
    * @param {string} [options.sortDir] Sort direction (asc|desc).
-   * @returns {Promise<Array<BlogModel>>} Matching blog posts.
+   * @param {number} [options.page] 1-indexed page number for pagination.
+   * @param {number} [options.pageSize] Number of rows per page.
+   * @returns {Promise<{ blogs: Array<BlogModel>, total: number }>} Matching blog posts and total match count.
    */
-  static async list({ searchTerm = "", sortBy = "created", sortDir = "desc" } = {}) {
+  static async list({
+    searchTerm = "", sortBy = "created", sortDir = "desc", page = 1, pageSize = null,
+  } = {}) {
     const column = this.SORTABLE_COLUMNS[sortBy] ?? this.SORTABLE_COLUMNS.created;
     const direction = sortDir === "asc" ? "ASC" : "DESC";
     const where = [];
@@ -87,10 +91,15 @@ export class BlogModel extends DatabaseModel {
       values.push(`%${searchTerm}%`, `%${searchTerm}%`);
     }
     const whereClause = where.length ? `WHERE ${where.join(" AND ")}` : "";
-    return this.query(
-      `SELECT * FROM blog ${whereClause} ORDER BY ${column} ${direction}, id ${direction}`,
-      values,
+    const countResult = await this.query(`SELECT COUNT(*) AS total FROM blog ${whereClause}`, values);
+    const total = Number(countResult[0]?.[""]?.total ?? 0);
+    const limitClause = pageSize ? "LIMIT ? OFFSET ?" : "";
+    const limitValues = pageSize ? [pageSize, (Math.max(1, page) - 1) * pageSize] : [];
+    const blogs = await this.query(
+      `SELECT * FROM blog ${whereClause} ORDER BY ${column} ${direction}, id ${direction} ${limitClause}`,
+      [...values, ...limitValues],
     ).then((result) => result.map((row) => this.tableToModel(row.blog)));
+    return { blogs, total };
   }
 
   /**

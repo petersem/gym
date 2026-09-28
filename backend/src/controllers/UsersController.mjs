@@ -1,5 +1,5 @@
 import express from "express";
-import { UsersModel } from "../models/UsersModel.mjs";
+import { UsersModel, USER_ROLE_ADMIN, USER_ROLE_TRAINER, USER_ROLE_MEMBER } from "../models/UsersModel.mjs";
 import bcrypt from "bcrypt";
 
 /** HTTP handlers for users. */
@@ -40,15 +40,20 @@ export class UsersController {
         const selectedUserId = req.params.id
         const query = req.query ?? {}
         const selectedSearchTerm = String(query.search_term ?? "").trim()
+        const selectedRole = [USER_ROLE_ADMIN, USER_ROLE_TRAINER, USER_ROLE_MEMBER].includes(query.role)
+            ? query.role : ""
         const selectedSortBy = Object.keys(UsersModel.SORTABLE_COLUMNS).includes(query.sort_by)
             ? query.sort_by : "last_name"
         const selectedSortDir = query.sort_dir === "desc" ? "desc" : "asc"
-        const usersPromise = (selectedSearchTerm || query.sort_by || query.sort_dir)
-            ? UsersModel.list({ searchTerm: selectedSearchTerm, sortBy: selectedSortBy, sortDir: selectedSortDir })
-            : UsersModel.getAll()
+        const pageSize = 7
+        const selectedPage = Math.max(1, Number(query.page) || 1)
+        const usersPromise = UsersModel.list({
+            searchTerm: selectedSearchTerm, role: selectedRole, sortBy: selectedSortBy, sortDir: selectedSortDir,
+            page: selectedPage, pageSize,
+        })
 
         usersPromise
-            .then(users => {
+            .then(({ users, total }) => {
 
                 const selectedUser = users.find(
                     e => e.id == selectedUserId
@@ -69,8 +74,11 @@ export class UsersController {
                     users,
                     selectedUser,
                     selectedSearchTerm,
+                    selectedRole,
                     selectedSortBy,
                     selectedSortDir,
+                    selectedPage,
+                    totalPages: Math.max(1, Math.ceil(total / pageSize)),
                     authenticatedUser: req.authenticatedUser,
                     role: "admin",
                 })
