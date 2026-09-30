@@ -23,6 +23,7 @@ afterEach(() => {
   jest.restoreAllMocks();
 });
 
+// Query spies verify blog mapping and SQL construction without contacting MySQL.
 describe("BlogModel unit tests", () => {
   test("constructs a blog post and maps a database row", () => {
     expect(blog).toBeInstanceOf(BlogModel);

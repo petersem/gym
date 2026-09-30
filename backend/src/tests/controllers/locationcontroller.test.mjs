@@ -25,6 +25,7 @@ afterEach(() => {
   jest.restoreAllMocks();
 });
 
+// Mocked model calls keep location handler behavior independent of MySQL.
 describe("LocationController", () => {
   test("renders location management and selected location", async () => {
     const locations = [{ id: 1, name: "Central Gym" }];

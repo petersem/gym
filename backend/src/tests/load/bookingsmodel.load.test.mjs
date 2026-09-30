@@ -44,6 +44,7 @@ afterAll(async () => {
   await BookingsModel.connection.end();
 });
 
+// Runs concurrent booking lifecycles against MySQL and removes dependent test data.
 describe("BookingsModel load test", () => {
   test(`handles ${requestCount} concurrent booking lifecycles`, async () => {
     const owner = (await UsersModel.getAll())[0];

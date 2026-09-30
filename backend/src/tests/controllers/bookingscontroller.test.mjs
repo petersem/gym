@@ -29,6 +29,7 @@ afterEach(() => {
   jest.restoreAllMocks();
 });
 
+// Model spies keep booking permissions, filters, and redirects database-independent.
 describe("BookingsController", () => {
   test("renders booking management and handles load errors", async () => {
     const bookings = [{ id: 1, session_id: 4, user_id: 7 }];
@@ -382,6 +383,13 @@ describe("BookingsController", () => {
     );
     expect(res.redirect).toHaveBeenCalledWith(
       "/bookings?booking_user_id=8&booking_trainer_id=5&booking_created=1",
+    );
+    await BookingsController.handleBookingManagement(
+      request({}, { booking_trainer_id: "all" }, { action: "create" }),
+      res,
+    );
+    expect(res.redirect).toHaveBeenLastCalledWith(
+      "/bookings?booking_trainer_id=all&booking_created=1",
     );
     await BookingsController.handleBookingManagement(
       request(

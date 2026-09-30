@@ -7,6 +7,7 @@ afterAll(async () => {
   await UsersModel.connection.end();
 });
 
+// Exercises user persistence and authentication lookup against the configured MySQL database.
 describe("UsersModel end-to-end flow", () => {
   test("creates, reads, searches, updates, authenticates, and deletes a user", async () => {
     const email = `e2e-model-${Date.now()}@example.com`;

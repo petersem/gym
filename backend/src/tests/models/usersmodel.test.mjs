@@ -31,6 +31,7 @@ afterEach(() => {
   jest.restoreAllMocks();
 });
 
+// Query spies verify user mapping, filtering, and SQL without contacting MySQL.
 describe("UsersModel unit tests", () => {
   test("constructs a user and maps a database row", () => {
     expect(user).toBeInstanceOf(UsersModel);

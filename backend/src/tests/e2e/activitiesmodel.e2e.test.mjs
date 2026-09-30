@@ -8,6 +8,7 @@ afterAll(async () => {
   await ActivitiesModel.connection.end();
 });
 
+// Exercises real MySQL persistence and removes each activity created by the test.
 describe("ActivitiesModel end-to-end flow", () => {
   test("creates, reads, searches, updates, and deletes an activity", async () => {
     const user = await owner();

@@ -14,6 +14,7 @@ afterAll(async () => {
   await SessionsModel.connection.end();
 });
 
+// Exercises related MySQL records and removes the session and its dependencies.
 describe("SessionsModel end-to-end flow", () => {
   test("creates, reads, updates, and deletes a gym session", async () => {
     const owner = await user();

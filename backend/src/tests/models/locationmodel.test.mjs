@@ -31,6 +31,7 @@ afterEach(() => {
   jest.restoreAllMocks();
 });
 
+// Query spies verify location mapping and SQL arguments without contacting MySQL.
 describe("LocationModel unit tests", () => {
   test("constructs a location and maps a database row", () => {
     expect(location).toBeInstanceOf(LocationModel);

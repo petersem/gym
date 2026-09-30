@@ -17,6 +17,7 @@ afterEach(() => {
   jest.restoreAllMocks();
 });
 
+// Query spies verify session mapping and SQL construction without contacting MySQL.
 describe("SessionsModel unit tests", () => {
   test("constructs a session and maps a database row", () => {
     expect(session).toBeInstanceOf(SessionsModel);

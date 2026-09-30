@@ -51,6 +51,7 @@ afterEach(() => {
   jest.restoreAllMocks();
 });
 
+// Mocked models isolate session handler behavior; unmocked calls can open MySQL pools.
 describe("SessionsController", () => {
   test("renders session management and handles load errors", async () => {
     const sessions = [

@@ -23,6 +23,7 @@ const ruleFor = (selector) => {
   );
 };
 
+// Checks the shared template and CSS contract without launching a browser.
 describe("shared footer layout", () => {
   test("keeps the footer at the viewport bottom on short pages", () => {
     expect(footerTemplate).toMatch(/class="site-footer"/);

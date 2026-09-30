@@ -24,6 +24,7 @@ afterEach(() => {
   jest.restoreAllMocks();
 });
 
+// Mocked model calls keep these response and routing tests independent of MySQL.
 describe("ActivitiesController", () => {
   test("renders activity management and handles load errors", async () => {
     const activities = [{ id: 1 }];

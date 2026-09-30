@@ -43,6 +43,7 @@ afterEach(() => {
   jest.restoreAllMocks();
 });
 
+// Mocked models isolate user-management responses from database behavior.
 describe("UsersController unit tests", () => {
   test("renders users and the selected user", async () => {
     jest

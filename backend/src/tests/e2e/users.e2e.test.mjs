@@ -76,6 +76,7 @@ const createUser = async (email) => {
   return users[0];
 };
 
+// Sends HTTP requests through the real routes with test-only admin authentication.
 describe("UsersController end-to-end flow", () => {
   test("creates a user through HTTP", async () => {
     const email = `e2e-create-${Date.now()}@example.com`;

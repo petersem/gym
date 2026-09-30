@@ -8,6 +8,7 @@ afterAll(async () => {
   await LocationModel.connection.end();
 });
 
+// Exercises real MySQL persistence and deletes the location created by the test.
 describe("LocationModel end-to-end flow", () => {
   test("creates, reads, searches, updates, and deletes a location", async () => {
     const user = (await UsersModel.getAll())[0];

@@ -24,6 +24,7 @@ afterEach(() => {
   jest.restoreAllMocks();
 });
 
+// Model spies isolate session and credential handling from database behavior.
 describe("AuthenticationController", () => {
   test("loads a user from an authenticated session", async () => {
     const user = { id: 7 };

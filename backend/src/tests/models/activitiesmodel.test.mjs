@@ -21,6 +21,7 @@ afterEach(() => {
   jest.restoreAllMocks();
 });
 
+// Query spies verify row mapping and SQL arguments without contacting MySQL.
 describe("ActivitiesModel unit tests", () => {
   test("constructs an activity and maps a database row", () => {
     expect(activity).toBeInstanceOf(ActivitiesModel);

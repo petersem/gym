@@ -14,6 +14,7 @@ afterEach(() => {
   jest.restoreAllMocks();
 });
 
+// Query spies verify booking mapping and SQL construction without contacting MySQL.
 describe("BookingsModel unit tests", () => {
   test("constructs a booking and maps a database row", () => {
     expect(booking).toBeInstanceOf(BookingsModel);

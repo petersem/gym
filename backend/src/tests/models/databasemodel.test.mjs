@@ -7,6 +7,7 @@ afterEach(() => {
   DatabaseModel.connection = originalConnection;
 });
 
+// Stubs the pool query method to test database helpers without a live connection.
 describe("DatabaseModel unit tests", () => {
   test("query returns the first value from the database response", async () => {
     const connection = {

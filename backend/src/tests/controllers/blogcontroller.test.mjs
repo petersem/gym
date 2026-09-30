@@ -26,6 +26,7 @@ afterEach(() => {
   jest.restoreAllMocks();
 });
 
+// Mocked model calls isolate blog permissions and response behavior.
 describe("BlogController", () => {
   test("renders blog management and handles load errors", async () => {
     const blogs = [{ id: 1 }];

@@ -30,6 +30,7 @@ afterAll(async () => {
   await SessionsModel.connection.end();
 });
 
+// Runs concurrent session lifecycles against MySQL and cleans up dependent records.
 describe("SessionsModel load test", () => {
   test(`handles ${requestCount} concurrent session lifecycles`, async () => {
     const owner = (await UsersModel.getAll())[0];

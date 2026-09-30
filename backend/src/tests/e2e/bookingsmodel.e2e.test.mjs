@@ -15,6 +15,7 @@ afterAll(async () => {
   await BookingsModel.connection.end();
 });
 
+// Exercises booking persistence against MySQL and removes dependent records afterward.
 describe("BookingsModel end-to-end flow", () => {
   test("creates, reads, updates, and deletes a booking", async () => {
     const user = new UsersModel(

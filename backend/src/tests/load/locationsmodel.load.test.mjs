@@ -13,6 +13,7 @@ afterAll(async () => {
   await LocationModel.connection.end();
 });
 
+// Runs concurrent location operations against MySQL and removes generated locations.
 describe("LocationModel load test", () => {
   test(`handles ${requestCount} concurrent location lifecycles`, async () => {
     const owner = (await UsersModel.getAll())[0];

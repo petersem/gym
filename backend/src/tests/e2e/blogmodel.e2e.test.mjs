@@ -9,6 +9,7 @@ afterAll(async () => {
   await BlogModel.connection.end();
 });
 
+// Exercises real MySQL persistence and cleans up the post and author afterward.
 describe("BlogModel end-to-end flow", () => {
   test("creates, reads, searches, updates, and deletes a blog post", async () => {
     const user = new UsersModel(

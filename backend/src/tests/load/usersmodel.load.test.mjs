@@ -12,6 +12,7 @@ afterAll(async () => {
   await UsersModel.connection.end();
 });
 
+// Runs concurrent user lifecycles against MySQL and removes generated users.
 describe("UsersModel load test", () => {
   test(`handles ${requestCount} concurrent user lifecycles`, async () => {
     const created = await Promise.all(

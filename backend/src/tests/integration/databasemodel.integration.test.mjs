@@ -5,6 +5,7 @@ afterAll(async () => {
   await DatabaseModel.connection.end();
 });
 
+// Requires a live MySQL service to verify the model's real query path.
 describe("DatabaseModel database integration", () => {
   test("executes a parameterized query against MySQL", async () => {
     const result = await DatabaseModel.query("SELECT ? AS value", [

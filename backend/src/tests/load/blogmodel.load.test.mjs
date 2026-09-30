@@ -18,6 +18,7 @@ afterAll(async () => {
   await BlogModel.connection.end();
 });
 
+// Runs concurrent blog operations against MySQL and cleans up their generated records.
 describe("BlogModel load test", () => {
   test(`handles ${requestCount} concurrent blog lifecycles`, async () => {
     const users = await Promise.all(

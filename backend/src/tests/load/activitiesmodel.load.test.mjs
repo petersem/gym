@@ -13,6 +13,7 @@ afterAll(async () => {
   await ActivitiesModel.connection.end();
 });
 
+// Runs concurrent MySQL lifecycles and removes the generated activity rows afterward.
 describe("ActivitiesModel load test", () => {
   test(`handles ${requestCount} concurrent activity lifecycles`, async () => {
     const owner = (await UsersModel.getAll())[0];

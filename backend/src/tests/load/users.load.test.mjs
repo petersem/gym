@@ -49,6 +49,7 @@ const userForm = (email) =>
     updatedBy: "1",
   });
 
+// Sends concurrent HTTP creates through the real route using test-only admin auth.
 describe("UsersController load test", () => {
   test(`handles ${requestCount} concurrent user creations`, async () => {
     const startedAt = performance.now();
