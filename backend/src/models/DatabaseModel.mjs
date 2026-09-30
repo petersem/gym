@@ -3,17 +3,17 @@ import mysql from "mysql2/promise";
 export class DatabaseModel {
   static connection;
 
-    static {
-        this.connection = mysql.createPool({
-            host: process.env.DB_HOST || "127.0.0.1",
-            user: process.env.DB_USER || "gymuser",
-            port: Number(process.env.DB_PORT) || 3307,
-            password: process.env.DB_PASSWORD || "Testing123!",
-            database: process.env.DB_NAME || "gym",
-            nestTables: true,
-            dateStrings: true,
-        })
-    }
+  static {
+    this.connection = mysql.createPool({
+      host: process.env.DB_HOST || "127.0.0.1",
+      user: process.env.DB_USER || "gymuser",
+      port: Number(process.env.DB_PORT) || 3307,
+      password: process.env.DB_PASSWORD || "Testing123!",
+      database: process.env.DB_NAME || "gym",
+      nestTables: true,
+      dateStrings: true,
+    });
+  }
 
   static async query(sql, values) {
     const [result] = await this.connection.query(sql, values);

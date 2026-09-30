@@ -9,52 +9,59 @@ export class LocationController {
   static routes = express.Router();
 
   static {
-        this.routes.get(
-            "/",
-            AuthenticationController.restrict(["admin"]),
-            this.viewLocationManagement
-        )
+    this.routes.get(
+      "/",
+      AuthenticationController.restrict(["admin"]),
+      this.viewLocationManagement,
+    );
 
-          this.routes.get("/sales", this.viewLocationSales)
+    this.routes.get("/sales", this.viewLocationSales);
 
-        this.routes.get(
-            "/:id",
-            AuthenticationController.restrict(["admin"]),
-            this.viewLocationManagement
-        )
+    this.routes.get(
+      "/:id",
+      AuthenticationController.restrict(["admin"]),
+      this.viewLocationManagement,
+    );
 
-        this.routes.post(
-            "/",
-            AuthenticationController.restrict(["admin"]),
-            this.handleLocationManagement
-        )
+    this.routes.post(
+      "/",
+      AuthenticationController.restrict(["admin"]),
+      this.handleLocationManagement,
+    );
 
-        this.routes.post(
-            "/:id",
-            AuthenticationController.restrict(["admin"]),
-            this.handleLocationManagement
-        )    
+    this.routes.post(
+      "/:id",
+      AuthenticationController.restrict(["admin"]),
+      this.handleLocationManagement,
+    );
   }
 
   /** @type {import("express").RequestHandler} */
   static viewLocationManagement(req, res) {
     const selectedLocationId = req.params.id;
     const selectedSearchTerm = String(req.query.search_term ?? "").trim();
-    const selectedSortBy = Object.keys(LocationModel.SORTABLE_COLUMNS).includes(req.query.sort_by)
-      ? req.query.sort_by : "name";
+    const selectedSortBy = Object.keys(LocationModel.SORTABLE_COLUMNS).includes(
+      req.query.sort_by,
+    )
+      ? req.query.sort_by
+      : "name";
     const selectedSortDir = req.query.sort_dir === "desc" ? "desc" : "asc";
     const pageSize = 7;
     const selectedPage = Math.max(1, Number(req.query.page) || 1);
     const locationsPromise = LocationModel.list({
-      searchTerm: selectedSearchTerm, sortBy: selectedSortBy, sortDir: selectedSortDir,
-      page: selectedPage, pageSize,
+      searchTerm: selectedSearchTerm,
+      sortBy: selectedSortBy,
+      sortDir: selectedSortDir,
+      page: selectedPage,
+      pageSize,
     });
 
     Promise.all([locationsPromise, UsersModel.getAll()])
       .then(([{ locations, total }, users]) => {
-        const selectedLocation = locations.find(
-          (location) => String(location.id) === selectedLocationId,
-        ) ?? new LocationModel(null, "", "", "", "", "", 0, 0, 0, 0);
+        const selectedLocation =
+          locations.find(
+            (location) => String(location.id) === selectedLocationId,
+          ) ?? new LocationModel(null, "", "", "", "", "", 0, 0, 0, 0);
 
         res.render("location_management.ejs", {
           locations,
@@ -81,15 +88,22 @@ export class LocationController {
   /** @type {import("express").RequestHandler} */
   static viewLocationList(req, res) {
     const selectedSearchTerm = String(req.query.search_term ?? "").trim();
-    const selectedSortBy = Object.keys(LocationModel.SORTABLE_COLUMNS).includes(req.query.sort_by)
-      ? req.query.sort_by : "name";
+    const selectedSortBy = Object.keys(LocationModel.SORTABLE_COLUMNS).includes(
+      req.query.sort_by,
+    )
+      ? req.query.sort_by
+      : "name";
     const selectedSortDir = req.query.sort_dir === "desc" ? "desc" : "asc";
-    const loadLocations = (req.query.sort_by || req.query.sort_dir)
-      ? LocationModel.list({ searchTerm: selectedSearchTerm, sortBy: selectedSortBy, sortDir: selectedSortDir })
-          .then((result) => result.locations)
-      : req.query.search_term
-        ? LocationModel.getBySearch(req.query.search_term)
-        : LocationModel.getAll();
+    const loadLocations =
+      req.query.sort_by || req.query.sort_dir
+        ? LocationModel.list({
+            searchTerm: selectedSearchTerm,
+            sortBy: selectedSortBy,
+            sortDir: selectedSortDir,
+          }).then((result) => result.locations)
+        : req.query.search_term
+          ? LocationModel.getBySearch(req.query.search_term)
+          : LocationModel.getAll();
 
     loadLocations
       .then((locations) => {
@@ -137,7 +151,6 @@ export class LocationController {
         });
       });
   }
-
 
   /** @type {import("express").RequestHandler} */
   static handleLocationManagement(req, res) {

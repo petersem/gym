@@ -13,7 +13,7 @@ export class LocationModel extends DatabaseModel {
     postcode,
     manager,
     deleted,
-    updatedBy
+    updatedBy,
   ) {
     super();
     this.id = id;
@@ -41,10 +41,9 @@ export class LocationModel extends DatabaseModel {
       row["postcode"],
       row["manager"],
       row["deleted"],
-      row["updated_by"]
+      row["updated_by"],
     );
   }
-
 
   /**
    *
@@ -67,12 +66,16 @@ export class LocationModel extends DatabaseModel {
             WHERE deleted = 0 
             AND (name LIKE ? OR suburb LIKE ? OR postcode LIKE ?)
         `,
-          [`%${term}%`, `%${term}%`, `%${term}%`],
+      [`%${term}%`, `%${term}%`, `%${term}%`],
     ).then((result) => result.map((row) => this.tableToModel(row.locations)));
   }
 
   /** Columns that may be used to sort location listings. */
-  static SORTABLE_COLUMNS = { name: "name", suburb: "suburb", postcode: "postcode" };
+  static SORTABLE_COLUMNS = {
+    name: "name",
+    suburb: "suburb",
+    postcode: "postcode",
+  };
 
   /**
    * Search and sort non-deleted locations server-side.
@@ -85,7 +88,11 @@ export class LocationModel extends DatabaseModel {
    * @returns {Promise<{ locations: Array<LocationModel>, total: number }>} Matching locations and total match count.
    */
   static async list({
-    searchTerm = "", sortBy = "name", sortDir = "asc", page = 1, pageSize = null,
+    searchTerm = "",
+    sortBy = "name",
+    sortDir = "asc",
+    page = 1,
+    pageSize = null,
   } = {}) {
     const column = this.SORTABLE_COLUMNS[sortBy] ?? this.SORTABLE_COLUMNS.name;
     const direction = sortDir === "desc" ? "DESC" : "ASC";
@@ -96,10 +103,15 @@ export class LocationModel extends DatabaseModel {
       values.push(`%${searchTerm}%`, `%${searchTerm}%`, `%${searchTerm}%`);
     }
     const whereClause = where.join(" AND ");
-    const countResult = await this.query(`SELECT COUNT(*) AS total FROM locations WHERE ${whereClause}`, values);
+    const countResult = await this.query(
+      `SELECT COUNT(*) AS total FROM locations WHERE ${whereClause}`,
+      values,
+    );
     const total = Number(countResult[0]?.[""]?.total ?? 0);
     const limitClause = pageSize ? "LIMIT ? OFFSET ?" : "";
-    const limitValues = pageSize ? [pageSize, (Math.max(1, page) - 1) * pageSize] : [];
+    const limitValues = pageSize
+      ? [pageSize, (Math.max(1, page) - 1) * pageSize]
+      : [];
     const locations = await this.query(
       `SELECT * FROM locations WHERE ${whereClause} ORDER BY ${column} ${direction} ${limitClause}`,
       [...values, ...limitValues],
@@ -113,7 +125,9 @@ export class LocationModel extends DatabaseModel {
    * @returns {Promise<LocationModel>}
    */
   static async getById(id) {
-    const result = await this.query("SELECT * FROM locations WHERE id = ?", [id]);
+    const result = await this.query("SELECT * FROM locations WHERE id = ?", [
+      id,
+    ]);
     return result.length > 0
       ? this.tableToModel(result[0].locations)
       : Promise.reject("not found");
@@ -183,7 +197,7 @@ export class LocationModel extends DatabaseModel {
         location.postcode,
         location.manager,
         location.deleted,
-        location.updated_by,  
+        location.updated_by,
       ],
     );
   }
@@ -209,7 +223,7 @@ export class LocationModel extends DatabaseModel {
         location.postcode,
         location.manager,
         location.deleted,
-        location.updated_by,  
+        location.updated_by,
       ],
     );
   }

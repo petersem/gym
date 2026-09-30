@@ -42,13 +42,13 @@ export class BlogModel extends DatabaseModel {
   }
 
   /**
-  * Retrieve all blog posts.
+   * Retrieve all blog posts.
    * @returns {Promise<Array<BlogModel>>} Active blog posts.
    */
   static async getAll() {
-    return this.query("SELECT * FROM blog ORDER BY create_date DESC, id DESC").then(
-      (result) => result.map((row) => this.tableToModel(row.blog)),
-    );
+    return this.query(
+      "SELECT * FROM blog ORDER BY create_date DESC, id DESC",
+    ).then((result) => result.map((row) => this.tableToModel(row.blog)));
   }
 
   /**
@@ -80,9 +80,14 @@ export class BlogModel extends DatabaseModel {
    * @returns {Promise<{ blogs: Array<BlogModel>, total: number }>} Matching blog posts and total match count.
    */
   static async list({
-    searchTerm = "", sortBy = "created", sortDir = "desc", page = 1, pageSize = null,
+    searchTerm = "",
+    sortBy = "created",
+    sortDir = "desc",
+    page = 1,
+    pageSize = null,
   } = {}) {
-    const column = this.SORTABLE_COLUMNS[sortBy] ?? this.SORTABLE_COLUMNS.created;
+    const column =
+      this.SORTABLE_COLUMNS[sortBy] ?? this.SORTABLE_COLUMNS.created;
     const direction = sortDir === "asc" ? "ASC" : "DESC";
     const where = [];
     const values = [];
@@ -91,10 +96,15 @@ export class BlogModel extends DatabaseModel {
       values.push(`%${searchTerm}%`, `%${searchTerm}%`);
     }
     const whereClause = where.length ? `WHERE ${where.join(" AND ")}` : "";
-    const countResult = await this.query(`SELECT COUNT(*) AS total FROM blog ${whereClause}`, values);
+    const countResult = await this.query(
+      `SELECT COUNT(*) AS total FROM blog ${whereClause}`,
+      values,
+    );
     const total = Number(countResult[0]?.[""]?.total ?? 0);
     const limitClause = pageSize ? "LIMIT ? OFFSET ?" : "";
-    const limitValues = pageSize ? [pageSize, (Math.max(1, page) - 1) * pageSize] : [];
+    const limitValues = pageSize
+      ? [pageSize, (Math.max(1, page) - 1) * pageSize]
+      : [];
     const blogs = await this.query(
       `SELECT * FROM blog ${whereClause} ORDER BY ${column} ${direction}, id ${direction} ${limitClause}`,
       [...values, ...limitValues],
@@ -127,12 +137,7 @@ export class BlogModel extends DatabaseModel {
             SET subject = ?, body = ?, user_id = ?
             WHERE id = ?
         `,
-      [
-        blog.title,
-        blog.content,
-        blog.user_id,
-        blog.id,
-      ],
+      [blog.title, blog.content, blog.user_id, blog.id],
     );
   }
 
@@ -148,7 +153,7 @@ export class BlogModel extends DatabaseModel {
             (subject, body, user_id, create_date)
             VALUES (?, ?, ?, ?)
         `,
-          [blog.title, blog.content, blog.user_id, blog.created],
+      [blog.title, blog.content, blog.user_id, blog.created],
     );
   }
 
@@ -164,13 +169,7 @@ export class BlogModel extends DatabaseModel {
             (id, subject, body, user_id, create_date)
             VALUES (?, ?, ?, ?, ?)
         `,
-      [
-        blog.id,
-        blog.title,
-        blog.content,
-        blog.user_id,
-        blog.created,
-      ],
+      [blog.id, blog.title, blog.content, blog.user_id, blog.created],
     );
   }
 

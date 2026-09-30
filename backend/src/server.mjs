@@ -42,9 +42,12 @@ app.use(AuthenticationController.middleware);
 app.use(sanitiser("reject"));
 app.use(idempotencyMiddleware(devOptions));
 
-console.log(logInfo, `Express-rate-limiter enabled.
+console.log(
+  logInfo,
+  `Express-rate-limiter enabled.
                 - Requests: ${limiterOptions.limit}
-                - Period: ${limiterOptions.windowMs / 1000 / 60} minutes`);
+                - Period: ${limiterOptions.windowMs / 1000 / 60} minutes`,
+);
 console.log(logInfo, `Cors enabled, and allowing: ${corsOptions.origin}`);
 
 app.use("/users", UsersController.routes);
@@ -62,12 +65,16 @@ const nextSevenDaysRange = () => {
   today.setHours(0, 0, 0, 0);
   const lastDate = new Date(today);
   lastDate.setDate(lastDate.getDate() + 7);
-  const toLocalDateValue = (date) => [
-    date.getFullYear(),
-    String(date.getMonth() + 1).padStart(2, "0"),
-    String(date.getDate()).padStart(2, "0"),
-  ].join("-");
-  return { firstDateValue: toLocalDateValue(today), lastDateValue: toLocalDateValue(lastDate) };
+  const toLocalDateValue = (date) =>
+    [
+      date.getFullYear(),
+      String(date.getMonth() + 1).padStart(2, "0"),
+      String(date.getDate()).padStart(2, "0"),
+    ].join("-");
+  return {
+    firstDateValue: toLocalDateValue(today),
+    lastDateValue: toLocalDateValue(lastDate),
+  };
 };
 
 // Build the role-specific dashboard summary stats for the logged-in user.
@@ -79,49 +86,75 @@ const buildDashboardSummary = async (authenticatedUser) => {
   };
 
   if (authenticatedUser.role === "admin") {
-    const [users, locations, activities, sessions, bookings] = await Promise.all([
-      UsersModel.getAll(), LocationModel.getAll(), ActivitiesModel.getAll(), SessionsModel.getAll(), BookingsModel.getAll(),
-    ]);
+    const [users, locations, activities, sessions, bookings] =
+      await Promise.all([
+        UsersModel.getAll(),
+        LocationModel.getAll(),
+        ActivitiesModel.getAll(),
+        SessionsModel.getAll(),
+        BookingsModel.getAll(),
+      ]);
     const upcomingSessions = sessions.filter(isInNextSevenDays);
-    const upcomingSessionIds = new Set(upcomingSessions.map((session) => session.id));
+    const upcomingSessionIds = new Set(
+      upcomingSessions.map((session) => session.id),
+    );
     return {
       totalMembers: users.filter((user) => user.role === "member").length,
       totalTrainers: users.filter((user) => user.role === "trainer").length,
       totalLocations: locations.length,
       totalActivities: activities.length,
       upcomingSessions: upcomingSessions.length,
-      upcomingBookings: bookings.filter((booking) => upcomingSessionIds.has(Number(booking.session_id))).length,
+      upcomingBookings: bookings.filter((booking) =>
+        upcomingSessionIds.has(Number(booking.session_id)),
+      ).length,
     };
   }
 
   if (authenticatedUser.role === "trainer") {
-    const [sessions, bookings] = await Promise.all([SessionsModel.getAll(), BookingsModel.getAll()]);
-    const mySessions = sessions.filter((session) => (
-      Number(session.trainer_id) === Number(authenticatedUser.id) && isInNextSevenDays(session)
-    ));
+    const [sessions, bookings] = await Promise.all([
+      SessionsModel.getAll(),
+      BookingsModel.getAll(),
+    ]);
+    const mySessions = sessions.filter(
+      (session) =>
+        Number(session.trainer_id) === Number(authenticatedUser.id) &&
+        isInNextSevenDays(session),
+    );
     const mySessionIds = new Set(mySessions.map((session) => session.id));
     return {
       upcomingSessions: mySessions.length,
-      upcomingBookings: bookings.filter((booking) => mySessionIds.has(Number(booking.session_id))).length,
+      upcomingBookings: bookings.filter((booking) =>
+        mySessionIds.has(Number(booking.session_id)),
+      ).length,
     };
   }
 
   if (authenticatedUser.role === "member") {
     const [bookings, sessions, locations] = await Promise.all([
-      BookingsModel.getByUserId(authenticatedUser.id), SessionsModel.getAll(), LocationModel.getAll(),
+      BookingsModel.getByUserId(authenticatedUser.id),
+      SessionsModel.getAll(),
+      LocationModel.getAll(),
     ]);
-    const sessionsById = new Map(sessions.map((session) => [session.id, session]));
-    const locationsById = new Map(locations.map((location) => [location.id, location]));
+    const sessionsById = new Map(
+      sessions.map((session) => [session.id, session]),
+    );
+    const locationsById = new Map(
+      locations.map((location) => [location.id, location]),
+    );
     const upcomingBookings = bookings
       .map((booking) => sessionsById.get(Number(booking.session_id)))
       .filter((session) => session && isInNextSevenDays(session))
-      .sort((left, right) => `${left.date}${left.time}`.localeCompare(`${right.date}${right.time}`));
+      .sort((left, right) =>
+        `${left.date}${left.time}`.localeCompare(`${right.date}${right.time}`),
+      );
     const nextSession = upcomingBookings[0] ?? null;
     return {
       upcomingBookings: upcomingBookings.length,
       nextSession: nextSession && {
         ...nextSession,
-        locationName: locationsById.get(Number(nextSession.location_id))?.name ?? "Unknown location",
+        locationName:
+          locationsById.get(Number(nextSession.location_id))?.name ??
+          "Unknown location",
       },
     };
   }

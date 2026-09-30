@@ -10,36 +10,50 @@ export class ActivitiesController {
   static routes = express.Router();
 
   static {
-    this.routes.get("/", 
+    this.routes.get(
+      "/",
       AuthenticationController.restrict("admin"),
-      this.viewActivityManagement);
-    this.routes.get("/:id", 
+      this.viewActivityManagement,
+    );
+    this.routes.get(
+      "/:id",
       AuthenticationController.restrict("admin"),
-      this.viewActivityManagement);
-    this.routes.post("/", 
+      this.viewActivityManagement,
+    );
+    this.routes.post(
+      "/",
       AuthenticationController.restrict("admin"),
-      this.handleActivityManagement);
-    this.routes.post("/:id", 
+      this.handleActivityManagement,
+    );
+    this.routes.post(
+      "/:id",
       AuthenticationController.restrict("admin"),
-      this.handleActivityManagement);
+      this.handleActivityManagement,
+    );
   }
 
   /** @type {import("express").RequestHandler} */
   static async viewActivityManagement(req, res) {
     const selectedSearchTerm = String(req.query.search_term ?? "").trim();
-    const selectedSortBy = Object.keys(ActivitiesModel.SORTABLE_COLUMNS).includes(req.query.sort_by)
-      ? req.query.sort_by : "name";
+    const selectedSortBy = Object.keys(
+      ActivitiesModel.SORTABLE_COLUMNS,
+    ).includes(req.query.sort_by)
+      ? req.query.sort_by
+      : "name";
     const selectedSortDir = req.query.sort_dir === "desc" ? "desc" : "asc";
     const pageSize = 7;
     const selectedPage = Math.max(1, Number(req.query.page) || 1);
     try {
       const { activities, total } = await ActivitiesModel.list({
-        searchTerm: selectedSearchTerm, sortBy: selectedSortBy, sortDir: selectedSortDir,
-        page: selectedPage, pageSize,
+        searchTerm: selectedSearchTerm,
+        sortBy: selectedSortBy,
+        sortDir: selectedSortDir,
+        page: selectedPage,
+        pageSize,
       });
-      const selectedActivity = activities.find(
-        (activity) => String(activity.id) === req.params.id,
-      ) ?? new ActivitiesModel(null, "", "", 0, 0);
+      const selectedActivity =
+        activities.find((activity) => String(activity.id) === req.params.id) ??
+        new ActivitiesModel(null, "", "", 0, 0);
       res.render("activity_management.ejs", {
         activities,
         selectedActivity,
@@ -78,17 +92,29 @@ export class ActivitiesController {
         const result = await ActivitiesModel.update(activity);
         return result.affectedRows > 0
           ? res.redirect("/activities")
-          : res.status(404).render("status.ejs", { status: "Activity Update Failed", message: "The activity could not be found." });
+          : res.status(404).render("status.ejs", {
+              status: "Activity Update Failed",
+              message: "The activity could not be found.",
+            });
       }
       if (req.body.action === "delete") {
         const result = await ActivitiesModel.delete(activity.id);
         return result.affectedRows > 0
           ? res.redirect("/activities")
-          : res.status(404).render("status.ejs", { status: "Activity Deletion Failed", message: "The activity could not be found." });
+          : res.status(404).render("status.ejs", {
+              status: "Activity Deletion Failed",
+              message: "The activity could not be found.",
+            });
       }
-      return res.status(400).render("status.ejs", { status: "Invalid Action", message: "The form doesn't support this action." });
+      return res.status(400).render("status.ejs", {
+        status: "Invalid Action",
+        message: "The form doesn't support this action.",
+      });
     } catch (error) {
-      return res.status(500).render("status.ejs", { status: "Database Error", message: "The activity could not be saved." });
+      return res.status(500).render("status.ejs", {
+        status: "Database Error",
+        message: "The activity could not be saved.",
+      });
     }
   }
 
@@ -99,30 +125,49 @@ export class ActivitiesController {
         ? await ActivitiesModel.getBySearch(req.query.search_term)
         : await ActivitiesModel.getAll();
       res.json(activities);
-    } catch (error) { next(error); }
+    } catch (error) {
+      next(error);
+    }
   }
 
   /** @type {import("express").RequestHandler} */
   static async getById(req, res, next) {
-    try { res.json(await ActivitiesModel.getById(Number(req.params.id))); }
-    catch (error) { next(error); }
+    try {
+      res.json(await ActivitiesModel.getById(Number(req.params.id)));
+    } catch (error) {
+      next(error);
+    }
   }
 
   /** @type {import("express").RequestHandler} */
   static async create(req, res, next) {
-    try { res.status(201).json(await ActivitiesModel.create(req.body)); }
-    catch (error) { next(error); }
+    try {
+      res.status(201).json(await ActivitiesModel.create(req.body));
+    } catch (error) {
+      next(error);
+    }
   }
 
   /** @type {import("express").RequestHandler} */
   static async update(req, res, next) {
-    try { res.json(await ActivitiesModel.update({ ...req.body, id: Number(req.params.id) })); }
-    catch (error) { next(error); }
+    try {
+      res.json(
+        await ActivitiesModel.update({
+          ...req.body,
+          id: Number(req.params.id),
+        }),
+      );
+    } catch (error) {
+      next(error);
+    }
   }
 
   /** @type {import("express").RequestHandler} */
   static async delete(req, res, next) {
-    try { res.json(await ActivitiesModel.delete(Number(req.params.id))); }
-    catch (error) { next(error); }
+    try {
+      res.json(await ActivitiesModel.delete(Number(req.params.id)));
+    } catch (error) {
+      next(error);
+    }
   }
 }

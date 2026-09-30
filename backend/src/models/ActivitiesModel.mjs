@@ -75,7 +75,11 @@ export class ActivitiesModel extends DatabaseModel {
    * @returns {Promise<{ activities: Array<ActivitiesModel>, total: number }>} Matching activities and total match count.
    */
   static async list({
-    searchTerm = "", sortBy = "name", sortDir = "asc", page = 1, pageSize = null,
+    searchTerm = "",
+    sortBy = "name",
+    sortDir = "asc",
+    page = 1,
+    pageSize = null,
   } = {}) {
     const column = this.SORTABLE_COLUMNS[sortBy] ?? this.SORTABLE_COLUMNS.name;
     const direction = sortDir === "desc" ? "DESC" : "ASC";
@@ -86,10 +90,15 @@ export class ActivitiesModel extends DatabaseModel {
       values.push(`%${searchTerm}%`, `%${searchTerm}%`);
     }
     const whereClause = where.join(" AND ");
-    const countResult = await this.query(`SELECT COUNT(*) AS total FROM activities WHERE ${whereClause}`, values);
+    const countResult = await this.query(
+      `SELECT COUNT(*) AS total FROM activities WHERE ${whereClause}`,
+      values,
+    );
     const total = Number(countResult[0]?.[""]?.total ?? 0);
     const limitClause = pageSize ? "LIMIT ? OFFSET ?" : "";
-    const limitValues = pageSize ? [pageSize, (Math.max(1, page) - 1) * pageSize] : [];
+    const limitValues = pageSize
+      ? [pageSize, (Math.max(1, page) - 1) * pageSize]
+      : [];
     const activities = await this.query(
       `SELECT * FROM activities WHERE ${whereClause} ORDER BY ${column} ${direction} ${limitClause}`,
       [...values, ...limitValues],
@@ -104,7 +113,9 @@ export class ActivitiesModel extends DatabaseModel {
    * @throws {string} "not found" when no activity matches the identifier.
    */
   static async getById(id) {
-    const result = await this.query("SELECT * FROM activities WHERE id = ?", [id]);
+    const result = await this.query("SELECT * FROM activities WHERE id = ?", [
+      id,
+    ]);
     return result.length > 0
       ? this.tableToModel(result[0].activities)
       : Promise.reject("not found");
@@ -144,7 +155,12 @@ export class ActivitiesModel extends DatabaseModel {
             (name, description, deleted, updated_by)
             VALUES (?, ?, ?, ?)
         `,
-      [activity.name, activity.description, activity.deleted, activity.updated_by],
+      [
+        activity.name,
+        activity.description,
+        activity.deleted,
+        activity.updated_by,
+      ],
     );
   }
 

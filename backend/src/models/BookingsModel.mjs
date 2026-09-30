@@ -37,8 +37,8 @@ export class BookingsModel extends DatabaseModel {
    * @returns {Promise<Array<BookingsModel>>} Stored bookings.
    */
   static async getAll() {
-    return this.query("SELECT * FROM bookings").then(
-      (result) => result.map((row) => this.tableToModel(row.bookings)),
+    return this.query("SELECT * FROM bookings").then((result) =>
+      result.map((row) => this.tableToModel(row.bookings)),
     );
   }
 
@@ -48,9 +48,9 @@ export class BookingsModel extends DatabaseModel {
    * @returns {Promise<Array<BookingsModel>>} The user's bookings.
    */
   static async getByUserId(userId) {
-    return this.query("SELECT * FROM bookings WHERE user_id = ?", [userId]).then(
-      (result) => result.map((row) => this.tableToModel(row.bookings)),
-    );
+    return this.query("SELECT * FROM bookings WHERE user_id = ?", [
+      userId,
+    ]).then((result) => result.map((row) => this.tableToModel(row.bookings)));
   }
 
   /**
@@ -59,9 +59,9 @@ export class BookingsModel extends DatabaseModel {
    * @returns {Promise<Array<BookingsModel>>} The session's bookings.
    */
   static async getBySessionId(sessionId) {
-    return this.query("SELECT * FROM bookings WHERE session_id = ?", [sessionId]).then(
-      (result) => result.map((row) => this.tableToModel(row.bookings)),
-    );
+    return this.query("SELECT * FROM bookings WHERE session_id = ?", [
+      sessionId,
+    ]).then((result) => result.map((row) => this.tableToModel(row.bookings)));
   }
 
   /**
@@ -80,7 +80,9 @@ export class BookingsModel extends DatabaseModel {
    * @throws {string} "not found" when no booking matches the identifier.
    */
   static async getById(id) {
-    const result = await this.query("SELECT * FROM bookings WHERE id = ?", [id]);
+    const result = await this.query("SELECT * FROM bookings WHERE id = ?", [
+      id,
+    ]);
     return result.length > 0
       ? this.tableToModel(result[0].bookings)
       : Promise.reject("not found");
@@ -112,14 +114,14 @@ export class BookingsModel extends DatabaseModel {
             SET session_id = ?, user_id = ?
             WHERE id = ?
         `,
-          [booking.session_id, booking.user_id, booking.id],
+      [booking.session_id, booking.user_id, booking.id],
     );
   }
 
   /**
    * Create a booking with a generated identifier.
    * @param {BookingsModel} booking Booking to create.
-  * @returns {Promise<import("mysql2/promise").OkPacket | {affectedRows: 0, duplicate: true}>} Insert result or duplicate marker.
+   * @returns {Promise<import("mysql2/promise").OkPacket | {affectedRows: 0, duplicate: true}>} Insert result or duplicate marker.
    */
   static async create(booking) {
     if (await this.existsForSessionUser(booking.session_id, booking.user_id)) {

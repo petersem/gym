@@ -9,21 +9,21 @@ export default [
     files: ["**/*.{js,mjs}"],
     languageOptions: {
       ecmaVersion: "latest",
-      sourceType: "module"
+      sourceType: "module",
     },
 
     rules: {
       // Keep existing unused bindings visible without blocking lint.
       "no-unused-vars": "warn",
       "no-console": "off",
-      "eqeqeq": ["error", "always", { "null": "ignore" }],
-      "curly": "error"
-    }
+      eqeqeq: ["error", "always", { null: "ignore" }],
+      curly: "error",
+    },
   },
   {
     files: ["backend/**/*.{js,mjs}"],
     languageOptions: {
-      globals: globals.node
-    }
-  }
+      globals: globals.node,
+    },
+  },
 ];

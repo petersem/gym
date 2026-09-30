@@ -1,181 +1,182 @@
-import express from "express"
-import session from "express-session"
-import { USER_ROLE_ADMIN, USER_ROLE_TRAINER, USER_ROLE_MEMBER, UsersModel } from "../models/UsersModel.mjs"
-import bcrypt from "bcrypt"
+import express from "express";
+import session from "express-session";
+import {
+  USER_ROLE_ADMIN,
+  USER_ROLE_TRAINER,
+  USER_ROLE_MEMBER,
+  UsersModel,
+} from "../models/UsersModel.mjs";
+import bcrypt from "bcrypt";
 
 export class AuthenticationController {
-    static middleware = express.Router()
-    static routes = express.Router()
+  static middleware = express.Router();
+  static routes = express.Router();
 
-    static {
-        this.middleware.use(session({
-            secret: "9c55abf5-111d-4235-b8d8-07c3463999e7",
-            resave: false,
-            saveUninitialized: false,
-            cookie: { secure: "auto" }
-        }))
-        this.middleware.use(this.#sessionAuthenticationProvider)
+  static {
+    this.middleware.use(
+      session({
+        secret: "9c55abf5-111d-4235-b8d8-07c3463999e7",
+        resave: false,
+        saveUninitialized: false,
+        cookie: { secure: "auto" },
+      }),
+    );
+    this.middleware.use(this.#sessionAuthenticationProvider);
 
-        this.routes.get("/", this.viewLogin)
-        this.routes.post("/", this.handleLogin)
-        this.routes.get("/register", this.viewRegister)
-        this.routes.post("/register", this.handleRegister)
+    this.routes.get("/", this.viewLogin);
+    this.routes.post("/", this.handleLogin);
+    this.routes.get("/register", this.viewRegister);
+    this.routes.post("/register", this.handleRegister);
 
-        this.routes.delete("/", this.handleLogout)
-        this.routes.get("/logout", this.handleLogout)
+    this.routes.delete("/", this.handleLogout);
+    this.routes.get("/logout", this.handleLogout);
+  }
+
+  /**
+   * Automatically stores the respective EmployeeModel into req.authenticatedUsed
+   * if there is an active session containing an userId
+   * @type {express.RequestHandler}
+   */
+  static async #sessionAuthenticationProvider(req, res, next) {
+    if (req.session.userId && !req.authenticatedUser) {
+      try {
+        req.authenticatedUser = await UsersModel.getById(req.session.userId);
+      } catch (error) {
+        console.error("Failed to authenticate user session - " + error);
+      }
+    }
+    next();
+  }
+
+  /**
+   * @type {express.RequestHandler}
+   */
+  static viewLogin(req, res) {
+    res.render("login.ejs");
+  }
+
+  static viewRegister(req, res) {
+    res.render("register.ejs");
+  }
+
+  /**
+   * @type {express.RequestHandler}
+   */
+  static async handleLogin(req, res) {
+    const username = req.body["username"];
+    const password = req.body["password"];
+
+    // TODO: Add validation
+
+    try {
+      const user = await UsersModel.getByUsername(username);
+      const isCorrectPassword = await bcrypt.compare(password, user.password);
+
+      if (isCorrectPassword) {
+        // Store the authenticated user's ID into the session
+        req.session.userId = user.id;
+
+        res.redirect("/");
+      } else {
+        res.status(400).render("status.ejs", {
+          status: "Authentication Failed.",
+          message: "Invalid credentials.",
+        });
+      }
+    } catch (error) {
+      if (error === "not found") {
+        res.status(400).render("status.ejs", {
+          status: "Authentication Failed.",
+          message: "Invalid credentials.",
+        });
+      } else {
+        console.error(error);
+        res.status(500).render("status.ejs", {
+          status: "Authentication Failed.",
+          message: "Server error.",
+        });
+      }
+    }
+  }
+
+  static async handleRegister(req, res) {
+    const { firstName, lastName, email, password, phone, dob } = req.body;
+
+    if (!firstName || !lastName || !email || !password || !phone) {
+      return res.status(400).render("status.ejs", {
+        status: "Registration Failed.",
+        message: "All required fields must be completed.",
+      });
     }
 
-    /**
-     * Automatically stores the respective EmployeeModel into req.authenticatedUsed
-     * if there is an active session containing an userId
-     * @type {express.RequestHandler}
-     */
-    static async #sessionAuthenticationProvider(req, res, next) {
-        if (req.session.userId && !req.authenticatedUser) {
-            try {
-                req.authenticatedUser = await UsersModel.getById(req.session.userId)
-            } catch (error) {
-                console.error("Failed to authenticate user session - " + error)
-            }
-        }
-        next()
+    try {
+      const passwordHash = await bcrypt.hash(password, 10);
+      await UsersModel.create(
+        new UsersModel(
+          null,
+          firstName,
+          lastName,
+          USER_ROLE_MEMBER,
+          email,
+          passwordHash,
+          phone,
+          dob || null,
+          0,
+          null,
+        ),
+      );
+      res.redirect("/authenticate");
+    } catch (error) {
+      console.error(error);
+      res.status(400).render("status.ejs", {
+        status: "Registration Failed.",
+        message: "The account could not be created.",
+      });
     }
+  }
 
-    /**
-     * @type {express.RequestHandler}
-     */
-    static viewLogin(req, res) {
-        res.render("login.ejs")
+  /**
+   * @type {express.RequestHandler}
+   */
+  static handleLogout(req, res) {
+    if (req.authenticatedUser) {
+      if (req.session.userId) {
+        req.session.destroy();
+        res.status(200).render("status.ejs", {
+          status: "Logged out successfully.",
+          message: "You have been logged out.",
+        });
+      }
+    } else {
+      res.status(401).render("status.ejs", {
+        status: "Unauthenticated.",
+        message: "Please login to access the requested resource.",
+      });
     }
+  }
 
-    static viewRegister(req, res) {
-        res.render("register.ejs")
-    }
-
-    /**
-     * @type {express.RequestHandler}
-     */
-    static async handleLogin(req, res) {
-
-        const username = req.body["username"]
-        const password = req.body["password"]
-        
-        // TODO: Add validation
-
-        try {
-            const user = await UsersModel.getByUsername(username)
-            const isCorrectPassword = await bcrypt.compare(password, user.password)
-
-            if (isCorrectPassword) {
-                // Store the authenticated user's ID into the session
-                req.session.userId = user.id
-
-                res.redirect("/")
-            } else {
-                res.status(400).render("status.ejs", {
-                    status: "Authentication Failed.",
-                    message: "Invalid credentials."
-                })
-            }
-        } catch (error) {
-            if (error === "not found") {
-                res.status(400).render("status.ejs", {
-                    status: "Authentication Failed.",
-                    message: "Invalid credentials."
-                })
-            } else {
-                console.error(error)
-                res.status(500).render("status.ejs", {
-                    status: "Authentication Failed.",
-                    message: "Server error."
-                })
-            }
-        }
-    }
-
-    static async handleRegister(req, res) {
-        const {
-            firstName,
-            lastName,
-            email,
-            password,
-            phone,
-            dob,
-        } = req.body
-
-        if (!firstName || !lastName || !email || !password || !phone) {
-            return res.status(400).render("status.ejs", {
-                status: "Registration Failed.",
-                message: "All required fields must be completed.",
-            })
-        }
-
-        try {
-            const passwordHash = await bcrypt.hash(password, 10)
-            await UsersModel.create(new UsersModel(
-                null,
-                firstName,
-                lastName,
-                USER_ROLE_MEMBER,
-                email,
-                passwordHash,
-                phone,
-                dob || null,
-                0,
-                null,
-            ))
-            res.redirect("/authenticate")
-        } catch (error) {
-            console.error(error)
-            res.status(400).render("status.ejs", {
-                status: "Registration Failed.",
-                message: "The account could not be created.",
-            })
-        }
-    }
-
-    /**
-     * @type {express.RequestHandler}
-     */
-    static handleLogout(req, res) {
-        if (req.authenticatedUser) {
-            if (req.session.userId) {
-                req.session.destroy()
-                res.status(200).render("status.ejs", {
-                    status: "Logged out successfully.",
-                    message: "You have been logged out."
-                })
-            }
+  /**
+   *
+   * @param {Array<"admin" | "stock" | "sales">} allowedRoles
+   * @returns {express.RequestHandler}
+   */
+  static restrict(allowedRoles) {
+    return function (req, res, next) {
+      if (req.authenticatedUser) {
+        if (allowedRoles.includes(req.authenticatedUser.role)) {
+          next();
         } else {
-            res.status(401).render("status.ejs", {
-                status: "Unauthenticated.",
-                message: "Please login to access the requested resource."
-            })
+          res.status(403).render("status.ejs", {
+            status: "Access Forbidden.",
+            message: "Role does not have access to the requested resource.",
+          });
         }
-    }
-
-    /**
-     * 
-     * @param {Array<"admin" | "stock" | "sales">} allowedRoles 
-     * @returns {express.RequestHandler}
-     */
-    static restrict(allowedRoles) {
-        return function (req, res, next) {
-            if (req.authenticatedUser) {
-                if (allowedRoles.includes(req.authenticatedUser.role)) {
-                    next()
-                } else {
-                    res.status(403).render("status.ejs", {
-                        status: "Access Forbidden.",
-                        message: "Role does not have access to the requested resource."
-                    })
-                }
-            } else {
-                res.status(401).render("status.ejs", {
-                    status: "Unauthenticated.",
-                    message: "Please login to access the requested resource."
-                })
-            }
-        }
-    }
+      } else {
+        res.status(401).render("status.ejs", {
+          status: "Unauthenticated.",
+          message: "Please login to access the requested resource.",
+        });
+      }
+    };
+  }
 }

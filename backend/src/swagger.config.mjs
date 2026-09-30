@@ -2,7 +2,7 @@
 import swaggerJsdoc from "swagger-jsdoc";
 import path from "path";
 import { fileURLToPath } from "url";
-import pkg from '../package.json' with { type: 'json' };
+import pkg from "../package.json" with { type: "json" };
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -15,11 +15,11 @@ const options = {
     info: {
       title: "Gym API",
       version: pkg.version,
-      description: "API documentation for my Gym backend Node app"
+      description: "API documentation for my Gym backend Node app",
     },
-    servers: [{url: '/'},{url: `http://localhost:${PORT}`}]
+    servers: [{ url: "/" }, { url: `http://localhost:${PORT}` }],
   },
-  apis: [path.join(__dirname, "routes/*.mjs")]
+  apis: [path.join(__dirname, "routes/*.mjs")],
 };
 
 export const swaggerSpec = swaggerJsdoc(options);

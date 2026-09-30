@@ -1,6 +1,8 @@
 @import "tailwindcss";
 @plugin "daisyui" {
-  themes: light --default, dark;
+  themes:
+    light --default,
+    dark;
 }
 @plugin "daisyui/theme" {
   name: "light";
@@ -83,7 +85,7 @@
   --gym-shadow: rgba(23, 35, 29, 0.055);
   --gym-admin: gold;
   --gym-trainer: silver;
-  --gym-member: #CD7F32;
+  --gym-member: #cd7f32;
 }
 
 html {
@@ -98,8 +100,13 @@ body {
   flex-direction: column;
   color: var(--gym-ink);
   background-color: var(--gym-paper); /* gridlines background*/
-  background-image: linear-gradient(180deg, var(--gym-glow), transparent 340px),
-    repeating-linear-gradient(90deg, transparent 0 47px, var(--gym-gridline) 48px 49px);
+  background-image:
+    linear-gradient(180deg, var(--gym-glow), transparent 340px),
+    repeating-linear-gradient(
+      90deg,
+      transparent 0 47px,
+      var(--gym-gridline) 48px 49px
+    );
   font-family: "DM Sans", sans-serif;
 }
 
@@ -314,7 +321,10 @@ input[type="submit"],
   text-align: center;
   text-decoration: none;
   cursor: pointer;
-  transition: background-color 140ms ease, border-color 140ms ease, transform 140ms ease;
+  transition:
+    background-color 140ms ease,
+    border-color 140ms ease,
+    transform 140ms ease;
 }
 
 button:hover,
@@ -705,11 +715,15 @@ section > ul:not(.menu) > li {
 
 @keyframes alert-attention {
   0% {
-    box-shadow: 0 0 0 0 var(--alert-border-color, var(--gym-coral)), 0 12px 28px var(--gym-shadow);
+    box-shadow:
+      0 0 0 0 var(--alert-border-color, var(--gym-coral)),
+      0 12px 28px var(--gym-shadow);
     transform: scale(1.05);
   }
   100% {
-    box-shadow: 0 0 0 10px rgba(0, 0, 0, 0), 0 12px 28px var(--gym-shadow);
+    box-shadow:
+      0 0 0 10px rgba(0, 0, 0, 0),
+      0 12px 28px var(--gym-shadow);
     transform: scale(1);
   }
 }
@@ -799,10 +813,18 @@ section > ul:not(.menu) > li {
   gap: 20px;
 }
 
-.cols-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-.cols-4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
-.cols-5 { grid-template-columns: repeat(5, minmax(0, 1fr)); }
-.data-list-heading { font-weight: 700; }
+.cols-3 {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+.cols-4 {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+.cols-5 {
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+}
+.data-list-heading {
+  font-weight: 700;
+}
 
 .order-update-form {
   display: grid;
@@ -810,8 +832,12 @@ section > ul:not(.menu) > li {
   align-items: stretch;
 }
 
-.sales-section h3 { margin: 1rem 0; }
-.sales-section p { margin: 0.5rem 0; }
+.sales-section h3 {
+  margin: 1rem 0;
+}
+.sales-section p {
+  margin: 0.5rem 0;
+}
 
 .available-session-select,
 .available-session-label {

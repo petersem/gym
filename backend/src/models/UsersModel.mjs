@@ -1,10 +1,8 @@
 import { DatabaseModel } from "./DatabaseModel.mjs";
 
-
-export const USER_ROLE_ADMIN = "admin"
-export const USER_ROLE_TRAINER = "trainer"
-export const USER_ROLE_MEMBER = "member"
-
+export const USER_ROLE_ADMIN = "admin";
+export const USER_ROLE_TRAINER = "trainer";
+export const USER_ROLE_MEMBER = "member";
 
 /**
  * Represents a user stored in the users table.
@@ -72,8 +70,8 @@ export class UsersModel extends DatabaseModel {
    * @returns {Promise<Array<UsersModel>>} Active users.
    */
   static async getAll() {
-    return this.query("SELECT * FROM users WHERE deleted = 0").then(
-      (result) => result.map((row) => this.tableToModel(row.users)),
+    return this.query("SELECT * FROM users WHERE deleted = 0").then((result) =>
+      result.map((row) => this.tableToModel(row.users)),
     );
   }
 
@@ -95,7 +93,10 @@ export class UsersModel extends DatabaseModel {
 
   /** Columns that may be used to sort user listings. */
   static SORTABLE_COLUMNS = {
-    first_name: "first_name", last_name: "last_name", email: "email", role: "role",
+    first_name: "first_name",
+    last_name: "last_name",
+    email: "email",
+    role: "role",
   };
 
   /**
@@ -110,9 +111,15 @@ export class UsersModel extends DatabaseModel {
    * @returns {Promise<{ users: Array<UsersModel>, total: number }>} Matching users and total match count.
    */
   static async list({
-    searchTerm = "", role = "", sortBy = "last_name", sortDir = "asc", page = 1, pageSize = null,
+    searchTerm = "",
+    role = "",
+    sortBy = "last_name",
+    sortDir = "asc",
+    page = 1,
+    pageSize = null,
   } = {}) {
-    const column = this.SORTABLE_COLUMNS[sortBy] ?? this.SORTABLE_COLUMNS.last_name;
+    const column =
+      this.SORTABLE_COLUMNS[sortBy] ?? this.SORTABLE_COLUMNS.last_name;
     const direction = sortDir === "desc" ? "DESC" : "ASC";
     const where = ["deleted = 0"];
     const values = [];
@@ -125,10 +132,15 @@ export class UsersModel extends DatabaseModel {
       values.push(role);
     }
     const whereClause = where.join(" AND ");
-    const countResult = await this.query(`SELECT COUNT(*) AS total FROM users WHERE ${whereClause}`, values);
+    const countResult = await this.query(
+      `SELECT COUNT(*) AS total FROM users WHERE ${whereClause}`,
+      values,
+    );
     const total = Number(countResult[0]?.[""]?.total ?? 0);
     const limitClause = pageSize ? "LIMIT ? OFFSET ?" : "";
-    const limitValues = pageSize ? [pageSize, (Math.max(1, page) - 1) * pageSize] : [];
+    const limitValues = pageSize
+      ? [pageSize, (Math.max(1, page) - 1) * pageSize]
+      : [];
     const users = await this.query(
       `SELECT * FROM users WHERE ${whereClause} ORDER BY ${column} ${direction} ${limitClause}`,
       [...values, ...limitValues],

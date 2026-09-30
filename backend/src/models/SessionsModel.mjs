@@ -10,8 +10,8 @@ export class SessionsModel extends DatabaseModel {
    * @param {number} locationId Location identifier.
    * @param {number} trainerId Trainer user identifier.
    * @param {string|Date} date Session date.
-  * @param {string} time Session time.
-  * @param {string} title Session title.
+   * @param {string} time Session time.
+   * @param {string} title Session title.
    */
   constructor(id, activityId, locationId, trainerId, date, time, title = "") {
     super();
@@ -46,8 +46,8 @@ export class SessionsModel extends DatabaseModel {
    * @returns {Promise<Array<SessionsModel>>} Stored sessions.
    */
   static async getAll() {
-    return this.query("SELECT * FROM sessions").then(
-      (result) => result.map((row) => this.tableToModel(row.sessions)),
+    return this.query("SELECT * FROM sessions").then((result) =>
+      result.map((row) => this.tableToModel(row.sessions)),
     );
   }
 
@@ -58,7 +58,9 @@ export class SessionsModel extends DatabaseModel {
    * @throws {string} "not found" when no session matches the identifier.
    */
   static async getById(id) {
-    const result = await this.query("SELECT * FROM sessions WHERE id = ?", [id]);
+    const result = await this.query("SELECT * FROM sessions WHERE id = ?", [
+      id,
+    ]);
     return result.length > 0
       ? this.tableToModel(result[0].sessions)
       : Promise.reject("not found");
@@ -76,7 +78,15 @@ export class SessionsModel extends DatabaseModel {
             SET title = ?, activity_id = ?, location_id = ?, trainer_id = ?, date = ?, time = ?
             WHERE id = ?
         `,
-          [session.title, session.activity_id, session.location_id, session.trainer_id, session.date, session.time, session.id],
+      [
+        session.title,
+        session.activity_id,
+        session.location_id,
+        session.trainer_id,
+        session.date,
+        session.time,
+        session.id,
+      ],
     );
   }
 
@@ -91,7 +101,14 @@ export class SessionsModel extends DatabaseModel {
             INSERT INTO sessions (title, activity_id, location_id, trainer_id, date, time)
             VALUES (?, ?, ?, ?, ?, ?)
         `,
-          [session.title, session.activity_id, session.location_id, session.trainer_id, session.date, session.time],
+      [
+        session.title,
+        session.activity_id,
+        session.location_id,
+        session.trainer_id,
+        session.date,
+        session.time,
+      ],
     );
   }
 

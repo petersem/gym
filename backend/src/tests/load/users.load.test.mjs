@@ -1,7 +1,7 @@
-import express from 'express';
-import { afterAll, beforeAll, describe, expect, test } from '@jest/globals';
-import { UsersController } from '../../controllers/UsersController.mjs';
-import { UsersModel } from '../../models/UsersModel.mjs';
+import express from "express";
+import { afterAll, beforeAll, describe, expect, test } from "@jest/globals";
+import { UsersController } from "../../controllers/UsersController.mjs";
+import { UsersModel } from "../../models/UsersModel.mjs";
 
 const requestCount = 50;
 const app = express();
@@ -10,7 +10,7 @@ let baseUrl;
 const createdUserIds = [];
 
 app.use(express.urlencoded({ extended: true }));
-app.use('/users', UsersController.routes);
+app.use("/users", UsersController.routes);
 
 beforeAll(async () => {
   server = await new Promise((resolve) => {
@@ -22,41 +22,44 @@ beforeAll(async () => {
 
 afterAll(async () => {
   await Promise.all(createdUserIds.map((id) => UsersModel.delete(id)));
-  await UsersModel.query("DELETE FROM users WHERE email LIKE ?", ["controller-load-%"]);
+  await UsersModel.query("DELETE FROM users WHERE email LIKE ?", [
+    "controller-load-%",
+  ]);
   await new Promise((resolve, reject) => {
     server.close((error) => (error ? reject(error) : resolve()));
   });
   await UsersModel.connection.end();
 });
 
-const userForm = (email) => new URLSearchParams({
-  action: 'create',
-  firstName: 'Load',
-  lastName: 'Test User',
-  role: 'member',
-  email,
-  password: 'Load-test-password-123',
-  phone: '555-0199',
-  dob: '2000-01-01',
-  deleted: '0',
-  updatedBy: '1',
-});
+const userForm = (email) =>
+  new URLSearchParams({
+    action: "create",
+    firstName: "Load",
+    lastName: "Test User",
+    role: "member",
+    email,
+    password: "Load-test-password-123",
+    phone: "555-0199",
+    dob: "2000-01-01",
+    deleted: "0",
+    updatedBy: "1",
+  });
 
-describe('UsersController load test', () => {
+describe("UsersController load test", () => {
   test(`handles ${requestCount} concurrent user creations`, async () => {
     const startedAt = performance.now();
     const responses = await Promise.all(
       Array.from({ length: requestCount }, (_, index) => {
         const email = `controller-load-${Date.now()}-${index}@example.com`;
         return fetch(`${baseUrl}/users`, {
-          method: 'POST',
-          headers: { 'content-type': 'application/x-www-form-urlencoded' },
+          method: "POST",
+          headers: { "content-type": "application/x-www-form-urlencoded" },
           body: userForm(email),
-          redirect: 'manual',
+          redirect: "manual",
         }).then(async (response) => ({
           email,
           status: response.status,
-          location: response.headers.get('location'),
+          location: response.headers.get("location"),
           body: await response.text(),
         }));
       }),
@@ -67,7 +70,7 @@ describe('UsersController load test', () => {
     expect(responses).toHaveLength(requestCount);
     expect(responses.filter((response) => response.status !== 302)).toEqual([]);
     expect(responses.map((response) => response.location)).toEqual(
-      Array(requestCount).fill('/users'),
+      Array(requestCount).fill("/users"),
     );
 
     for (const response of responses) {

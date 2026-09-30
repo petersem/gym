@@ -1,6 +1,5 @@
 import { logDanger, logWarning, logInfo } from "../utilities/logger.mjs";
 
-
 /**
  * InMemoryIdempotencyStore class
  */
@@ -11,24 +10,28 @@ export class InMemoryIdempotencyStore {
 
   defaultOptions = {
     ttlMs: 24 * 60 * 60 * 1000,
-    cleanupIntervalM: 60
+    cleanupIntervalM: 60,
   };
 
   /**
-   * @param {Object} options Any [optional] override options 
+   * @param {Object} options Any [optional] override options
    */
-  constructor(options = {}) {  // 24 hours default
-    const config = { ...this.defaultOptions, ...options}
+  constructor(options = {}) {
+    // 24 hours default
+    const config = { ...this.defaultOptions, ...options };
     this.ttlMs = config.ttlMs;
     this.cleanupIntervalM = config.cleanupIntervalM;
     // Clean up expired records periodically (hourly)
-    this.cleanupIntervalM = setInterval(() => this.cleanup(), this.cleanupIntervalM * 60 * 1000);
+    this.cleanupIntervalM = setInterval(
+      () => this.cleanup(),
+      this.cleanupIntervalM * 60 * 1000,
+    );
   }
 
   /**
    * ### Get
-   * @param {String} key the key string 
-   * @returns {Object} keyObject 
+   * @param {String} key the key string
+   * @returns {Object} keyObject
    */
   get(key) {
     return this.records.get(key);
@@ -59,4 +62,3 @@ export class InMemoryIdempotencyStore {
     clearInterval(this.cleanupIntervalM);
   }
 }
-
