@@ -1,13 +1,23 @@
 # Gym App — Frontend Style Guide
 
 Source of truth: [backend/src/public/css/style.css](../backend/src/public/css/style.css)
-(Tailwind + DaisyUI source, compiled to `backend/src/dist/css/tailwind.css`, which is the
-file actually linked from [partials/head.ejs](../backend/src/views/partials/head.ejs)).
+(Tailwind + DaisyUI source, compiled into the generated stylesheet that is served as
+`/css/tailwind.css` from [partials/head.ejs](../backend/src/views/partials/head.ejs)).
 
-> **Important:** Edits to `style.css` are not visible in the browser until the compiled
-> file is regenerated. Run `npm run build:css` (in `backend/`) after every CSS change, or
-> run `npm run tailwind` in a separate terminal to watch and rebuild automatically.
-> `npm run dev` only rebuilds CSS once, at startup.
+> **Important:** Edits to `style.css` are not visible in the browser until the generated
+> stylesheet is rebuilt. The app currently serves the compiled file from `/css/tailwind.css`.
+> Run the backend CSS build/watch task after any styling change so the browser gets the new
+> version. `npm run dev` only rebuilds CSS once, at startup.
+
+### Current implementation snapshot
+
+- Styling is primarily custom CSS classes in `style.css`; the views mostly use a small set of
+  DaisyUI primitives plus the project’s own class names.
+- Keep custom selectors and component names in the CSS file rather than sprinkling raw Tailwind
+  utilities into the EJS templates.
+- Theme switching, fonts, and the generated stylesheet path are all defined in the head partial,
+  so any style-guide update should reflect the live runtime behaviour rather than an idealized
+  version of the app.
 
 ---
 
@@ -36,7 +46,7 @@ Custom CSS variables (not DaisyUI tokens) drive most of the visual design. Defin
 | `--gym-coral` | `#d96e4c` | `#f09576` | Accent/hover colour (errors, hover states, sort-link hover) |
 | `--gym-muted` | `#65736b` | `#afbeb4` | Secondary/label text |
 | `--gym-line` | `#dfe7e0` | `#33473a` | Border colour |
-| `--gym-paper` | `#f3f6f2` | `#101713` | Page background |
+| `--gym-paper` | `#ebeeea` | `#101713` | Page background |
 | `--gym-surface` | `#ffffff` | `#1a2620` | Card/table/form background |
 | `--gym-control-border` | `#cbd6cd` | `#465b4c` | Input/select/textarea border |
 | `--gym-link` | `#1d4a38` | `#a1d5b0` | Anchor colour |

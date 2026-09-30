@@ -39,7 +39,7 @@ const limiter = rateLimit(limiterOptions);
 app.use(cors(corsOptions));
 app.use(limiter);
 app.use(AuthenticationController.middleware);
-app.use(sanitiser("warn"));
+app.use(sanitiser("reject"));
 app.use(idempotencyMiddleware(devOptions));
 
 console.log(logInfo, `Express-rate-limiter enabled.

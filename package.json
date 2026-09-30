@@ -5,7 +5,9 @@
   "main": "index.js",
   "scripts": {
     "test": "node --experimental-vm-modules ./node_modules/jest/bin/jest.js --coverage --verbose",
-    "doc": "node /node_modules/jsdoc/jsdoc.js -c ./jsdoc.conf.json"
+    "doc": "node /node_modules/jsdoc/jsdoc.js -c ./jsdoc.conf.json",
+    "lint": "eslint .",
+    "prettier:check": "prettier --check ."
   },
   "keywords": [],
   "author": "",
@@ -16,8 +18,10 @@
     "frontend"
   ],
   "devDependencies": {
+    "eslint": "^10.11.0",
     "jsdoc": "^4.0.5",
-    "npm-run-all": "^4.1.5"
+    "npm-run-all": "^4.1.5",
+    "prettier": "^3.9.9"
   },
   "allowScripts": {
     "@parcel/watcher@2.5.1": true,

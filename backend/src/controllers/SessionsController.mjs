@@ -4,7 +4,13 @@ import { UsersModel } from "../models/UsersModel.mjs";
 import { ActivitiesModel } from "../models/ActivitiesModel.mjs";
 import { LocationModel } from "../models/LocationModel.mjs";
 import { BookingsModel } from "../models/BookingsModel.mjs";
+import { AuthenticationController } from "./AuthenticationController.mjs";
 
+/**
+ * Converts a session time from an HTML time input or 12-hour input to MySQL format.
+ * @param {unknown} value Session time value.
+ * @returns {unknown|string} Normalized time or the original value when it is not parseable.
+ */
 const normalizeSessionTime = (value) => {
   const normalizedValue = String(value).trim();
   const pickerMatch = normalizedValue.match(/^(\d{1,2}):(\d{2})$/);
@@ -21,10 +27,24 @@ const normalizeSessionTime = (value) => {
   return `${String(hour).padStart(2, "0")}:${minute}:00`;
 };
 
+/**
+ * Checks whether a value represents a positive numeric identifier.
+ * @param {unknown} value Candidate identifier.
+ * @returns {boolean} Whether the identifier is positive and integral.
+ */
 const isPositiveId = (value) => Number.isInteger(Number(value)) && Number(value) > 0;
 
 const SESSION_SORT_COLUMNS = ["title", "trainer", "date", "activity", "location", "bookings"];
 
+/**
+ * Gets the value used to sort a session by the selected column.
+ * @param {object} session Session record.
+ * @param {object[]} users User records.
+ * @param {object[]} activities Activity records.
+ * @param {object[]} locations Location records.
+ * @param {string} sortBy Sort column.
+ * @returns {string|number} Comparable sort value.
+ */
 // Compute a comparable sort value for a session given its related records.
 const sessionSortValue = (session, users, activities, locations, sortBy) => {
   if (sortBy === "trainer") {
@@ -46,6 +66,16 @@ const sessionSortValue = (session, users, activities, locations, sortBy) => {
   return session.title;
 };
 
+/**
+ * Sorts sessions by a supported column and direction.
+ * @param {object[]} sessions Session records.
+ * @param {object[]} users User records.
+ * @param {object[]} activities Activity records.
+ * @param {object[]} locations Location records.
+ * @param {string} sortBy Sort column.
+ * @param {"asc"|"desc"} sortDir Sort direction.
+ * @returns {object[]} Sorted session records.
+ */
 // Sort sessions server-side using the given column and direction.
 const sortSessions = (sessions, users, activities, locations, sortBy, sortDir) => {
   const multiplier = sortDir === "desc" ? -1 : 1;
@@ -58,16 +88,24 @@ const sortSessions = (sessions, users, activities, locations, sortBy, sortDir) =
   ));
 };
 
-// HTTP handlers for sessions. 
+/** HTTP handlers for sessions. */
 export class SessionsController {
   /** @type {import("express").Router} */
   static routes = express.Router();
 
   static {
-    this.routes.get("/", this.viewSessionManagement);
-    this.routes.get("/:id", this.viewSessionManagement);
-    this.routes.post("/", this.handleSessionManagement);
-    this.routes.post("/:id", this.handleSessionManagement);
+    this.routes.get("/",
+      AuthenticationController.restrict(["admin", "trainer"]),
+      this.viewSessionManagement);
+    this.routes.get("/:id",
+      AuthenticationController.restrict(["admin", "trainer"]),
+      this.viewSessionManagement);
+    this.routes.post("/",
+      AuthenticationController.restrict(["admin", "trainer"]),
+      this.handleSessionManagement);
+    this.routes.post("/:id",
+      AuthenticationController.restrict(["admin", "trainer"]),
+      this.handleSessionManagement);
   }
 
   /** @type {import("express").RequestHandler} */

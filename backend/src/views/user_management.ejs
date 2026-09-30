@@ -3,130 +3,157 @@
 
 <head>
     <%- include("partials/head.ejs") %>
-    <title>User Management - Gym</title>
+        <title>User Management - Gym</title>
 </head>
 
 <body>
     <main>
         <%- include("partials/header.ejs") %>
-        <%- include("partials/nav.ejs", { role, authenticatedUser }) %>
+            <%- include("partials/nav.ejs", { role, authenticatedUser }) %>
 
-        <section>
-            <h2>Users</h2>
-            <div class="list-search">
-                <label for="role-filter">Filter by role</label>
-                <select id="role-filter" onchange="filterUsers()">
-                    <option value="" <%= selectedRole === '' ? 'selected' : '' %>>All roles</option>
-                    <option value="admin" <%= selectedRole === 'admin' ? 'selected' : '' %>>Admin</option>
-                    <option value="trainer" <%= selectedRole === 'trainer' ? 'selected' : '' %>>Trainer</option>
-                    <option value="member" <%= selectedRole === 'member' ? 'selected' : '' %>>Member</option>
-                </select>
-            </div>
-            <div class="list-search">
-                <label for="user-search">Search users</label>
-                <div class="list-search-control">
-                    <input id="user-search" type="search" value="<%= selectedSearchTerm %>" onkeydown="if (event.key === 'Enter') { event.preventDefault(); filterUsers(); }">
-                    <button type="button" class="btn-accent" onclick="filterUsers()">Search</button>
-                </div>
-            </div>
-            <div class="list-results">
-                <table class="list-results-table">
-                    <% const userSortLink = (column) => {
-                        const params = new URLSearchParams();
-                        if (selectedSearchTerm) params.set('search_term', selectedSearchTerm);
-                        if (selectedRole) params.set('role', selectedRole);
-                        params.set('sort_by', column);
-                        params.set('sort_dir', selectedSortBy === column && selectedSortDir === 'asc' ? 'desc' : 'asc');
-                        return `/users?${params.toString()}`;
-                    }; %>
-                    <% const userSortAria = (column) => selectedSortBy === column
-                        ? (selectedSortDir === 'asc' ? 'ascending' : 'descending')
-                        : 'none'; %>
-                    <% const userListQuery = (page) => {
-                        const params = new URLSearchParams();
-                        if (selectedSearchTerm) params.set('search_term', selectedSearchTerm);
-                        if (selectedRole) params.set('role', selectedRole);
-                        params.set('sort_by', selectedSortBy);
-                        params.set('sort_dir', selectedSortDir);
-                        params.set('page', page);
-                        return params.toString();
-                    }; %>
-                    <thead>
-                        <tr>
-                            <th scope="col" aria-sort="<%= userSortAria('last_name') %>"><a class="sort-link" href="<%= userSortLink('last_name') %>" aria-label="Sort by name">Name</a></th>
-                            <th scope="col" aria-sort="<%= userSortAria('email') %>"><a class="sort-link" href="<%= userSortLink('email') %>" aria-label="Sort by email">Email</a></th>
-                            <th scope="col" aria-sort="<%= userSortAria('role') %>"><a class="sort-link" href="<%= userSortLink('role') %>" aria-label="Sort by role">Role</a></th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <% if (users.length === 0) { %>
-                            <tr><td colspan="3">No users match this search.</td></tr>
+                <section>
+                    <h2>Users</h2>
+                    <div class="list-search">
+                        <label for="role-filter">Filter by role</label>
+                        <select id="role-filter" onchange="filterUsers()">
+                            <option value="" <%=selectedRole==='' ? 'selected' : '' %>>All roles</option>
+                            <option value="admin" <%=selectedRole==='admin' ? 'selected' : '' %>>Admin</option>
+                            <option value="trainer" <%=selectedRole==='trainer' ? 'selected' : '' %>>Trainer</option>
+                            <option value="member" <%=selectedRole==='member' ? 'selected' : '' %>>Member</option>
+                        </select>
+                    </div>
+                    <div class="list-search">
+                        <label for="user-search">Search users</label>
+                        <div class="list-search-control">
+                            <input id="user-search" type="search" value="<%= selectedSearchTerm %>"
+                                onkeydown="if (event.key === 'Enter') { event.preventDefault(); filterUsers(); }">
+                            <button type="button" class="btn-accent" onclick="filterUsers()">Search</button>
+                        </div>
+                    </div>
+                    <div class="list-results">
+                        <table class="list-results-table">
+                            <% const userSortLink=(column)=> {
+                                const params = new URLSearchParams();
+                                if (selectedSearchTerm) params.set('search_term', selectedSearchTerm);
+                                if (selectedRole) params.set('role', selectedRole);
+                                params.set('sort_by', column);
+                                params.set('sort_dir', selectedSortBy === column && selectedSortDir === 'asc' ? 'desc' :
+                                'asc');
+                                return `/users?${params.toString()}`;
+                                }; %>
+                                <% const userSortAria=(column)=> selectedSortBy === column
+                                    ? (selectedSortDir === 'asc' ? 'ascending' : 'descending')
+                                    : 'none'; %>
+                                    <% const userListQuery=(page)=> {
+                                        const params = new URLSearchParams();
+                                        if (selectedSearchTerm) params.set('search_term', selectedSearchTerm);
+                                        if (selectedRole) params.set('role', selectedRole);
+                                        params.set('sort_by', selectedSortBy);
+                                        params.set('sort_dir', selectedSortDir);
+                                        params.set('page', page);
+                                        return params.toString();
+                                        }; %>
+                                        <thead>
+                                            <tr>
+                                                <th scope="col" aria-sort="<%= userSortAria('last_name') %>"><a
+                                                        class="sort-link" href="<%= userSortLink('last_name') %>"
+                                                        aria-label="Sort by name">Name</a></th>
+                                                <th scope="col" aria-sort="<%= userSortAria('email') %>"><a
+                                                        class="sort-link" href="<%= userSortLink('email') %>"
+                                                        aria-label="Sort by email">Email</a></th>
+                                                <th scope="col" aria-sort="<%= userSortAria('role') %>"><a
+                                                        class="sort-link" href="<%= userSortLink('role') %>"
+                                                        aria-label="Sort by role">Role</a></th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <% if (users.length===0) { %>
+                                                <tr>
+                                                    <td colspan="3">No users match this search.</td>
+                                                </tr>
+                                                <% } %>
+                                                    <% users.forEach((user)=> { %>
+                                                        <tr>
+                                                            <td><a
+                                                                    href="/users/<%= user.id %>?<%= userListQuery(selectedPage) %>#user-management">
+                                                                    <%= user.last_name %>, <%= user.first_name %>
+                                                                </a></td>
+                                                            <td>
+                                                                <%= user.email %>
+                                                            </td>
+                                                            <td>
+                                                                <%= user.role %>
+                                                            </td>
+                                                        </tr>
+                                                        <% }) %>
+                                        </tbody>
+                        </table>
+                    </div>
+                    <% if (totalPages> 1) { %>
+                        <nav class="pagination" aria-label="Users pagination">
+                            <a class="btn-outline<%= selectedPage <= 1 ? ' is-disabled' : '' %>"
+                                href="<%= selectedPage > 1 ? `/users?${userListQuery(selectedPage - 1)}` : '#' %>"
+                                aria-disabled="<%= selectedPage <= 1 %>">Previous</a>
+                            <span>Page <%= selectedPage %> of <%= totalPages %></span>
+                            <a class="btn-outline<%= selectedPage >= totalPages ? ' is-disabled' : '' %>"
+                                href="<%= selectedPage < totalPages ? `/users?${userListQuery(selectedPage + 1)}` : '#' %>"
+                                aria-disabled="<%= selectedPage >= totalPages %>">Next</a>
+                        </nav>
                         <% } %>
-                        <% users.forEach((user) => { %>
-                            <tr>
-                                <td><a href="/users/<%= user.id %>?<%= userListQuery(selectedPage) %>#user-management"><%= user.last_name %>, <%= user.first_name %></a></td>
-                                <td><%= user.email %></td>
-                                <td><%= user.role %></td>
-                            </tr>
-                        <% }) %>
-                    </tbody>
-                </table>
-            </div>
-            <% if (totalPages > 1) { %>
-                <nav class="pagination" aria-label="Users pagination">
-                    <a class="btn-outline<%= selectedPage <= 1 ? ' is-disabled' : '' %>" href="<%= selectedPage > 1 ? `/users?${userListQuery(selectedPage - 1)}` : '#' %>" aria-disabled="<%= selectedPage <= 1 %>">Previous</a>
-                    <span>Page <%= selectedPage %> of <%= totalPages %></span>
-                    <a class="btn-outline<%= selectedPage >= totalPages ? ' is-disabled' : '' %>" href="<%= selectedPage < totalPages ? `/users?${userListQuery(selectedPage + 1)}` : '#' %>" aria-disabled="<%= selectedPage >= totalPages %>">Next</a>
-                </nav>
-            <% } %>
-        </section>
+                </section>
 
-        <script>
-            function filterUsers() {
-                const params = new URLSearchParams(window.location.search);
-                const searchTerm = document.getElementById('user-search').value.trim();
-                const role = document.getElementById('role-filter').value;
-                if (searchTerm) params.set('search_term', searchTerm); else params.delete('search_term');
-                if (role) params.set('role', role); else params.delete('role');
-                params.delete('page');
-                window.location.href = `/users${params.toString() ? `?${params}` : ''}`;
-            }
-        </script>
+                <script>
+                    function filterUsers() {
+                        const params = new URLSearchParams(window.location.search);
+                        const searchTerm = document.getElementById('user-search').value.trim();
+                        const role = document.getElementById('role-filter').value;
+                        if (searchTerm) params.set('search_term', searchTerm); else params.delete('search_term');
+                        if (role) params.set('role', role); else params.delete('role');
+                        params.delete('page');
+                        window.location.href = `/users${params.toString() ? `?${params}` : ''}`;
+                    }
+                </script>
 
-        <section id="user-management">
-            <h2>User management - <%= selectedUser.id ? 'Edit' : 'Create' %></h2>
-            <form action="/users<%= selectedUser.id ? '/' + selectedUser.id : '' %>" method="post" class="form-grid responsive-half">
-                <label for="first-name">First name</label>
-                <input id="first-name" name="firstName" value="<%= selectedUser.first_name %>" required>
-                <label for="last-name">Last name</label>
-                <input id="last-name" name="lastName" value="<%= selectedUser.last_name %>" required>
-                <label for="role">Role</label>
-                <select id="role" name="role" required>
-                    <% ['admin', 'trainer', 'member'].forEach((userRole) => { %>
-                        <option value="<%= userRole %>" <%= selectedUser.role === userRole ? 'selected' : '' %>><%= userRole %></option>
-                    <% }) %>
-                </select>
-                <label for="email">Email</label>
-                <input id="email" name="email" type="email" value="<%= selectedUser.email %>" required>
-                <label for="password">Password</label>
-                <input id="password" name="password" type="password" value="<%= selectedUser.password %>" required>
-                <label for="phone">Phone</label>
-                <input id="phone" name="phone" value="<%= selectedUser.phone %>" required>
-                <label for="dob">Date of birth</label>
-                <input id="dob" name="dob" type="date" value="<%= selectedUser.dob %>">
-                <input type="hidden" name="deleted" value="<%= selectedUser.deleted || 0 %>">
-                <input type="hidden" name="authenticationKey" value="<%= selectedUser.authentication_key || '' %>">
-                <button type="submit" name="action" value="<%= selectedUser.id ? 'update' : 'create' %>">
-                    <%= selectedUser.id ? 'Update user' : 'Create user' %>
-                </button>
-                <% if (selectedUser.id) { %>
-                    <button type="button" onclick="window.location.href='/users#user-management'">Clear</button>
-                    <button type="submit" name="action" value="delete">Delete user</button>
-                <% } %>
-            </form>
-        </section>
+                <section id="user-management">
+                    <h2>User management - <%= selectedUser.id ? 'Edit' : 'Create' %>
+                    </h2>
+                    <form action="/users<%= selectedUser.id ? '/' + selectedUser.id : '' %>" method="post"
+                        class="form-grid responsive-half">
+                        <label for="first-name">First name</label>
+                        <input id="first-name" name="firstName" value="<%= selectedUser.first_name %>" required>
+                        <label for="last-name">Last name</label>
+                        <input id="last-name" name="lastName" value="<%= selectedUser.last_name %>" required>
+                        <label for="role">Role</label>
+                        <select id="role" name="role" required>
+                            <% ['admin', 'trainer' , 'member' ].forEach((userRole)=> { %>
+                                <option value="<%= userRole %>" <%=selectedUser.role===userRole ? 'selected' : '' %>><%=
+                                        userRole %>
+                                </option>
+                                <% }) %>
+                        </select>
+                        <label for="email">Email</label>
+                        <input id="email" name="email" type="email" value="<%= selectedUser.email %>" required>
+                        <label for="password">Password</label>
+                        <input id="password" name="password" type="password" value="<%= selectedUser.password %>"
+                            required>
+                        <label for="phone">Phone</label>
+                        <input id="phone" name="phone" value="<%= selectedUser.phone %>" required>
+                        <label for="dob">Date of birth</label>
+                        <input id="dob" name="dob" type="date" value="<%= selectedUser.dob %>">
+                        <input type="hidden" name="deleted" value="<%= selectedUser.deleted || 0 %>">
+                        <input type="hidden" name="authenticationKey"
+                            value="<%= selectedUser.authentication_key || '' %>">
+                        <button type="submit" name="action" value="<%= selectedUser.id ? 'update' : 'create' %>">
+                            <%= selectedUser.id ? 'Update user' : 'Create user' %>
+                        </button>
+                        <% if (selectedUser.id) { %>
+                            <button type="button" onclick="window.location.href='/users#user-management'">Clear</button>
+                            <button type="submit" name="action" value="delete">Delete user</button>
+                            <% } %>
+                    </form>
+                </section>
 
-        <%- include("partials/footer.ejs") %>
+                <%- include("partials/footer.ejs") %>
     </main>
 </body>
 

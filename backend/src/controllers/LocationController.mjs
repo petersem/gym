@@ -1,14 +1,17 @@
 import express from "express";
 import { LocationModel } from "../models/LocationModel.mjs";
 import { UsersModel } from "../models/UsersModel.mjs";
+import { AuthenticationController } from "./AuthenticationController.mjs";
 
+/** HTTP handlers for locations. */
 export class LocationController {
+  /** @type {import("express").Router} */
   static routes = express.Router();
 
   static {
         this.routes.get(
             "/",
-            //AuthenticationController.restrict(["admin"]),
+            AuthenticationController.restrict(["admin"]),
             this.viewLocationManagement
         )
 
@@ -16,23 +19,24 @@ export class LocationController {
 
         this.routes.get(
             "/:id",
-            //AuthenticationController.restrict(["admin"]),
+            AuthenticationController.restrict(["admin"]),
             this.viewLocationManagement
         )
 
         this.routes.post(
             "/",
-            //AuthenticationController.restrict(["admin"]),
+            AuthenticationController.restrict(["admin"]),
             this.handleLocationManagement
         )
 
         this.routes.post(
             "/:id",
-            //AuthenticationController.restrict(["admin"]),
+            AuthenticationController.restrict(["admin"]),
             this.handleLocationManagement
         )    
   }
 
+  /** @type {import("express").RequestHandler} */
   static viewLocationManagement(req, res) {
     const selectedLocationId = req.params.id;
     const selectedSearchTerm = String(req.query.search_term ?? "").trim();
@@ -74,6 +78,7 @@ export class LocationController {
       });
   }
 
+  /** @type {import("express").RequestHandler} */
   static viewLocationList(req, res) {
     const selectedSearchTerm = String(req.query.search_term ?? "").trim();
     const selectedSortBy = Object.keys(LocationModel.SORTABLE_COLUMNS).includes(req.query.sort_by)
@@ -106,6 +111,7 @@ export class LocationController {
       });
   }
 
+  /** @type {import("express").RequestHandler} */
   static viewLocationSales(req, res) {
     res.status(501).render("status.ejs", {
       status: "Locations Unavailable",
@@ -113,6 +119,7 @@ export class LocationController {
     });
   }
 
+  /** @type {import("express").RequestHandler} */
   static viewLocationDetails(req, res) {
     LocationModel.getById(req.params.id)
       .then((location) => {
@@ -132,6 +139,7 @@ export class LocationController {
   }
 
 
+  /** @type {import("express").RequestHandler} */
   static handleLocationManagement(req, res) {
     const authenticatedUserId = Number(req.authenticatedUser?.id);
     if (!Number.isInteger(authenticatedUserId) || authenticatedUserId <= 0) {

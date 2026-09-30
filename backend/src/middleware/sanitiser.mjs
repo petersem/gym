@@ -2,9 +2,9 @@ import { logDanger, logWarning, logInfo } from "../utilities/logger.mjs";
 
 
 /**
- * ### Sanitises prohibitted characters from requests
- * @param {String} action the action to take for the sanitiser 
- * @returns {Request,Response,next} Middleware types
+ * Creates middleware that cleans, warns about, or rejects unsafe request body values.
+ * @param {"clean"|"warn"|"reject"|"disable"} action Sanitisation behavior.
+ * @returns {import("express").RequestHandler} Configured sanitiser middleware.
  */
 export const sanitiser = function (action = "fail") {
     // options can be
@@ -21,7 +21,7 @@ export const sanitiser = function (action = "fail") {
             } else {
                 // Remove potentially dangerous characters
                 for (let [key, value] of Object.entries(req.body)) {
-                    const testBad = /[$&+:;=?#|<>{}^*%!]/.test(req.body[key]);
+                    const testBad = /[$&+;=?#|<>{}^*%!]/.test(req.body[key]);
                     // if bad characters found, print to the log and santisise bad data
                     if (testBad) {
                         const display = () => {
@@ -53,7 +53,11 @@ export const sanitiser = function (action = "fail") {
                                 //if (process.env.NODE_ENV === "development") {
                                     console.log(logWarning, `Sanitiser (Mode: ${action}) ${errorMessage}`);
                                 //}
-                                return res.setHeader('Content-Type', 'application/json').status(422).json({ message: errorMessage, status: "rejected" });
+                                return res.status(422).render("status.ejs", {
+                                    status: "Request Rejected",
+                                    message: errorMessage,
+                                    authenticatedUser: req.authenticatedUser,
+                                });
                                 break;
                             default:
                                 res.status(500);

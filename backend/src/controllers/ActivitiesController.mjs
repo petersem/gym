@@ -1,5 +1,6 @@
 import express from "express";
 import { ActivitiesModel } from "../models/ActivitiesModel.mjs";
+import { AuthenticationController } from "./AuthenticationController.mjs";
 
 /** HTTP handlers for activities.
  * @class
@@ -9,10 +10,18 @@ export class ActivitiesController {
   static routes = express.Router();
 
   static {
-    this.routes.get("/", this.viewActivityManagement);
-    this.routes.get("/:id", this.viewActivityManagement);
-    this.routes.post("/", this.handleActivityManagement);
-    this.routes.post("/:id", this.handleActivityManagement);
+    this.routes.get("/", 
+      AuthenticationController.restrict("admin"),
+      this.viewActivityManagement);
+    this.routes.get("/:id", 
+      AuthenticationController.restrict("admin"),
+      this.viewActivityManagement);
+    this.routes.post("/", 
+      AuthenticationController.restrict("admin"),
+      this.handleActivityManagement);
+    this.routes.post("/:id", 
+      AuthenticationController.restrict("admin"),
+      this.handleActivityManagement);
   }
 
   /** @type {import("express").RequestHandler} */

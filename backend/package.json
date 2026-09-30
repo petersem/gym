@@ -8,8 +8,7 @@
     "dev": "npm run build:css && nodemon --env-file=./src/.env src/server.mjs",
     "prod": "npm run build:css && nodemon --env-file=./src/.envprod src/server.mjs",
     "tailwind": "npx @tailwindcss/cli -i src/public/css/style.css -o src/dist/css/tailwind.css --watch",
-    "dev-full": "npm-run-all --parallel tailwind dev",
-    "seed:villains": "node --env-file=./src/.env src/scripts/seedVillainMembers.mjs",
+    "dev-full": "npm-run-all --parallel dev tailwind",
     "doc": "node /node_modules/jsdoc/jsdoc.js -c ./jsdoc.conf.json"
   },
   "keywords": [],

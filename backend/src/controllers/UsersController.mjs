@@ -1,6 +1,7 @@
 import express from "express";
 import { UsersModel, USER_ROLE_ADMIN, USER_ROLE_TRAINER, USER_ROLE_MEMBER } from "../models/UsersModel.mjs";
 import bcrypt from "bcrypt";
+import { AuthenticationController } from "./AuthenticationController.mjs";
 
 /** HTTP handlers for users. */
 export class UsersController {
@@ -9,25 +10,25 @@ export class UsersController {
     static {
         this.routes.get(
             "/",
-            //AuthenticationController.restrict(["admin"]),
+            AuthenticationController.restrict("admin"),
             this.viewUserManagement
         )
 
         this.routes.get(
             "/:id",
-            //AuthenticationController.restrict(["admin"]),
+            AuthenticationController.restrict("admin"),
             this.viewUserManagement
         )
 
         this.routes.post(
             "/",
-            //AuthenticationController.restrict(["admin"]),
+            AuthenticationController.restrict("admin"),
             this.handleUserManagement
         )
 
         this.routes.post(
             "/:id",
-            //AuthenticationController.restrict(["admin"]),
+            AuthenticationController.restrict("admin"),
             this.handleUserManagement
         )
     }
@@ -81,6 +82,8 @@ export class UsersController {
                     totalPages: Math.max(1, Math.ceil(total / pageSize)),
                     authenticatedUser: req.authenticatedUser,
                     role: "admin",
+                    userDeleted: req.query.user_deleted === "1",
+                    userCreated: req.query.user_created === "1",
                 })
             })
             .catch(error => {
@@ -112,7 +115,7 @@ export class UsersController {
             formData["authenticationKey"] ?? formData["authentication_key"] ?? 0
         )
 
-        // We need to hash the password if it is not hashed
+        // hash the password if it is not hashed
         if (!/^\$2[aby]\$/.test(user.password)) {
             user.password = bcrypt.hashSync(user.password, 10)
         }

@@ -132,6 +132,11 @@ describe('BookingsController', () => {
     expect(selectedUserData.bookingUserId).toBe(8);
     expect(selectedUserData.bookingCalendarDays[0].bookings).toEqual([bookings[1]]);
 
+    await BookingsController.viewBookingManagement(request({}, { booking_trainer_id: 'all' }, {}, authenticatedUser), res);
+    const allTrainerData = res.render.mock.calls.at(-1)[1];
+    expect(allTrainerData.bookingUserId).toBeNull();
+    expect(allTrainerData.bookingCalendarDays[0].bookings).toEqual(bookings);
+
     if (role === 'trainer') {
       const trainerUsers = [
         { id: 12, first_name: 'Taylor', last_name: 'Trainer', role: 'trainer' },
@@ -178,7 +183,7 @@ describe('BookingsController', () => {
 
     await BookingsController.viewBookingManagement(request({}, {
       booking_trainer_id: 'all',
-    }, {}, { role: 'trainer' }), res);
+    }, {}, { id: 12, role: 'trainer' }), res);
     expect(res.render.mock.calls.at(-1)[1].bookingTrainerId).toBeNull();
 
     await BookingsController.viewBookingManagement(request({}, {
@@ -292,6 +297,29 @@ describe('BookingsController', () => {
     await BookingsController.handleBookingManagement(request({ id: '2' }, {}, { action: 'update' }), res);
     BookingsModel.delete.mockRejectedValue(new Error('database error'));
     await BookingsController.handleBookingManagement(request({ id: '2' }, {}, { action: 'delete' }), res);
+  });
+
+  test('allows trainers to delete bookings only for their own sessions', async () => {
+    jest.spyOn(BookingsModel, 'getById').mockResolvedValue({ id: 2, session_id: 9 });
+    jest.spyOn(SessionsModel, 'getById').mockResolvedValue({ id: 9, trainer_id: 12 });
+    const deleteBooking = jest.spyOn(BookingsModel, 'delete').mockResolvedValue({ affectedRows: 1 });
+    const res = response();
+    const trainer = { id: 12, role: 'trainer' };
+
+    await BookingsController.handleBookingManagement(
+      request({ id: '2' }, {}, { action: 'delete' }, trainer), res,
+    );
+    expect(deleteBooking).toHaveBeenCalledWith(2);
+
+    SessionsModel.getById.mockResolvedValue({ id: 9, trainer_id: 13 });
+    await BookingsController.handleBookingManagement(
+      request({ id: '2' }, {}, { action: 'delete' }, trainer), res,
+    );
+    expect(deleteBooking).toHaveBeenCalledTimes(1);
+    expect(res.status).toHaveBeenCalledWith(403);
+    expect(res.render).toHaveBeenCalledWith('status.ejs', expect.objectContaining({
+      status: 'Booking Deletion Forbidden',
+    }));
   });
 
   test('forwards errors from booking JSON handlers', async () => {

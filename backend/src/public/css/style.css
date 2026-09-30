@@ -81,6 +81,9 @@
   --gym-gridline: rgba(29, 74, 56, 0.025);
   --gym-glow: rgba(255, 255, 255, 0.75);
   --gym-shadow: rgba(23, 35, 29, 0.055);
+  --gym-admin: gold;
+  --gym-trainer: silver;
+  --gym-member: #CD7F32;
 }
 
 html {
@@ -192,21 +195,21 @@ main {
 }
 
 .role-badge.role-admin {
-  border-color: var(--gym-coral);
-  background: var(--gym-coral);
-  color: #ffffff;
+  border-color: var(--gym-admin);
+  background: var(--gym-admin);
+  color: #000000;
 }
 
 .role-badge.role-trainer {
-  border-color: var(--gym-forest);
-  background: var(--gym-forest);
-  color: #ffffff;
+  border-color: var(--gym-trainer);
+  background: var(--gym-trainer);
+  color: #000000;
 }
 
 .role-badge.role-member {
-  border-color: var(--gym-citron);
-  background: var(--gym-citron);
-  color: var(--gym-ink);
+  border-color: var(--gym-member);
+  background: var(--gym-member);
+  color: #000000;
 }
 
 .site-nav.navbar {
@@ -893,11 +896,6 @@ section > ul:not(.menu) > li {
 
 :root[data-theme="dark"] .authenticated-user {
   color: #000000;
-}
-
-:root[data-theme="dark"] .role-badge.role-trainer {
-  border-color: #a1d5b0;
-  background: #a1d5b0;
 }
 
 @media screen and (max-width: 760px) {

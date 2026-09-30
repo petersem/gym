@@ -5,6 +5,12 @@ import { SessionsModel } from "../models/SessionsModel.mjs";
 import { LocationModel } from "../models/LocationModel.mjs";
 import { ActivitiesModel } from "../models/ActivitiesModel.mjs";
 
+/**
+ * Builds the bookings management URL while preserving the active filters.
+ * @param {import("express").Request} req Current request.
+ * @param {{ bookingDeleted?: boolean, bookingCreated?: boolean }} [options] Result flags.
+ * @returns {string} Bookings page URL.
+ */
 const bookingPageUrl = (req, { bookingDeleted = false, bookingCreated = false } = {}) => {
   const query = new URLSearchParams();
   if (req.query.booking_user_id === "all") {
@@ -15,9 +21,13 @@ const bookingPageUrl = (req, { bookingDeleted = false, bookingCreated = false } 
       query.set("booking_user_id", String(bookingUserId));
     }
   }
-  const bookingTrainerId = Number(req.query.booking_trainer_id);
-  if (Number.isInteger(bookingTrainerId) && bookingTrainerId > 0) {
+  if (req.query.booking_trainer_id === "all") {
+    query.set("booking_trainer_id", "all");
+  } else {
+    const bookingTrainerId = Number(req.query.booking_trainer_id);
+    if (Number.isInteger(bookingTrainerId) && bookingTrainerId > 0) {
     query.set("booking_trainer_id", String(bookingTrainerId));
+    }
   }
   if (bookingDeleted) query.set("booking_deleted", "1");
   if (bookingCreated) query.set("booking_created", "1");
@@ -58,25 +68,23 @@ export class BookingsController {
       const availableLocationId = Number(req.query.available_location_id) || null;
       const bookingLocationId = Number(req.query.booking_location_id) || null;
       const bookingUserIdParam = req.query.booking_user_id;
+      const bookingTrainerIdParam = req.query.booking_trainer_id;
       const bookingUserId = canManageBookings
         ? bookingUserIdParam === undefined
-          ? req.authenticatedUser?.role === "trainer"
+          ? req.authenticatedUser?.role === "trainer" || bookingTrainerIdParam !== undefined
             ? null
             : req.authenticatedUser?.id ?? null
           : bookingUserIdParam === "all"
             ? null
             : Number(bookingUserIdParam) || null
         : req.authenticatedUser?.id ?? null;
-      const bookingTrainerIdParam = req.query.booking_trainer_id;
       const bookingTrainerId = canManageBookings
         ? bookingTrainerIdParam === undefined
           ? req.authenticatedUser?.role === "trainer"
             ? req.authenticatedUser.id ?? null
             : null
           : bookingTrainerIdParam === "all"
-            ? req.authenticatedUser?.role === "trainer"
-              ? req.authenticatedUser.id ?? null
-              : null
+            ? null
             : Number(bookingTrainerIdParam) || null
         : null;
       const availableSessions = availableLocationId
@@ -84,7 +92,11 @@ export class BookingsController {
         : sessions;
       const bookingSessions = sessions.filter((session) => {
         const matchesLocation = !bookingLocationId || Number(session.location_id) === bookingLocationId;
-        const matchesTrainer = !bookingTrainerId || Number(session.trainer_id) === Number(bookingTrainerId);
+        // A trainer's own bookings stay visible even under sessions taught by other trainers.
+        const isOwnBooking = req.authenticatedUser?.role === "trainer"
+          && bookings.some((booking) => Number(booking.session_id) === Number(session.id)
+            && Number(booking.user_id) === Number(req.authenticatedUser.id));
+        const matchesTrainer = !bookingTrainerId || Number(session.trainer_id) === Number(bookingTrainerId) || isOwnBooking;
         return matchesLocation && matchesTrainer;
       });
       const today = new Date();
@@ -182,8 +194,26 @@ export class BookingsController {
           res.status(500).render("status.ejs", { status: "Database Error", message: "The booking could not be updated." });
         });
     } else if (req.body.action === "delete") {
-      return BookingsModel.delete(booking.id)
-        .then((result) => result.affectedRows > 0
+      const deleteBooking = req.authenticatedUser?.role === "trainer"
+        ? BookingsModel.getById(booking.id)
+          .then((existingBooking) => SessionsModel.getById(existingBooking.session_id)
+            .then((session) => ({ existingBooking, session })))
+          .then(({ existingBooking, session }) => {
+            const ownsSession = Number(session.trainer_id) === Number(req.authenticatedUser.id);
+            const ownsBooking = Number(existingBooking.user_id) === Number(req.authenticatedUser.id);
+            if (!ownsSession || !ownsBooking) {
+              return res.status(403).render("status.ejs", {
+                status: "Booking Deletion Forbidden",
+                message: "You can only delete bookings for your own sessions or your own bookings",
+              });
+            }
+            return BookingsModel.delete(booking.id);
+          })
+        : BookingsModel.delete(booking.id);
+      return deleteBooking
+        .then((result) => result == null
+          ? undefined
+          : result.affectedRows > 0
           ? res.redirect(bookingPageUrl(req, { bookingDeleted: true }))
           : res.status(404).render("status.ejs", { status: "Booking Deletion Failed", message: "The booking could not be found." }))
         .catch((error) => {
