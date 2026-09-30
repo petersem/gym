@@ -1602,6 +1602,9 @@
   .static {
     position: static;
   }
+  .isolate {
+    isolation: isolate;
+  }
   @layer daisyui.l1.l2.l3 {
     .stack {
       display: inline-grid;
