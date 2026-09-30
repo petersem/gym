@@ -274,7 +274,7 @@ export class BookingsController {
                 const ownsBooking =
                   Number(existingBooking.user_id) ===
                   Number(req.authenticatedUser.id);
-                if (!ownsSession || !ownsBooking) {
+                if (!ownsSession && !ownsBooking) {
                   return res.status(403).render("status.ejs", {
                     status: "Booking Deletion Forbidden",
                     message:

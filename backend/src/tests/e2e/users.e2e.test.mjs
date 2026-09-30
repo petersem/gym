@@ -16,6 +16,10 @@ let baseUrl;
 let createdUserId;
 
 app.use(express.urlencoded({ extended: true }));
+app.use((req, res, next) => {
+  req.authenticatedUser = { id: 1, role: "admin" };
+  next();
+});
 app.use("/users", UsersController.routes);
 
 beforeAll(async () => {

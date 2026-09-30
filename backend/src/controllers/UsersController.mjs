@@ -87,8 +87,8 @@ export class UsersController {
           totalPages: Math.max(1, Math.ceil(total / pageSize)),
           authenticatedUser: req.authenticatedUser,
           role: "admin",
-          userDeleted: req.query.user_deleted === "1",
-          userCreated: req.query.user_created === "1",
+          userDeleted: query.user_deleted === "1",
+          userCreated: query.user_created === "1",
         });
       })
       .catch((error) => {
