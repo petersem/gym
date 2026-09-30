@@ -32,9 +32,9 @@ describe('SessionsModel end-to-end flow', () => {
       await SessionsModel.update(session);
       expect((await SessionsModel.getById(sessionId)).time).toBe('10:00:00');
     } finally {
-      if (sessionId) await SessionsModel.delete(sessionId);
-      if (locationId) await LocationModel.delete(locationId);
-      if (activityId) await ActivitiesModel.delete(activityId);
+      if (sessionId) {await SessionsModel.delete(sessionId);}
+      if (locationId) {await LocationModel.delete(locationId);}
+      if (activityId) {await ActivitiesModel.delete(activityId);}
     }
 
     await expect(SessionsModel.getById(sessionId)).rejects.toBe('not found');

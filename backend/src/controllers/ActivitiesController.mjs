@@ -38,7 +38,7 @@ export class ActivitiesController {
         page: selectedPage, pageSize,
       });
       const selectedActivity = activities.find(
-        (activity) => activity.id == req.params.id,
+        (activity) => String(activity.id) === req.params.id,
       ) ?? new ActivitiesModel(null, "", "", 0, 0);
       res.render("activity_management.ejs", {
         activities,

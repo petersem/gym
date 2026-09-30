@@ -31,7 +31,7 @@ describe('ActivitiesModel load test', () => {
       .every((activity) => activity.description === 'Updated load description')).toBe(true);
 
     await Promise.all(createdIds.map((id) => ActivitiesModel.delete(id)));
-    for (const id of createdIds) await expect(ActivitiesModel.getById(id)).rejects.toBe('not found');
+    for (const id of createdIds) {await expect(ActivitiesModel.getById(id)).rejects.toBe('not found');}
     createdIds.length = 0;
   });
 });

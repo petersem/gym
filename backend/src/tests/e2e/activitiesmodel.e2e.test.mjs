@@ -28,7 +28,7 @@ describe('ActivitiesModel end-to-end flow', () => {
       await ActivitiesModel.update(saved);
       expect((await ActivitiesModel.getById(id)).description).toBe('Updated description');
     } finally {
-      if (id) await ActivitiesModel.delete(id);
+      if (id) {await ActivitiesModel.delete(id);}
     }
 
     await expect(ActivitiesModel.getById(id)).rejects.toBe('not found');

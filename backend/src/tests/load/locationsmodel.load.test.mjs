@@ -26,7 +26,7 @@ describe('LocationModel load test', () => {
       .every((location) => location.suburb === 'Sydney')).toBe(true);
 
     await Promise.all(createdIds.map((id) => LocationModel.delete(id)));
-    for (const id of createdIds) await expect(LocationModel.getById(id)).rejects.toBe('not found');
+    for (const id of createdIds) {await expect(LocationModel.getById(id)).rejects.toBe('not found');}
     createdIds.length = 0;
   });
 });

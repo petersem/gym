@@ -28,7 +28,7 @@ export class BlogController {
     });
     return Promise.all([blogsPromise, UsersModel.getAll()])
       .then(([{ blogs, total }, users]) => {
-      const selectedBlog = blogs.find((blog) => blog.id == req.params.id)
+      const selectedBlog = blogs.find((blog) => String(blog.id) === req.params.id)
         ?? new BlogModel(null, "", "", 0, "", 0, 0);
       res.render("blog_management.ejs", {
         blogs,

@@ -78,7 +78,7 @@ export class AuthenticationController {
                 })
             }
         } catch (error) {
-            if (error == "not found") {
+            if (error === "not found") {
                 res.status(400).render("status.ejs", {
                     status: "Authentication Failed.",
                     message: "Invalid credentials."

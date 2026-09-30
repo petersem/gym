@@ -29,8 +29,8 @@ const bookingPageUrl = (req, { bookingDeleted = false, bookingCreated = false } 
     query.set("booking_trainer_id", String(bookingTrainerId));
     }
   }
-  if (bookingDeleted) query.set("booking_deleted", "1");
-  if (bookingCreated) query.set("booking_created", "1");
+  if (bookingDeleted) {query.set("booking_deleted", "1");}
+  if (bookingCreated) {query.set("booking_created", "1");}
   const search = query.toString();
   return search ? `/bookings?${search}` : "/bookings";
 };
@@ -63,7 +63,7 @@ export class BookingsController {
       ActivitiesModel.getAll(),
     ])
       .then(([bookings, users, sessions, locations, activities]) => {
-      const selectedBooking = bookings.find((booking) => booking.id == req.params.id)
+      const selectedBooking = bookings.find((booking) => String(booking.id) === req.params.id)
         ?? new BookingsModel(null, req.query.session_id ?? "", 0, "");
       const availableLocationId = Number(req.query.available_location_id) || null;
       const bookingLocationId = Number(req.query.booking_location_id) || null;

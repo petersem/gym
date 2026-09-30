@@ -27,7 +27,7 @@ describe('UsersModel end-to-end flow', () => {
       await UsersModel.update(saved);
       expect((await UsersModel.getById(userId)).phone).toBe('555-0189');
     } finally {
-      if (userId) await UsersModel.delete(userId);
+      if (userId) {await UsersModel.delete(userId);}
     }
 
     await expect(UsersModel.getById(userId)).rejects.toBe('not found');

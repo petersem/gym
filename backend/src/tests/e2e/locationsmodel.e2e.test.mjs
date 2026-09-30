@@ -26,7 +26,7 @@ describe('LocationModel end-to-end flow', () => {
       await LocationModel.update(location);
       expect((await LocationModel.getById(locationId)).suburb).toBe('Sydney');
     } finally {
-      if (locationId) await LocationModel.delete(locationId);
+      if (locationId) {await LocationModel.delete(locationId);}
     }
 
     await expect(LocationModel.getById(locationId)).rejects.toBe('not found');

@@ -15,11 +15,11 @@ let sessionId;
 afterAll(async () => {
   await Promise.all(bookingIds.map((id) => BookingsModel.delete(id)));
   await BookingsModel.query("DELETE b FROM bookings b JOIN sessions s ON s.id = b.session_id JOIN activities a ON a.id = s.activity_id WHERE a.name LIKE ?", ["Load Booking Activity %"]);
-  if (sessionId) await SessionsModel.delete(sessionId);
+  if (sessionId) {await SessionsModel.delete(sessionId);}
   await SessionsModel.query("DELETE s FROM sessions s JOIN activities a ON a.id = s.activity_id WHERE a.name LIKE ?", ["Load Booking Activity %"]);
-  if (locationId) await LocationModel.delete(locationId);
+  if (locationId) {await LocationModel.delete(locationId);}
   await LocationModel.query("DELETE FROM locations WHERE name LIKE ?", ["Load Booking Location %"]);
-  if (activityId) await ActivitiesModel.delete(activityId);
+  if (activityId) {await ActivitiesModel.delete(activityId);}
   await ActivitiesModel.query("DELETE FROM activities WHERE name LIKE ?", ["Load Booking Activity %"]);
   await Promise.all(userIds.map((id) => UsersModel.delete(id)));
   await UsersModel.query("DELETE FROM users WHERE email LIKE ?", ["booking-load-%"]);
@@ -50,7 +50,7 @@ describe('BookingsModel load test', () => {
       .every((booking) => booking.created === '2026-09-26 10:00:00')).toBe(true);
 
     await Promise.all(bookingIds.map((id) => BookingsModel.delete(id)));
-    for (const id of bookingIds) await expect(BookingsModel.getById(id)).rejects.toBe('not found');
+    for (const id of bookingIds) {await expect(BookingsModel.getById(id)).rejects.toBe('not found');}
     bookingIds.length = 0;
     userIds.length = 0;
   });

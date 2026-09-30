@@ -57,7 +57,7 @@ export class UsersController {
             .then(({ users, total }) => {
 
                 const selectedUser = users.find(
-                    e => e.id == selectedUserId
+                    e => String(e.id) === String(selectedUserId)
                 ) ?? new UsersModel(
                     null,
                     "",
@@ -120,7 +120,7 @@ export class UsersController {
             user.password = bcrypt.hashSync(user.password, 10)
         }
 
-        if (action == "create") {
+        if (action === "create") {
             UsersModel.create(user)
                 .then(result => {
                     res.redirect("/users")
@@ -132,7 +132,7 @@ export class UsersController {
                     });
                     console.error(error)
                 })
-        } else if (action == "update") {
+        } else if (action === "update") {
             UsersModel.update(user)
                 .then(result => {
                     if (result.affectedRows > 0) {
@@ -151,7 +151,7 @@ export class UsersController {
                     });
                     console.error(error)
                 })
-        } else if (action == "delete") {
+        } else if (action === "delete") {
             UsersModel.delete(user.id)
                 .then(result => {
                     if (result.affectedRows > 0) {

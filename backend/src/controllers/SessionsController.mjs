@@ -14,16 +14,16 @@ import { AuthenticationController } from "./AuthenticationController.mjs";
 const normalizeSessionTime = (value) => {
   const normalizedValue = String(value).trim();
   const pickerMatch = normalizedValue.match(/^(\d{1,2}):(\d{2})$/);
-  if (pickerMatch) return `${pickerMatch[1].padStart(2, "0")}:${pickerMatch[2]}:00`;
+  if (pickerMatch) {return `${pickerMatch[1].padStart(2, "0")}:${pickerMatch[2]}:00`;}
 
   const match = normalizedValue.match(/^(\d{1,2}):(\d{2})\s*(am|pm)$/i);
-  if (!match) return value;
+  if (!match) {return value;}
 
   let hour = Number(match[1]);
   const minute = match[2];
   const meridiem = match[3].toLowerCase();
-  if (meridiem === "pm" && hour !== 12) hour += 12;
-  if (meridiem === "am" && hour === 12) hour = 0;
+  if (meridiem === "pm" && hour !== 12) {hour += 12;}
+  if (meridiem === "am" && hour === 12) {hour = 0;}
   return `${String(hour).padStart(2, "0")}:${minute}:00`;
 };
 
@@ -147,7 +147,7 @@ export class SessionsController {
       ));
       const sessionBookingCounts = bookings.reduce((counts, booking) => {
         const sessionId = Number(booking.session_id);
-        if (!Number.isFinite(sessionId)) return counts;
+        if (!Number.isFinite(sessionId)) {return counts;}
         counts.set(sessionId, (counts.get(sessionId) ?? 0) + 1);
         return counts;
       }, new Map());
@@ -160,7 +160,7 @@ export class SessionsController {
       const selectedPage = Math.max(1, Number(req.query.page) || 1);
       const totalPages = Math.max(1, Math.ceil(sortedSessions.length / pageSize));
       const paginatedSessions = sortedSessions.slice((selectedPage - 1) * pageSize, selectedPage * pageSize);
-      const selectedSession = sessions.find((session) => session.id == req.params.id)
+      const selectedSession = sessions.find((session) => String(session.id) === req.params.id)
         ?? new SessionsModel(null, 0, 0, 0, "", "", "");
       return (selectedSession.id ? BookingsModel.getBySessionId(selectedSession.id) : Promise.resolve([]))
         .then((selectedSessionBookings) => {

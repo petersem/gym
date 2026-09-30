@@ -24,7 +24,7 @@ describe('UsersModel load test', () => {
       .every((user) => user.phone === '555-0181')).toBe(true);
 
     await Promise.all(createdIds.map((id) => UsersModel.delete(id)));
-    for (const id of createdIds) await expect(UsersModel.getById(id)).rejects.toBe('not found');
+    for (const id of createdIds) {await expect(UsersModel.getById(id)).rejects.toBe('not found');}
     createdIds.length = 0;
   });
 });

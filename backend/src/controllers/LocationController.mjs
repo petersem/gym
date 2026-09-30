@@ -53,7 +53,7 @@ export class LocationController {
     Promise.all([locationsPromise, UsersModel.getAll()])
       .then(([{ locations, total }, users]) => {
         const selectedLocation = locations.find(
-          (location) => location.id == selectedLocationId,
+          (location) => String(location.id) === selectedLocationId,
         ) ?? new LocationModel(null, "", "", "", "", "", 0, 0, 0, 0);
 
         res.render("location_management.ejs", {

@@ -12,9 +12,9 @@ let locationId;
 afterAll(async () => {
   await Promise.all(sessionIds.map((id) => SessionsModel.delete(id)));
   await SessionsModel.query("DELETE s FROM sessions s JOIN activities a ON a.id = s.activity_id WHERE a.name LIKE ?", ["Load Session Activity %"]);
-  if (locationId) await LocationModel.delete(locationId);
+  if (locationId) {await LocationModel.delete(locationId);}
   await LocationModel.query("DELETE FROM locations WHERE name LIKE ?", ["Load Session Location %"]);
-  if (activityId) await ActivitiesModel.delete(activityId);
+  if (activityId) {await ActivitiesModel.delete(activityId);}
   await ActivitiesModel.query("DELETE FROM activities WHERE name LIKE ?", ["Load Session Activity %"]);
   await SessionsModel.connection.end();
 });
@@ -37,7 +37,7 @@ describe('SessionsModel load test', () => {
       .every((session) => session.time === '12:00:00')).toBe(true);
 
     await Promise.all(sessionIds.map((id) => SessionsModel.delete(id)));
-    for (const id of sessionIds) await expect(SessionsModel.getById(id)).rejects.toBe('not found');
+    for (const id of sessionIds) {await expect(SessionsModel.getById(id)).rejects.toBe('not found');}
     sessionIds.length = 0;
   });
 });

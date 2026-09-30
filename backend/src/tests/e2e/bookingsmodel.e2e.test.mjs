@@ -34,11 +34,11 @@ describe('BookingsModel end-to-end flow', () => {
       await BookingsModel.update(booking);
       expect((await BookingsModel.getById(bookingId)).created).toBe('2026-09-26 10:00:00');
     } finally {
-      if (bookingId) await BookingsModel.delete(bookingId);
-      if (sessionId) await SessionsModel.delete(sessionId);
-      if (locationId) await LocationModel.delete(locationId);
-      if (activityId) await ActivitiesModel.delete(activityId);
-      if (userId) await UsersModel.delete(userId);
+      if (bookingId) {await BookingsModel.delete(bookingId);}
+      if (sessionId) {await SessionsModel.delete(sessionId);}
+      if (locationId) {await LocationModel.delete(locationId);}
+      if (activityId) {await ActivitiesModel.delete(activityId);}
+      if (userId) {await UsersModel.delete(userId);}
     }
 
     await expect(BookingsModel.getById(bookingId)).rejects.toBe('not found');

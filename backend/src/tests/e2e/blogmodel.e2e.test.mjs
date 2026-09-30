@@ -28,8 +28,8 @@ describe('BlogModel end-to-end flow', () => {
       await BlogModel.update(blog);
       expect((await BlogModel.getById(blogId)).content).toBe('Updated body');
     } finally {
-      if (blogId) await BlogModel.delete(blogId);
-      if (userId) await UsersModel.delete(userId);
+      if (blogId) {await BlogModel.delete(blogId);}
+      if (userId) {await UsersModel.delete(userId);}
     }
 
     await expect(BlogModel.getById(blogId)).rejects.toBe('not found');

@@ -15,12 +15,12 @@ export const sanitiser = function (action = "fail") {
 
 
     return (req, res, next) => {
-        if (req.body != undefined) {
-            if (action.toLowerCase() == "disable") {
+        if (req.body !== undefined) {
+            if (action.toLowerCase() === "disable") {
                 console.log(logInfo, `Sanitiser ** Disabled!`);
             } else {
                 // Remove potentially dangerous characters
-                for (let [key, value] of Object.entries(req.body)) {
+                for (const key of Object.keys(req.body)) {
                     const testBad = /[$&+;=?#|<>{}^*%!]/.test(req.body[key]);
                     // if bad characters found, print to the log and santisise bad data
                     if (testBad) {
@@ -48,7 +48,7 @@ export const sanitiser = function (action = "fail") {
                                     console.log(logWarning, `             Warning only`);
                                 }
                                 break;
-                            case "reject":
+                            case "reject": {
                                 const errorMessage = `Field: ${key} - '${req.body[key]}'`;
                                 //if (process.env.NODE_ENV === "development") {
                                     console.log(logWarning, `Sanitiser (Mode: ${action}) ${errorMessage}`);
@@ -58,7 +58,7 @@ export const sanitiser = function (action = "fail") {
                                     message: errorMessage,
                                     authenticatedUser: req.authenticatedUser,
                                 });
-                                break;
+                            }
                             default:
                                 res.status(500);
                                 if (process.env.NODE_ENV === "development") {
@@ -66,7 +66,6 @@ export const sanitiser = function (action = "fail") {
                                 }
                                 res.setHeader('Content-Type', 'application/json').status(500).json(`{message: sanitiser middleware triggered, but using invalid option '${action}' - No action taken }`);
                                 return;
-                                break;
                         }
                     }
                 }

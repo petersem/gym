@@ -33,7 +33,7 @@ describe('BlogModel load test', () => {
       .every((blog) => blog.content === 'Updated load body')).toBe(true);
 
     await Promise.all(blogIds.map((id) => BlogModel.delete(id)));
-    for (const id of blogIds) await expect(BlogModel.getById(id)).rejects.toBe('not found');
+    for (const id of blogIds) {await expect(BlogModel.getById(id)).rejects.toBe('not found');}
     blogIds.length = 0;
     userIds.length = 0;
   });
