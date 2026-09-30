@@ -61,7 +61,7 @@ CREATE TABLE `activities` (
 
 LOCK TABLES `activities` WRITE;
 /*!40000 ALTER TABLE `activities` DISABLE KEYS */;
-INSERT INTO `activities` VALUES (1,'Cardio','work yur guts out until you puke',0,1),(1909,'Bike Riding','Bring your spandex and take up all the road',0,1),(1910,'Posing','With your camera, you are the star',0,1),(1911,'Health Foods','Learn about what you can eat and drink to improve your health',0,1),(1912,'Boxing','Really sweat to make it happen',0,1),(1913,'Twerking','Move dat ass',0,1),(1914,'Flexibility','Free your body in coordinated stretching routines.',0,1),(2246,'Meditation','Focus on your middle eye to achieve enlightment.',0,1);
+INSERT INTO `activities` VALUES (1,'Cardio','work your guts out until you puke',0,1),(1909,'Bike Riding','Bring your spandex and take up all the road',0,1),(1910,'Posing','With your camera, you are the star',0,1),(1911,'Health Foods','Learn about what you can eat and drink to improve your health',0,1),(1912,'Boxing','Really sweat to make it happen',0,1),(1913,'Twerking','Move dat ass',0,1),(1914,'Flexibility','Free your body in coordinated stretching routines.',0,1),(2246,'Meditation','Focus on your middle eye to achieve enlightment.',0,1);
 /*!40000 ALTER TABLE `activities` ENABLE KEYS */;
 UNLOCK TABLES;
 
