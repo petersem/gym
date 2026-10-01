@@ -32,7 +32,7 @@ UNLOCK TABLES;
 
 LOCK TABLES `locations` WRITE;
 /*!40000 ALTER TABLE `locations` DISABLE KEYS */;
-INSERT INTO `locations` VALUES (1,'Fig Tree Pocket','8675309','ftp@gym.com','1 poop street','fig tree pocket',4069,2,0,2),(2,'City','8675309','city@gym.com','1 dump place','brisbane',4000,2,0,2),(315,'Evil Gym','66666666','evilgym@gymsrus.com','1 Lair Cresent','Evilsville',5000,2,0,2),(1935,'Haunted House','22222222','aa@gym.com','1 song st','Amityville ',666,9772,0,2);
+INSERT INTO `locations` VALUES (1,'Fig Tree Pocket','8675309','ftp@gym.com','1 fig street','fig tree pocket',4069,2,0,2),(2,'City','8675309','city@gym.com','1 dump place','brisbane',4000,2,0,2),(315,'Evil Gym','66666666','evilgym@gymsrus.com','1 Lair Cresent','Evilsville',5000,2,0,2),(1935,'Haunted House','22222222','aa@gym.com','1 song st','Amityville ',666,9772,0,2);
 /*!40000 ALTER TABLE `locations` ENABLE KEYS */;
 UNLOCK TABLES;
 --
@@ -40,7 +40,7 @@ UNLOCK TABLES;
 --
 LOCK TABLES `sessions` WRITE;
 /*!40000 ALTER TABLE `sessions` DISABLE KEYS */;
-INSERT INTO `sessions` VALUES (624,'Get lean and mean',1,315,2,'2026-10-04','17:00:00'),(1578,'Plugh',1,1,5,'2026-09-25','11:15:00'),(1803,'Papperazzi',1910,2,5,'2026-09-28','19:00:00'),(1804,'Spandex people',1909,2,2,'2026-10-02','11:00:00'),(1805,'Glug glug',1911,1,5,'2026-10-02','17:30:00'),(1806,'Work it out',1912,2,2,'2026-10-03','10:00:00'),(1807,'Shake it',1,1,9773,'2026-10-01','15:00:00'),(1808,'Look at Meeeee',1910,2,2,'2026-09-28','09:00:00'),(1810,'Getting Evil',1909,315,2,'2026-10-04','09:00:00'),(1811,'Work it out',1,1,9773,'2026-09-28','16:00:00'),(1812,'Go for it',1914,1935,9773,'2026-09-30','11:00:00'),(1813,'Dance session',1913,1,5,'2026-10-01','15:00:00'),(1814,'Take all the road',1909,1,2,'2026-09-30','09:00:00'),(1815,'1M Dollars',1,1,2,'2026-10-01','09:00:00'),(1816,'Use the force',1910,315,10086,'2026-10-04','11:00:00');
+INSERT INTO `sessions` VALUES (624,'Get lean and mean',1,315,2,'2026-10-08','17:00:00'),(1578,'Plugh',1,1,5,'2026-09-29','11:15:00'),(1803,'Papperazzi',1910,2,5,'2026-10-02','19:00:00'),(1804,'Spandex people',1909,2,2,'2026-10-06','11:00:00'),(1805,'Glug glug',1911,1,5,'2026-10-06','17:30:00'),(1806,'Work it out',1912,2,2,'2026-10-07','10:00:00'),(1807,'Shake it',1,1,9773,'2026-10-05','15:00:00'),(1808,'Look at Meeeee',1910,2,2,'2026-10-02','09:00:00'),(1810,'Getting Evil',1909,315,2,'2026-10-08','09:00:00'),(1811,'Work it out',1,1,9773,'2026-10-02','16:00:00'),(1812,'Go for it',1914,1935,9773,'2026-10-04','11:00:00'),(1813,'Dance session',1913,1,5,'2026-10-05','15:00:00'),(1814,'Take all the road',1909,1,2,'2026-10-04','09:00:00'),(1815,'1M Dollars',1,1,2,'2026-10-05','09:00:00'),(1816,'Use the force',1910,315,10086,'2026-10-08','11:00:00');
 /*!40000 ALTER TABLE `sessions` ENABLE KEYS */;
 UNLOCK TABLES;
 --
