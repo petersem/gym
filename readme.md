@@ -1,12 +1,15 @@
 # Gym app
 
-
 Gym app for Tafe stage 2 assessment
+
 - Backend MVC app
 - Backend API (coming soon)
 - Frontend React app (coming soon)
 
+![gym app](gh-assets/gymapp.png)
+
 ## Example `.env` file
+
 ```
 DB_HOST=127.0.0.1
 DB_PORT=3307
@@ -19,6 +22,7 @@ ADMIN_SEED_PASSWORD=testing123
 ```
 
 ## Example `compose.yaml` file
+
 ```
 services:
   gymdb:
