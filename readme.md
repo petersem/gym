@@ -19,6 +19,7 @@ DB_PASSWORD=Testing123!
 DB_NAME=gym
 ADMIN_EMAIL=admin@example.com
 ADMIN_SEED_PASSWORD=testing123
+DATA_SEED=true
 ```
 
 ## Example `compose.yaml` file
@@ -32,14 +33,14 @@ services:
     entrypoint: ["bash", "/opt/gym/start-db.sh"]
     command: ["mysqld"]
     environment:
-      MYSQL_DATABASE: gym
-      MYSQL_USER: gymuser
-      MYSQL_PASSWORD: Testing123!
-      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_DATABASE: ${DB_NAME}
+      MYSQL_USER: ${DB_USER}
+      MYSQL_PASSWORD: ${DB_PASSWORD}
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
       # Enable or disable data seeding - can only run on initial database creation
-      DATA_SEED: true
+      DATA_SEED: ${DATA_SEED}
     ports:
-      - "${DB_PORT}:3306"
+      - ${DB_PORT}:3306
     volumes:
       - db-data:/var/lib/mysql
       - ./db/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql:ro
@@ -77,7 +78,12 @@ services:
       DB_NAME: ${DB_NAME}
       ADMIN_EMAIL: ${ADMIN_EMAIL}
       ADMIN_SEED_PASSWORD: ${ADMIN_SEED_PASSWORD}
-    command: ["sh", "-c", "node backend/src/scripts/seedAdmin.mjs && exec node backend/src/server.mjs"]
+    command:
+      [
+        "sh",
+        "-c",
+        "node backend/src/scripts/seedAdmin.mjs && exec node backend/src/server.mjs",
+      ]
     depends_on:
       gymdb:
         condition: service_healthy
