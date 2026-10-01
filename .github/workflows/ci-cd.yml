@@ -135,8 +135,7 @@ jobs:
         with:
           images: docker.io/${{ env.IMAGE_NAME }}
           tags: |
-            type=raw,value=latest,enable=${{ github.ref == 'refs/heads/main' }}
-            type=sha
+            type=raw,value=latest
             type=semver,pattern={{version}}
 
       - name: Build and push multi-architecture image

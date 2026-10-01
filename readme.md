@@ -1,7 +1,24 @@
 # Gym app
 
-Noot Noot
 
+Gym app for Tafe stage 2 assessment
+- Backend MVC app
+- Backend API (coming soon)
+- Frontend React app (coming soon)
+
+## Example `.env` file
+```
+DB_HOST=127.0.0.1
+DB_PORT=3307
+DB_ROOT_PASSWORD=rootpassword
+DB_USER=gymuser
+DB_PASSWORD=Testing123!
+DB_NAME=gym
+ADMIN_EMAIL=admin@example.com
+ADMIN_SEED_PASSWORD=testing123
+```
+
+## Example `compose.yaml` file
 ```
 services:
   gymdb:
