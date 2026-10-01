@@ -1,7 +1,9 @@
+import { readFileSync } from "node:fs";
 import express from "express";
 import path from "path";
 import cors from "cors";
 import swaggerUi from "swagger-ui-express";
+import pkg from "../package.json" with { type: "json" };
 import { UsersController } from "./controllers/UsersController.mjs";
 import { LocationController } from "./controllers/LocationController.mjs";
 import { AuthenticationController } from "./controllers/AuthenticationController.mjs";
@@ -26,11 +28,33 @@ import {
 } from "./middleware/middlewareLoader.mjs";
 import { logInfo } from "./utilities/logger.mjs";
 
+let appVersion = pkg.version;
+try {
+  const rootPkg = JSON.parse(
+    readFileSync(new URL("../../package.json", import.meta.url), "utf8"),
+  );
+  if (rootPkg.version) {
+    if (pkg.version !== "1.0.0" && rootPkg.version === "1.0.0") {
+      appVersion = pkg.version;
+    } else {
+      appVersion = rootPkg.version;
+    }
+  }
+} catch {
+  // In Docker runtime or standalone, root package.json may not exist.
+}
+
 const app = express();
 const port = process.env.PORT || 3000;
 
 app.set("view engine", "ejs");
 app.set("views", path.join(import.meta.dirname, "views"));
+app.locals.version = appVersion;
+
+app.use((req, res, next) => {
+  res.locals.version = appVersion;
+  next();
+});
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
