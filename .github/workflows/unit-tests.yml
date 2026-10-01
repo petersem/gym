@@ -43,7 +43,9 @@ jobs:
         run: sudo apt-get update && sudo apt-get install --yes mysql-client
 
       - name: Initialize test database
-        run: mysql --host=127.0.0.1 --port=3307 --user=gymuser --password=Testing123! gym < db/schema.sql
+        run: |
+          mysql --host=127.0.0.1 --port=3307 --user=gymuser --password=Testing123! gym < db/schema.sql
+          mysql --host=127.0.0.1 --port=3307 --user=gymuser --password=Testing123! gym < db/seed.sql
 
       - name: Run unit tests
         id: tests
