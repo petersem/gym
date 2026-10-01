@@ -1,10 +1,6 @@
 {
   "name": "backend",
-<<<<<<< HEAD
-  "version": "0.20.0",
-=======
-  "version": "0.17.0",
->>>>>>> 536b11e81ab2410f45844d60ada17cbc658e1f2e
+  "version": "0.20.1",
   "description": "",
   "main": "index.js",
   "scripts": {
