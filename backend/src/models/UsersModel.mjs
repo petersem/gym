@@ -91,7 +91,7 @@ export class UsersModel extends DatabaseModel {
     ).then((result) => result.map((row) => this.tableToModel(row.users)));
   }
 
-  /** Columns that may be used to sort user listings. */
+  // Columns that may be used to sort user listings. 
   static SORTABLE_COLUMNS = {
     first_name: "first_name",
     last_name: "last_name",
@@ -180,7 +180,7 @@ export class UsersModel extends DatabaseModel {
   /**
    * Update an existing user.
    * @param {UsersModel} user User to update.
-   * @returns {Promise<import("mysql2/promise").OkPacket>} Database result.
+   * @returns {Promise<OkPacket>} Database result.
    */
   static update(user) {
     return this.query(
@@ -208,7 +208,7 @@ export class UsersModel extends DatabaseModel {
   /**
    * Create a user with a generated identifier.
    * @param {UsersModel} user User to create.
-   * @returns {Promise<import("mysql2/promise").OkPacket>} Database result.
+   * @returns {Promise<OkPacket>} Database result.
    */
   static create(user) {
     return this.query(
@@ -234,7 +234,7 @@ export class UsersModel extends DatabaseModel {
   /**
    * Create a user with a caller-provided identifier.
    * @param {UsersModel} user User to create.
-   * @returns {Promise<import("mysql2/promise").OkPacket>} Database result.
+   * @returns {Promise<OkPacket>} Database result.
    */
   static createWithExistingID(user) {
     return this.query(
@@ -261,9 +261,12 @@ export class UsersModel extends DatabaseModel {
   /**
    * Delete a user by identifier.
    * @param {number} id User identifier.
-   * @returns {Promise<import("mysql2/promise").OkPacket>} Database result.
+   * @returns {Promise<OkPacket>} Database result.
    */
   static delete(id) {
-    return this.query("DELETE FROM users WHERE id = ?", [id]);
+    return this.query(
+      `UPDATE users SET deleted = 1 WHERE id = ?`,
+      [id]
+    );
   }
 }

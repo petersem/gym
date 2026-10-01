@@ -3,3 +3,4 @@ frontend/node_modules/
 backend/node_modules/
 coverage/*
 backend/src/dist/*
+backend/src/public/docs/*

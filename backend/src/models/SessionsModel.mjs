@@ -69,7 +69,7 @@ export class SessionsModel extends DatabaseModel {
   /**
    * Update an existing session.
    * @param {SessionsModel} session Session to update.
-   * @returns {Promise<import("mysql2/promise").OkPacket>} Database result.
+   * @returns {Promise<OkPacket>} Database result.
    */
   static update(session) {
     return this.query(
@@ -93,7 +93,7 @@ export class SessionsModel extends DatabaseModel {
   /**
    * Create a session.
    * @param {SessionsModel} session Session to create.
-   * @returns {Promise<import("mysql2/promise").OkPacket>} Database result.
+   * @returns {Promise<OkPacket>} Database result.
    */
   static create(session) {
     return this.query(
@@ -115,7 +115,7 @@ export class SessionsModel extends DatabaseModel {
   /**
    * Delete a session by its identifier.
    * @param {string} sid Session identifier.
-   * @returns {Promise<import("mysql2/promise").OkPacket>} Database result.
+   * @returns {Promise<OkPacket>} Database result.
    */
   static delete(id) {
     return this.query("DELETE FROM sessions WHERE id = ?", [id]);

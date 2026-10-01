@@ -1,9 +1,10 @@
+import express from "express";
 import { logDanger, logWarning, logInfo } from "../utilities/logger.mjs";
 
 /**
  * Creates middleware that cleans, warns about, or rejects unsafe request body values.
  * @param {"clean"|"warn"|"reject"|"disable"} action Sanitisation behavior.
- * @returns {import("express").RequestHandler} Configured sanitiser middleware.
+ * @returns {express.RequestHandler} Configured sanitiser middleware.
  */
 export const sanitiser = function (action = "fail") {
   // options can be

@@ -7,7 +7,7 @@ Source of truth: [backend/src/public/css/style.css](../backend/src/public/css/st
 > **Important:** Edits to `style.css` are not visible in the browser until the generated
 > stylesheet is rebuilt. The app currently serves the compiled file from `/css/tailwind.css`.
 > Run the backend CSS build/watch task after any styling change so the browser gets the new
-> version. `npm run dev` only rebuilds CSS once, at startup.
+> version. `npm run dev` only rebuilds CSS once, at startup. Run `npm run devall -w backend`
 
 ### Current implementation snapshot
 

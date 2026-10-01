@@ -124,7 +124,7 @@ const sortSessions = (
 
 /** HTTP handlers for sessions. */
 export class SessionsController {
-  /** @type {import("express").Router} */
+  /** @type {express.Router} */
   static routes = express.Router();
 
   static {
@@ -150,7 +150,7 @@ export class SessionsController {
     );
   }
 
-  /** @type {import("express").RequestHandler} */
+  /** @type {express.RequestHandler} */
   static viewSessionManagement(req, res) {
     return Promise.all([
       SessionsModel.getAll(),
@@ -262,7 +262,7 @@ export class SessionsController {
       });
   }
 
-  /** @type {import("express").RequestHandler} */
+  /** @type {express.RequestHandler} */
   static handleSessionManagement(req, res) {
     const title = req.body.title;
     const activityId = req.body.activityId ?? req.body.activity_id;
@@ -347,7 +347,7 @@ export class SessionsController {
     }
   }
 
-  /** @type {import("express").RequestHandler} */
+  /** @type {express.RequestHandler} */
   static async list(req, res, next) {
     try {
       res.json(await SessionsModel.getAll());
@@ -356,7 +356,7 @@ export class SessionsController {
     }
   }
 
-  /** @type {import("express").RequestHandler} */
+  /** @type {express.RequestHandler} */
   static async getById(req, res, next) {
     try {
       res.json(await SessionsModel.getById(Number(req.params.id)));
@@ -365,7 +365,7 @@ export class SessionsController {
     }
   }
 
-  /** @type {import("express").RequestHandler} */
+  /** @type {express.RequestHandler} */
   static async create(req, res, next) {
     try {
       res.status(201).json(await SessionsModel.create(req.body));
@@ -374,7 +374,7 @@ export class SessionsController {
     }
   }
 
-  /** @type {import("express").RequestHandler} */
+  /** @type {express.RequestHandler} */
   static async update(req, res, next) {
     try {
       res.json(
@@ -385,7 +385,7 @@ export class SessionsController {
     }
   }
 
-  /** @type {import("express").RequestHandler} */
+  /** @type {express.RequestHandler} */
   static async delete(req, res, next) {
     try {
       res.json(await SessionsModel.delete(Number(req.params.id)));

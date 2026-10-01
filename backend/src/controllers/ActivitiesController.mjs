@@ -6,7 +6,7 @@ import { AuthenticationController } from "./AuthenticationController.mjs";
  * @class
  */
 export class ActivitiesController {
-  /** @type {import("express").Router} */
+  /** @type {express.Router} */
   static routes = express.Router();
 
   static {
@@ -32,7 +32,7 @@ export class ActivitiesController {
     );
   }
 
-  /** @type {import("express").RequestHandler} */
+  /** @type {express.RequestHandler} */
   static async viewActivityManagement(req, res) {
     const selectedSearchTerm = String(req.query.search_term ?? "").trim();
     const selectedSortBy = Object.keys(
@@ -73,7 +73,7 @@ export class ActivitiesController {
     }
   }
 
-  /** @type {import("express").RequestHandler} */
+  /** @type {express.RequestHandler} */
   static async handleActivityManagement(req, res) {
     const activity = new ActivitiesModel(
       req.params.id ? Number(req.params.id) : null,
@@ -118,7 +118,7 @@ export class ActivitiesController {
     }
   }
 
-  /** @type {import("express").RequestHandler} */
+  /** @type {express.RequestHandler} */
   static async list(req, res, next) {
     try {
       const activities = req.query.search_term
@@ -130,7 +130,7 @@ export class ActivitiesController {
     }
   }
 
-  /** @type {import("express").RequestHandler} */
+  /** @type {express.RequestHandler} */
   static async getById(req, res, next) {
     try {
       res.json(await ActivitiesModel.getById(Number(req.params.id)));
@@ -139,7 +139,7 @@ export class ActivitiesController {
     }
   }
 
-  /** @type {import("express").RequestHandler} */
+  /** @type {express.RequestHandler} */
   static async create(req, res, next) {
     try {
       res.status(201).json(await ActivitiesModel.create(req.body));
@@ -148,7 +148,7 @@ export class ActivitiesController {
     }
   }
 
-  /** @type {import("express").RequestHandler} */
+  /** @type {express.RequestHandler} */
   static async update(req, res, next) {
     try {
       res.json(
@@ -162,7 +162,7 @@ export class ActivitiesController {
     }
   }
 
-  /** @type {import("express").RequestHandler} */
+  /** @type {express.RequestHandler} */
   static async delete(req, res, next) {
     try {
       res.json(await ActivitiesModel.delete(Number(req.params.id)));

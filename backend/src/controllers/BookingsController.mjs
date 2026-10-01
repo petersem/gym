@@ -7,8 +7,8 @@ import { ActivitiesModel } from "../models/ActivitiesModel.mjs";
 
 /**
  * Builds the bookings management URL while preserving the active filters.
- * @param {import("express").Request} req Current request.
- * @param {{ bookingDeleted?: boolean, bookingCreated?: boolean }} [options] Result flags.
+ * @param {express.Request} req Current request.
+ * @param {Object} [options] Result flags.
  * @returns {string} Bookings page URL.
  */
 const bookingPageUrl = (
@@ -44,7 +44,7 @@ const bookingPageUrl = (
 
 /** HTTP handlers for bookings. */
 export class BookingsController {
-  /** @type {import("express").Router} */
+  /** @type {express.Router} */
   static routes = express.Router();
 
   static {
@@ -54,7 +54,7 @@ export class BookingsController {
     this.routes.post("/:id", this.handleBookingManagement);
   }
 
-  /** @type {import("express").RequestHandler} */
+  /** @type {express.RequestHandler} */
   static viewBookingManagement(req, res) {
     const canManageBookings = ["admin", "trainer"].includes(
       req.authenticatedUser?.role,
@@ -222,7 +222,7 @@ export class BookingsController {
       });
   }
 
-  /** @type {import("express").RequestHandler} */
+  /** @type {express.RequestHandler} */
   static handleBookingManagement(req, res) {
     const booking = new BookingsModel(
       req.params.id ? Number(req.params.id) : null,
@@ -310,7 +310,7 @@ export class BookingsController {
     }
   }
 
-  /** @type {import("express").RequestHandler} */
+  /** @type {express.RequestHandler} */
   static async list(req, res, next) {
     try {
       res.json(await BookingsModel.getAll());
@@ -319,7 +319,7 @@ export class BookingsController {
     }
   }
 
-  /** @type {import("express").RequestHandler} */
+  /** @type {express.RequestHandler} */
   static async getById(req, res, next) {
     try {
       res.json(await BookingsModel.getById(Number(req.params.id)));
@@ -328,7 +328,7 @@ export class BookingsController {
     }
   }
 
-  /** @type {import("express").RequestHandler} */
+  /** @type {express.RequestHandler} */
   static async create(req, res, next) {
     try {
       const result = await BookingsModel.create(req.body);
@@ -338,7 +338,7 @@ export class BookingsController {
     }
   }
 
-  /** @type {import("express").RequestHandler} */
+  /** @type {express.RequestHandler} */
   static async update(req, res, next) {
     try {
       res.json(
@@ -349,7 +349,7 @@ export class BookingsController {
     }
   }
 
-  /** @type {import("express").RequestHandler} */
+  /** @type {express.RequestHandler} */
   static async delete(req, res, next) {
     try {
       res.json(await BookingsModel.delete(Number(req.params.id)));

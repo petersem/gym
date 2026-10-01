@@ -1,6 +1,6 @@
 {
   "source": {
-    "include": ["src"],
+    "include": ["backend/src"],
     "includePattern": ".+\\.(m?js(doc|x)?|cjs|ts)$",
     "excludePattern": "(^|\\/|\\\\)_"
   },

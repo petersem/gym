@@ -128,7 +128,7 @@ export class BlogModel extends DatabaseModel {
   /**
    * Update an existing blog post.
    * @param {BlogModel} blog Blog post to update.
-   * @returns {Promise<import("mysql2/promise").OkPacket>} Database result.
+   * @returns {Promise<OkPacket>} Database result.
    */
   static update(blog) {
     return this.query(
@@ -144,7 +144,7 @@ export class BlogModel extends DatabaseModel {
   /**
    * Create a blog post with a generated identifier.
    * @param {BlogModel} blog Blog post to create.
-   * @returns {Promise<import("mysql2/promise").OkPacket>} Database result.
+   * @returns {Promise<OkPacket>} Database result.
    */
   static create(blog) {
     return this.query(
@@ -160,7 +160,7 @@ export class BlogModel extends DatabaseModel {
   /**
    * Create a blog post with a caller-provided identifier.
    * @param {BlogModel} blog Blog post to create.
-   * @returns {Promise<import("mysql2/promise").OkPacket>} Database result.
+   * @returns {Promise<OkPacket>} Database result.
    */
   static createWithExistingID(blog) {
     return this.query(
@@ -176,9 +176,12 @@ export class BlogModel extends DatabaseModel {
   /**
    * Delete a blog post by its identifier.
    * @param {number} id Blog post identifier.
-   * @returns {Promise<import("mysql2/promise").OkPacket>} Database result.
+   * @returns {Promise<OkPacket>} Database result.
    */
   static delete(id) {
-    return this.query("DELETE FROM blog WHERE id = ?", [id]);
+    return this.query(
+      'DELETE FROM blog WHERE id = ?',
+      [id]
+    );
   }
 }

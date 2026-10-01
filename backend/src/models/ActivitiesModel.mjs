@@ -124,7 +124,7 @@ export class ActivitiesModel extends DatabaseModel {
   /**
    * Update an existing activity.
    * @param {ActivitiesModel} activity Activity to update.
-   * @returns {Promise<import("mysql2/promise").OkPacket>} Database result.
+   * @returns {Promise<OkPacket>} Database result.
    */
   static update(activity) {
     return this.query(
@@ -146,7 +146,7 @@ export class ActivitiesModel extends DatabaseModel {
   /**
    * Create an activity with a generated identifier.
    * @param {ActivitiesModel} activity Activity to create.
-   * @returns {Promise<import("mysql2/promise").OkPacket>} Database result.
+   * @returns {Promise<OkPacket>} Database result.
    */
   static create(activity) {
     return this.query(
@@ -167,7 +167,7 @@ export class ActivitiesModel extends DatabaseModel {
   /**
    * Create an activity with a caller-provided identifier.
    * @param {ActivitiesModel} activity Activity to create.
-   * @returns {Promise<import("mysql2/promise").OkPacket>} Database result.
+   * @returns {Promise<OkPacket>} Database result.
    */
   static createWithExistingID(activity) {
     return this.query(
@@ -189,9 +189,12 @@ export class ActivitiesModel extends DatabaseModel {
   /**
    * Delete an activity by its identifier.
    * @param {number} id Activity identifier.
-   * @returns {Promise<import("mysql2/promise").OkPacket>} Database result.
+   * @returns {Promise<OkPacket>} Database result.
    */
   static delete(id) {
-    return this.query("DELETE FROM activities WHERE id = ?", [id]);
+    return this.query(
+      `UPDATE activities SET deleted = 1 WHERE id = ?`,
+      [id]
+    );
   }
 }

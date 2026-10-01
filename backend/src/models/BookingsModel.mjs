@@ -67,7 +67,7 @@ export class BookingsModel extends DatabaseModel {
   /**
    * Delete every booking belonging to one session.
    * @param {number} sessionId Session identifier.
-   * @returns {Promise<import("mysql2/promise").OkPacket>} Database result.
+   * @returns {Promise<OkPacket>} Database result.
    */
   static deleteBySessionId(sessionId) {
     return this.query("DELETE FROM bookings WHERE session_id = ?", [sessionId]);
@@ -105,7 +105,7 @@ export class BookingsModel extends DatabaseModel {
   /**
    * Update an existing booking.
    * @param {BookingsModel} booking Booking to update.
-   * @returns {Promise<import("mysql2/promise").OkPacket>} Database result.
+   * @returns {Promise<OkPacket>} Database result.
    */
   static update(booking) {
     return this.query(
@@ -121,7 +121,7 @@ export class BookingsModel extends DatabaseModel {
   /**
    * Create a booking with a generated identifier.
    * @param {BookingsModel} booking Booking to create.
-   * @returns {Promise<import("mysql2/promise").OkPacket | {affectedRows: 0, duplicate: true}>} Insert result or duplicate marker.
+   * @returns {Promise<OkPacket | {affectedRows: 0, duplicate: true}>} Insert result or duplicate marker.
    */
   static async create(booking) {
     if (await this.existsForSessionUser(booking.session_id, booking.user_id)) {
@@ -140,7 +140,7 @@ export class BookingsModel extends DatabaseModel {
   /**
    * Create a booking with a caller-provided identifier.
    * @param {BookingsModel} booking Booking to create.
-   * @returns {Promise<import("mysql2/promise").OkPacket>} Database result.
+   * @returns {Promise<OkPacket>} Database result.
    */
   static createWithExistingID(booking) {
     return this.query(
@@ -155,7 +155,7 @@ export class BookingsModel extends DatabaseModel {
   /**
    * Delete a booking by its identifier.
    * @param {number} id Booking identifier.
-   * @returns {Promise<import("mysql2/promise").OkPacket>} Database result.
+   * @returns {Promise<OkPacket>} Database result.
    */
   static delete(id) {
     return this.query("DELETE FROM bookings WHERE id = ?", [id]);

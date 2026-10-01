@@ -4,7 +4,7 @@ import { UsersModel } from "../models/UsersModel.mjs";
 
 /** HTTP handlers for blog posts. */
 export class BlogController {
-  /** @type {import("express").Router} */
+  /** @type {express.Router} */
   static routes = express.Router();
 
   static {
@@ -14,7 +14,7 @@ export class BlogController {
     this.routes.post("/:id", this.handleBlogManagement);
   }
 
-  /** @type {import("express").RequestHandler} */
+  /** @type {express.RequestHandler} */
   static viewBlogManagement(req, res) {
     const selectedSearchTerm = String(req.query.search_term ?? "").trim();
     const selectedSortBy = Object.keys(BlogModel.SORTABLE_COLUMNS).includes(
@@ -59,7 +59,7 @@ export class BlogController {
       });
   }
 
-  /** @type {import("express").RequestHandler} */
+  /** @type {express.RequestHandler} */
   static handleBlogManagement(req, res) {
     const authenticatedUserId = Number(req.authenticatedUser?.id);
     if (
@@ -161,7 +161,7 @@ export class BlogController {
     }
   }
 
-  /** @type {import("express").RequestHandler} */
+  /** @type {express.RequestHandler} */
   static async list(req, res, next) {
     try {
       const blogs = req.query.search_term
@@ -173,7 +173,7 @@ export class BlogController {
     }
   }
 
-  /** @type {import("express").RequestHandler} */
+  /** @type {express.RequestHandler} */
   static async getById(req, res, next) {
     try {
       res.json(await BlogModel.getById(Number(req.params.id)));
@@ -182,7 +182,7 @@ export class BlogController {
     }
   }
 
-  /** @type {import("express").RequestHandler} */
+  /** @type {express.RequestHandler} */
   static async create(req, res, next) {
     try {
       res.status(201).json(await BlogModel.create(req.body));
@@ -191,7 +191,7 @@ export class BlogController {
     }
   }
 
-  /** @type {import("express").RequestHandler} */
+  /** @type {express.RequestHandler} */
   static async update(req, res, next) {
     try {
       res.json(
@@ -202,7 +202,7 @@ export class BlogController {
     }
   }
 
-  /** @type {import("express").RequestHandler} */
+  /** @type {express.RequestHandler} */
   static async delete(req, res, next) {
     try {
       res.json(await BlogModel.delete(Number(req.params.id)));

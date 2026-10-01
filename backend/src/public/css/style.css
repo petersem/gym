@@ -150,6 +150,7 @@ main {
 .brand-copy {
   display: flex;
   flex-direction: column;
+  gap: 3px;
   line-height: 1;
 }
 

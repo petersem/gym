@@ -88,14 +88,14 @@ CREATE TABLE `locations` (
   `postcode` int NOT NULL,
   `manager` int NOT NULL,
   `deleted` tinyint NOT NULL DEFAULT '0',
-  `updated_by` int NOT NULL DEFAULT '2',
+  `updated_by` int NOT NULL DEFAULT '1',
   PRIMARY KEY (`id`),
   UNIQUE KEY `id_UNIQUE` (`id`),
   KEY `fk_location_manager_idx` (`manager`),
   KEY `fk_loc_user_idx` (`updated_by`),
   CONSTRAINT `fk_loc_user` FOREIGN KEY (`updated_by`) REFERENCES `users` (`id`),
   CONSTRAINT `fk_location_manager` FOREIGN KEY (`manager`) REFERENCES `users` (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=2536 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=2957 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 SELECT 'Created table: locations' AS message;
 /*!40101 SET character_set_client = @saved_cs_client */;
 

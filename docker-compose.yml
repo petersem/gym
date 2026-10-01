@@ -46,11 +46,11 @@ services:
       PORT: 3000
       DB_HOST: db
       DB_PORT: 3306
-      DB_USER: ${DB_USER}
-      DB_PASSWORD: ${DB_PASSWORD}
-      DB_NAME: ${DB_NAME}
-      ADMIN_EMAIL: ${ADMIN_EMAIL}
-      ADMIN_SEED_PASSWORD: ${ADMIN_SEED_PASSWORD}
+      DB_USER: gymuser
+      DB_PASSWORD: Testing123!
+      DB_NAME: gym
+      ADMIN_EMAIL: admin@example.com
+      ADMIN_SEED_PASSWORD: testing123
     command:
       [
         "sh",

@@ -9,7 +9,7 @@
     "prod": "npm run build:css && nodemon --env-file=./src/.envprod src/server.mjs",
     "tailwind": "npx @tailwindcss/cli -i src/public/css/style.css -o src/dist/css/tailwind.css --watch",
     "dev-full": "npm-run-all --parallel dev tailwind",
-    "doc": "node /node_modules/jsdoc/jsdoc.js -c ./jsdoc.conf.json"
+    "doc": "npm --prefix .. run doc"
   },
   "keywords": [],
   "author": "",
@@ -19,23 +19,22 @@
     "@tailwindcss/cli": "^4.3.3",
     "bcrypt": "^6.0.0",
     "cors": "^2.8.6",
-    "daisyui": "^5.7.28",
+    "daisyui": "^5.7.47",
     "ejs": "^6.0.1",
     "express": "^5.2.1",
     "express-rate-limit": "^8.7.0",
     "express-rate-limiter": "^1.3.1",
     "express-session": "^1.19.0",
-    "express-sessions": "^1.0.1",
     "express-validator": "^7.3.2",
-    "mysql2": "^3.24.4",
+    "mysql2": "^3.24.5",
     "swagger-jsdoc": "^6.3.0",
     "swagger-ui-express": "^5.0.1",
     "tailwindcss": "^4.3.3",
     "validator": "^13.15.35"
   },
   "devDependencies": {
-    "@jest/globals": "^30.5.1",
-    "jest": "^30.5.1",
+    "@jest/globals": "^30.5.2",
+    "jest": "^30.5.2",
     "jsdoc": "^4.0.5",
     "nodemon": "^3.1.14"
   }
