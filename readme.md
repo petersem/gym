@@ -6,7 +6,7 @@ Gym app for Tafe stage 2 assessment
 - Backend API (coming soon)
 - Frontend React app (coming soon)
 
-![gym app](gh-assets/gymapp.png)
+![gym app](https://raw.githubusercontent.com/petersem/gym/main/gh-assets/gymapp.png)
 
 ## Example `.env` file
 
