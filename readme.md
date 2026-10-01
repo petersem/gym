@@ -64,4 +64,3 @@ services:
 volumes:
   db-data:
 ```
-

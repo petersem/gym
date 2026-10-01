@@ -51,7 +51,12 @@ services:
       DB_NAME: ${DB_NAME}
       ADMIN_EMAIL: ${ADMIN_EMAIL}
       ADMIN_SEED_PASSWORD: ${ADMIN_SEED_PASSWORD}
-    command: ["sh", "-c", "node backend/src/scripts/seedAdmin.mjs && exec node backend/src/server.mjs"]
+    command:
+      [
+        "sh",
+        "-c",
+        "node backend/src/scripts/seedAdmin.mjs && exec node backend/src/server.mjs",
+      ]
     depends_on:
       gymdb:
         condition: service_healthy
