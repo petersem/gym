@@ -33,6 +33,7 @@ beforeAll(async () => {
 afterEach(async () => {
   if (createdUserId) {
     await UsersModel.delete(createdUserId);
+    await UsersModel.query("DELETE FROM users WHERE id = ?", [createdUserId]);
     createdUserId = undefined;
   }
 });
@@ -113,7 +114,10 @@ describe("UsersController end-to-end flow", () => {
     });
 
     expect(deleteResponse.status).toBe(302);
-    await expect(UsersModel.getById(createdUserId)).rejects.toBe("not found");
+    await expect(UsersModel.getById(createdUserId)).resolves.toMatchObject({
+      id: createdUserId,
+      deleted: 1,
+    });
     createdUserId = undefined;
   });
 });

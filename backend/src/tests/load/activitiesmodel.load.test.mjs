@@ -54,7 +54,10 @@ describe("ActivitiesModel load test", () => {
 
     await Promise.all(createdIds.map((id) => ActivitiesModel.delete(id)));
     for (const id of createdIds) {
-      await expect(ActivitiesModel.getById(id)).rejects.toBe("not found");
+      await expect(ActivitiesModel.getById(id)).resolves.toMatchObject({
+        id,
+        deleted: 1,
+      });
     }
     createdIds.length = 0;
   });

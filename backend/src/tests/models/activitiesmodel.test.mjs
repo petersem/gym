@@ -219,7 +219,7 @@ describe("ActivitiesModel unit tests", () => {
     );
   });
 
-  test("delete passes the activity id", async () => {
+  test("soft deletes the activity id", async () => {
     const query = jest
       .spyOn(ActivitiesModel, "query")
       .mockResolvedValue({ affectedRows: 1 });
@@ -228,7 +228,7 @@ describe("ActivitiesModel unit tests", () => {
       affectedRows: 1,
     });
     expect(query).toHaveBeenCalledWith(
-      "DELETE FROM activities WHERE id = ?",
+      "UPDATE activities SET deleted = 1 WHERE id = ?",
       [12],
     );
   });

@@ -4,6 +4,9 @@ import { UsersModel } from "../../models/UsersModel.mjs";
 let userId;
 
 afterAll(async () => {
+  if (userId) {
+    await UsersModel.query("DELETE FROM users WHERE id = ?", [userId]);
+  }
   await UsersModel.connection.end();
 });
 
@@ -46,6 +49,9 @@ describe("UsersModel end-to-end flow", () => {
       }
     }
 
-    await expect(UsersModel.getById(userId)).rejects.toBe("not found");
+    await expect(UsersModel.getById(userId)).resolves.toMatchObject({
+      id: userId,
+      deleted: 1,
+    });
   });
 });

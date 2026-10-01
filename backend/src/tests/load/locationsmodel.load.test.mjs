@@ -54,7 +54,10 @@ describe("LocationModel load test", () => {
 
     await Promise.all(createdIds.map((id) => LocationModel.delete(id)));
     for (const id of createdIds) {
-      await expect(LocationModel.getById(id)).rejects.toBe("not found");
+      await expect(LocationModel.getById(id)).resolves.toMatchObject({
+        id,
+        deleted: 1,
+      });
     }
     createdIds.length = 0;
   });

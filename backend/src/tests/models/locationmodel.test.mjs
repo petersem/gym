@@ -266,7 +266,7 @@ describe("LocationModel unit tests", () => {
     );
   });
 
-  test("delete passes the location id", async () => {
+  test("soft deletes the location id", async () => {
     const query = jest
       .spyOn(LocationModel, "query")
       .mockResolvedValue({ affectedRows: 1 });
@@ -275,7 +275,7 @@ describe("LocationModel unit tests", () => {
       affectedRows: 1,
     });
     expect(query).toHaveBeenCalledWith(
-      "DELETE FROM locations WHERE id = ?",
+      "UPDATE locations SET deleted = 1 WHERE id = ?",
       [42],
     );
   });

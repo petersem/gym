@@ -50,7 +50,10 @@ describe("UsersModel load test", () => {
 
     await Promise.all(createdIds.map((id) => UsersModel.delete(id)));
     for (const id of createdIds) {
-      await expect(UsersModel.getById(id)).rejects.toBe("not found");
+      await expect(UsersModel.getById(id)).resolves.toMatchObject({
+        id,
+        deleted: 1,
+      });
     }
     createdIds.length = 0;
   });

@@ -263,12 +263,15 @@ describe("UsersModel unit tests", () => {
     );
   });
 
-  test("delete passes the user id", async () => {
+  test("soft deletes the user id", async () => {
     const query = jest
       .spyOn(UsersModel, "query")
       .mockResolvedValue({ affectedRows: 1 });
 
     await expect(UsersModel.delete(7)).resolves.toEqual({ affectedRows: 1 });
-    expect(query).toHaveBeenCalledWith("DELETE FROM users WHERE id = ?", [7]);
+    expect(query).toHaveBeenCalledWith(
+      "UPDATE users SET deleted = 1 WHERE id = ?",
+      [7],
+    );
   });
 });

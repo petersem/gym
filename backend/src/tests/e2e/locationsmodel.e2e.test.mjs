@@ -5,6 +5,11 @@ import { UsersModel } from "../../models/UsersModel.mjs";
 let locationId;
 
 afterAll(async () => {
+  if (locationId) {
+    await LocationModel.query("DELETE FROM locations WHERE id = ?", [
+      locationId,
+    ]);
+  }
   await LocationModel.connection.end();
 });
 
@@ -47,6 +52,9 @@ describe("LocationModel end-to-end flow", () => {
       }
     }
 
-    await expect(LocationModel.getById(locationId)).rejects.toBe("not found");
+    await expect(LocationModel.getById(locationId)).resolves.toMatchObject({
+      id: locationId,
+      deleted: 1,
+    });
   });
 });
