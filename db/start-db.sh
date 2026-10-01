@@ -18,9 +18,9 @@ trap 'kill -TERM "$mysql_pid" 2>/dev/null || true' TERM INT
       done
       seeded=$(MYSQL_PWD="$MYSQL_ROOT_PASSWORD" mysql --protocol=socket -uroot --database="$MYSQL_DATABASE" -N -s -e "SELECT COUNT(*) FROM users WHERE email = 'de@gym.com'")
       if [ "$seeded" -gt 0 ]; then
-        echo "Sample data present."
+        echo "Sample data added."
       else
-        echo "Sample data not present."
+        echo "Sample data ommitted."
       fi
       exit 0
     fi
