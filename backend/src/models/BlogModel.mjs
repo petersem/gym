@@ -179,9 +179,6 @@ export class BlogModel extends DatabaseModel {
    * @returns {Promise<OkPacket>} Database result.
    */
   static delete(id) {
-    return this.query(
-      'DELETE FROM blog WHERE id = ?',
-      [id]
-    );
+    return this.query("DELETE FROM blog WHERE id = ?", [id]);
   }
 }

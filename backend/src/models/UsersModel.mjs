@@ -91,7 +91,7 @@ export class UsersModel extends DatabaseModel {
     ).then((result) => result.map((row) => this.tableToModel(row.users)));
   }
 
-  // Columns that may be used to sort user listings. 
+  // Columns that may be used to sort user listings.
   static SORTABLE_COLUMNS = {
     first_name: "first_name",
     last_name: "last_name",
@@ -264,9 +264,6 @@ export class UsersModel extends DatabaseModel {
    * @returns {Promise<OkPacket>} Database result.
    */
   static delete(id) {
-    return this.query(
-      `UPDATE users SET deleted = 1 WHERE id = ?`,
-      [id]
-    );
+    return this.query(`UPDATE users SET deleted = 1 WHERE id = ?`, [id]);
   }
 }

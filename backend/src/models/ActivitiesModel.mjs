@@ -192,9 +192,6 @@ export class ActivitiesModel extends DatabaseModel {
    * @returns {Promise<OkPacket>} Database result.
    */
   static delete(id) {
-    return this.query(
-      `UPDATE activities SET deleted = 1 WHERE id = ?`,
-      [id]
-    );
+    return this.query(`UPDATE activities SET deleted = 1 WHERE id = ?`, [id]);
   }
 }

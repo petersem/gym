@@ -233,9 +233,6 @@ export class LocationModel extends DatabaseModel {
    * @returns {Promise<mysql.OkPacket>}
    */
   static delete(id) {
-    return this.query(
-      `UPDATE locations SET deleted = 1 WHERE id = ?`,
-      [id]
-    );
+    return this.query(`UPDATE locations SET deleted = 1 WHERE id = ?`, [id]);
   }
 }

@@ -1,132 +1,198 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Privacy policy for High Street Gym.">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="Privacy policy for High Street Gym." />
     <title>Privacy Policy - High Street Gym</title>
     <script>
-        (() => {
-            let theme = window.matchMedia("(prefers-color-scheme: light)").matches ? "dark" : "light";
-            try {
-                const savedTheme = window.localStorage.getItem("gym-theme");
-                if (savedTheme === "light" || savedTheme === "dark") theme = savedTheme;
-            } catch {}
-            document.documentElement.dataset.theme = theme;
-        })();
+      (() => {
+        let theme = window.matchMedia("(prefers-color-scheme: light)").matches
+          ? "dark"
+          : "light";
+        try {
+          const savedTheme = window.localStorage.getItem("gym-theme");
+          if (savedTheme === "light" || savedTheme === "dark")
+            theme = savedTheme;
+        } catch {}
+        document.documentElement.dataset.theme = theme;
+      })();
     </script>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="/css/tailwind.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=DM+Sans:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="/css/tailwind.css" />
     <style>
-        .policy-content {
-            width: min(100%, 760px);
-            margin: 36px auto 64px;
-        }
+      .policy-content {
+        width: min(100%, 760px);
+        margin: 36px auto 64px;
+      }
 
-        .policy-content h2,
-        .policy-content h3 {
-            color: var(--gym-ink);
+      .policy-content h2,
+      .policy-content h3 {
+        color: var(--gym-ink);
+      }
+
+      .policy-content h2 {
+        margin: 0 0 8px;
+        font-family: "Barlow Condensed", sans-serif;
+        font-size: 42px;
+        line-height: 1.1;
+      }
+
+      .policy-content h3 {
+        margin: 28px 0 8px;
+        font-size: 18px;
+        font-weight: 700;
+      }
+
+      .policy-content p,
+      .policy-content li {
+        line-height: 1.7;
+      }
+
+      .policy-content ul {
+        padding-left: 22px;
+        list-style: disc;
+      }
+
+      .policy-updated {
+        margin: 0 0 24px;
+        color: var(--gym-muted);
+        font-size: 14px;
+      }
+
+      @media (max-width: 600px) {
+        .policy-content {
+          margin-top: 24px;
         }
 
         .policy-content h2 {
-            margin: 0 0 8px;
-            font-family: "Barlow Condensed", sans-serif;
-            font-size: 42px;
-            line-height: 1.1;
+          font-size: 36px;
         }
-
-        .policy-content h3 {
-            margin: 28px 0 8px;
-            font-size: 18px;
-            font-weight: 700;
-        }
-
-        .policy-content p,
-        .policy-content li {
-            line-height: 1.7;
-        }
-
-        .policy-content ul {
-            padding-left: 22px;
-            list-style: disc;
-        }
-
-        .policy-updated {
-            margin: 0 0 24px;
-            color: var(--gym-muted);
-            font-size: 14px;
-        }
-
-        @media (max-width: 600px) {
-            .policy-content {
-                margin-top: 24px;
-            }
-
-            .policy-content h2 {
-                font-size: 36px;
-            }
-        }
+      }
     </style>
-</head>
-<body>
+  </head>
+  <body>
     <main>
-        <header class="site-header">
-            <a class="brand" href="/" aria-label="High Street Gym dashboard">
-                <span class="brand-mark" aria-hidden="true">HSG</span>
-                <span class="brand-copy">
-                    <h1>High Street Gym</h1>
-                    <small>Management portal</small>
-                </span>
-            </a>
-            <a href="/">Back to the portal</a>
-        </header>
+      <header class="site-header">
+        <a class="brand" href="/" aria-label="High Street Gym dashboard">
+          <span class="brand-mark" aria-hidden="true">HSG</span>
+          <span class="brand-copy">
+            <h1>High Street Gym</h1>
+            <small>Management portal</small>
+          </span>
+        </a>
+        <a href="/">Back to the portal</a>
+      </header>
 
-        <article class="policy-content" aria-labelledby="privacy-title">
-            <p class="policy-updated">Effective date: 2 October 2026</p>
-            <h2 id="privacy-title">Privacy Policy</h2>
-            <p>High Street Gym ("we", "us", or "our") respects your privacy. This policy explains how we handle personal information when you use our management portal or interact with our gym.</p>
+      <article class="policy-content" aria-labelledby="privacy-title">
+        <p class="policy-updated">Effective date: 2 October 2026</p>
+        <h2 id="privacy-title">Privacy Policy</h2>
+        <p>
+          High Street Gym ("we", "us", or "our") respects your privacy. This
+          policy explains how we handle personal information when you use our
+          management portal or interact with our gym.
+        </p>
 
-            <h3>Information We Collect</h3>
-            <p>Depending on how you use the portal, we may collect:</p>
-            <ul>
-                <li>Account and contact details, such as your name, email address, and login information.</li>
-                <li>Gym service details, such as bookings, session attendance, and activity preferences.</li>
-                <li>Information you submit through forms or other portal features.</li>
-                <li>Basic technical information needed to operate and secure the portal.</li>
-            </ul>
-            <p>Please do not submit sensitive health or financial information through general text fields.</p>
+        <h3>Information We Collect</h3>
+        <p>Depending on how you use the portal, we may collect:</p>
+        <ul>
+          <li>
+            Account and contact details, such as your name, email address, and
+            login information.
+          </li>
+          <li>
+            Gym service details, such as bookings, session attendance, and
+            activity preferences.
+          </li>
+          <li>
+            Information you submit through forms or other portal features.
+          </li>
+          <li>
+            Basic technical information needed to operate and secure the portal.
+          </li>
+        </ul>
+        <p>
+          Please do not submit sensitive health or financial information through
+          general text fields.
+        </p>
 
-            <h3>How We Use Information</h3>
-            <p>We use personal information to manage accounts, provide gym services and bookings, respond to enquiries, maintain and secure the portal, and meet legal obligations. We will use information for other purposes only where permitted by law and, when required, with your consent.</p>
+        <h3>How We Use Information</h3>
+        <p>
+          We use personal information to manage accounts, provide gym services
+          and bookings, respond to enquiries, maintain and secure the portal,
+          and meet legal obligations. We will use information for other purposes
+          only where permitted by law and, when required, with your consent.
+        </p>
 
-            <h3>When We Share Information</h3>
-            <p>We may share information with service providers that help us operate the portal and provide our services. They may use it only to perform services for us and as permitted by law. We may also disclose information when required by law or to protect people, rights, or the security of our services.</p>
-            <p>[Describe whether your business sells or shares personal information for advertising, and update this policy to match your actual practices.]</p>
+        <h3>When We Share Information</h3>
+        <p>
+          We may share information with service providers that help us operate
+          the portal and provide our services. They may use it only to perform
+          services for us and as permitted by law. We may also disclose
+          information when required by law or to protect people, rights, or the
+          security of our services.
+        </p>
+        <p>
+          [Describe whether your business sells or shares personal information
+          for advertising, and update this policy to match your actual
+          practices.]
+        </p>
 
-            <h3>Cookies and Browser Storage</h3>
-            <p>The portal uses session technologies needed for sign-in and may store your theme preference in your browser. You can manage browser storage through your browser settings; some portal features may not work correctly if essential storage is disabled.</p>
+        <h3>Cookies and Browser Storage</h3>
+        <p>
+          The portal uses session technologies needed for sign-in and may store
+          your theme preference in your browser. You can manage browser storage
+          through your browser settings; some portal features may not work
+          correctly if essential storage is disabled.
+        </p>
 
-            <h3>Retention and Security</h3>
-            <p>We keep personal information only as long as reasonably necessary for the purposes described in this policy, unless a longer period is required by law. We use reasonable safeguards to protect information, but no online service can guarantee complete security.</p>
+        <h3>Retention and Security</h3>
+        <p>
+          We keep personal information only as long as reasonably necessary for
+          the purposes described in this policy, unless a longer period is
+          required by law. We use reasonable safeguards to protect information,
+          but no online service can guarantee complete security.
+        </p>
 
-            <h3>Your Choices and Rights</h3>
-            <p>Depending on where you live, you may have rights to request access to, correction of, or deletion of your personal information, or to object to certain uses. Contact us using the details below. We may need to verify your identity before responding.</p>
+        <h3>Your Choices and Rights</h3>
+        <p>
+          Depending on where you live, you may have rights to request access to,
+          correction of, or deletion of your personal information, or to object
+          to certain uses. Contact us using the details below. We may need to
+          verify your identity before responding.
+        </p>
 
-            <h3>Children's Privacy</h3>
-            <p>Our services are not intended for children under [Minimum age]. We do not knowingly collect children's personal information without any consent required by law. Contact us if you believe a child has provided us with personal information.</p>
+        <h3>Children's Privacy</h3>
+        <p>
+          Our services are not intended for children under [Minimum age]. We do
+          not knowingly collect children's personal information without any
+          consent required by law. Contact us if you believe a child has
+          provided us with personal information.
+        </p>
 
-            <h3>Changes and Contact</h3>
-            <p>We may update this policy from time to time. We will post the revised policy here and update its effective date.</p>
-            <p>Questions or privacy requests: contact High Street Gym at <a href="mailto:admin@example.com">[admin@example.com]</a>.</p>
-        </article>
+        <h3>Changes and Contact</h3>
+        <p>
+          We may update this policy from time to time. We will post the revised
+          policy here and update its effective date.
+        </p>
+        <p>
+          Questions or privacy requests: contact High Street Gym at
+          <a href="mailto:admin@example.com">[admin@example.com]</a>.
+        </p>
+      </article>
 
-        <footer class="site-footer">
-            <span>High Street Gym © 2026</span>
-            <a href="/docs/index.html" target="_blank" rel="noopener">JSDoc Reference</a>
-            <a href="/privacy-policy.html" aria-current="page">Privacy Policy</a>
-        </footer>
+      <footer class="site-footer">
+        <span>High Street Gym © 2026</span>
+        <a href="/docs/index.html" target="_blank" rel="noopener"
+          >JSDoc Reference</a
+        >
+        <a href="/privacy-policy.html" aria-current="page">Privacy Policy</a>
+      </footer>
     </main>
-</body>
+  </body>
 </html>
