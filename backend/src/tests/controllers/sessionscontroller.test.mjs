@@ -45,6 +45,7 @@ const dateForOffset = (dayOffset) => {
 beforeEach(() => {
   jest.spyOn(BookingsModel, "getAll").mockResolvedValue([]);
   jest.spyOn(BookingsModel, "getBySessionId").mockResolvedValue([]);
+  jest.spyOn(console, "error").mockImplementation(() => {});
 });
 
 afterEach(() => {

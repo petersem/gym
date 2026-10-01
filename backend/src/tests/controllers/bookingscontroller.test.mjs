@@ -1,4 +1,11 @@
-import { afterEach, describe, expect, jest, test } from "@jest/globals";
+import {
+  afterEach,
+  beforeEach,
+  describe,
+  expect,
+  jest,
+  test,
+} from "@jest/globals";
 import { BookingsController } from "../../controllers/BookingsController.mjs";
 import { BookingsModel } from "../../models/BookingsModel.mjs";
 import { UsersModel } from "../../models/UsersModel.mjs";
@@ -24,6 +31,10 @@ const request = (params = {}, query = {}, body = {}, authenticatedUser) => ({
   authenticatedUser,
 });
 const next = () => jest.fn();
+
+beforeEach(() => {
+  jest.spyOn(console, "error").mockImplementation(() => {});
+});
 
 afterEach(() => {
   jest.restoreAllMocks();
