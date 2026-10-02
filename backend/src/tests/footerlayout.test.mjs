@@ -16,6 +16,11 @@ const blogTemplatePath = new URL(
   import.meta.url,
 );
 const blogTemplate = readFileSync(blogTemplatePath, "utf8");
+const bookingTemplatePath = new URL(
+  "../views/booking_management.ejs",
+  import.meta.url,
+);
+const bookingTemplate = readFileSync(bookingTemplatePath, "utf8");
 const pageTemplates = readdirSync(new URL("../views/", import.meta.url))
   .filter((file) => file.endsWith(".ejs"))
   .map((file) =>
@@ -137,5 +142,43 @@ describe("shared footer layout", () => {
       '<a class="btn btn-outline" href="/blogs">Discard</a>',
     );
     expect(createPage).not.toContain(">Discard</a>");
+  });
+
+  test("offers bookings XML download to authenticated booking viewers", () => {
+    const renderBookingPage = (authenticatedUser) =>
+      ejs.render(
+        bookingTemplate,
+        {
+          authenticatedUser: authenticatedUser ?? undefined,
+          role: authenticatedUser?.role ?? "",
+          sessions: [],
+          bookings: [],
+          users: [],
+          locations: [],
+          activities: [],
+          calendarDays: [],
+          bookingCalendarDays: [],
+          selectedBooking: { id: null },
+          availableLocationId: null,
+          bookingLocationId: null,
+          bookingTrainerId: null,
+          bookingUserId: authenticatedUser?.id ?? null,
+          canManageBookings: ["admin", "trainer"].includes(
+            authenticatedUser?.role,
+          ),
+          bookingDeleted: false,
+          bookingCreated: false,
+        },
+        { filename: fileURLToPath(bookingTemplatePath) },
+      );
+
+    const memberPage = renderBookingPage({ id: 7, role: "member" });
+    const guestPage = renderBookingPage(null);
+
+    expect(memberPage).toMatch(
+      /href="\/bookings\/export\.xml\?booking_user_id=7/,
+    );
+    expect(memberPage).toMatch(/Download\s+XML/);
+    expect(guestPage).not.toContain("/bookings/export.xml");
   });
 });

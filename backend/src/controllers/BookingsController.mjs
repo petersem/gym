@@ -4,6 +4,34 @@ import { UsersModel } from "../models/UsersModel.mjs";
 import { SessionsModel } from "../models/SessionsModel.mjs";
 import { LocationModel } from "../models/LocationModel.mjs";
 import { ActivitiesModel } from "../models/ActivitiesModel.mjs";
+import XMLBuilder from "fast-xml-builder";
+
+const xmlBuilder = new XMLBuilder({
+  ignoreAttributes: false,
+  format: true,
+});
+
+const bookingsDtd = `<!DOCTYPE gymBookings [
+<!ELEMENT gymBookings (booking*)>
+<!ELEMENT booking (id, userId, created, session)>
+<!ELEMENT id (#PCDATA)>
+<!ELEMENT userId (#PCDATA)>
+<!ELEMENT created (#PCDATA)>
+<!ELEMENT session (id, title, date, time, activity, trainer, location)>
+<!ELEMENT title (#PCDATA)>
+<!ELEMENT date (#PCDATA)>
+<!ELEMENT time (#PCDATA)>
+<!ELEMENT activity (name, description)>
+<!ELEMENT name (#PCDATA)>
+<!ELEMENT description (#PCDATA)>
+<!ELEMENT trainer (firstName, lastName)>
+<!ELEMENT firstName (#PCDATA)>
+<!ELEMENT lastName (#PCDATA)>
+<!ELEMENT location (name, street, suburb, postcode)>
+<!ELEMENT street (#PCDATA)>
+<!ELEMENT suburb (#PCDATA)>
+<!ELEMENT postcode (#PCDATA)>
+]>`;
 
 /**
  * Builds the bookings management URL while preserving the active filters.
@@ -49,9 +77,154 @@ export class BookingsController {
 
   static {
     this.routes.get("/", this.viewBookingManagement);
+    this.routes.get("/export.xml", this.exportBookingsXml);
     this.routes.get("/:id", this.viewBookingManagement);
     this.routes.post("/", this.handleBookingManagement);
     this.routes.post("/:id", this.handleBookingManagement);
+  }
+
+  /** @type {express.RequestHandler} */
+  static async exportBookingsXml(req, res, next) {
+    const authenticatedUser = req.authenticatedUser;
+    if (!authenticatedUser) {
+      return res.status(401).send("Authentication required.");
+    }
+
+    try {
+      const canManageBookings = ["admin", "trainer"].includes(
+        authenticatedUser.role,
+      );
+      const [bookings, sessions, locations, activities, users] =
+        await Promise.all([
+          canManageBookings
+            ? BookingsModel.getAll()
+            : BookingsModel.getByUserId(authenticatedUser.id),
+          SessionsModel.getAll(),
+          LocationModel.getAll(),
+          ActivitiesModel.getAll(),
+          UsersModel.getAll(),
+        ]);
+
+      const selectedUserId = canManageBookings
+        ? Number(req.query.booking_user_id) || null
+        : Number(authenticatedUser.id);
+      const selectedTrainerId = canManageBookings
+        ? Number(req.query.booking_trainer_id) || null
+        : null;
+      const selectedLocationId = Number(req.query.booking_location_id) || null;
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const endDate = new Date(today);
+      endDate.setDate(endDate.getDate() + 7);
+      const dateValue = (date) =>
+        [
+          date.getFullYear(),
+          String(date.getMonth() + 1).padStart(2, "0"),
+          String(date.getDate()).padStart(2, "0"),
+        ].join("-");
+      const firstDateValue = dateValue(today);
+      const endDateValue = dateValue(endDate);
+      const ownBookingSessionIds = new Set();
+      if (authenticatedUser.role === "trainer") {
+        bookings.forEach((booking) => {
+          if (Number(booking.user_id) === Number(authenticatedUser.id)) {
+            ownBookingSessionIds.add(Number(booking.session_id));
+          }
+        });
+      }
+
+      const visibleSessions = sessions
+        .filter((session) => {
+          const sessionDate = String(session.date).slice(0, 10);
+          const matchesDate =
+            sessionDate >= firstDateValue && sessionDate < endDateValue;
+          const matchesLocation =
+            !selectedLocationId ||
+            Number(session.location_id) === selectedLocationId;
+          const matchesTrainer =
+            !selectedTrainerId ||
+            Number(session.trainer_id) === selectedTrainerId ||
+            ownBookingSessionIds.has(Number(session.id));
+          return matchesDate && matchesLocation && matchesTrainer;
+        })
+        .sort(
+          (left, right) =>
+            String(left.date).localeCompare(String(right.date)) ||
+            String(left.time).localeCompare(String(right.time)),
+        );
+      const sessionsById = new Map(
+        visibleSessions.map((session) => [Number(session.id), session]),
+      );
+      const selectedBookings = bookings
+        .filter(
+          (booking) =>
+            sessionsById.has(Number(booking.session_id)) &&
+            (!selectedUserId || Number(booking.user_id) === selectedUserId),
+        )
+        .sort((left, right) => {
+          const leftSession = sessionsById.get(Number(left.session_id));
+          const rightSession = sessionsById.get(Number(right.session_id));
+          return (
+            String(leftSession.date).localeCompare(String(rightSession.date)) ||
+            String(leftSession.time).localeCompare(String(rightSession.time))
+          );
+        });
+      const bookingRecords = selectedBookings.map((booking) => {
+        const session = sessionsById.get(Number(booking.session_id));
+        const location =
+          locations.find(
+            (item) => Number(item.id) === Number(session.location_id),
+          ) ?? {};
+        const activity =
+          activities.find(
+            (item) => Number(item.id) === Number(session.activity_id),
+          ) ?? {};
+        const trainer =
+          users.find(
+            (user) => Number(user.id) === Number(session.trainer_id),
+          ) ?? {};
+
+        return {
+          id: String(booking.id),
+          userId: String(booking.user_id),
+          created: String(booking.created ?? ""),
+          session: {
+            id: String(session.id),
+            title: String(session.title ?? ""),
+            date: String(session.date).slice(0, 10),
+            time: String(session.time ?? "").slice(0, 8),
+            activity: {
+              name: String(activity.name ?? ""),
+              description: String(activity.description ?? ""),
+            },
+            trainer: {
+              firstName: String(trainer.first_name ?? ""),
+              lastName: String(trainer.last_name ?? ""),
+            },
+            location: {
+              name: String(location.name ?? ""),
+              street: String(location.street ?? ""),
+              suburb: String(location.suburb ?? ""),
+              postcode: String(location.postcode ?? ""),
+            },
+          },
+        };
+      });
+      const xml = xmlBuilder.build({
+        "?xml": { "@_version": "1.0", "@_encoding": "UTF-8" },
+        gymBookings: { booking: bookingRecords },
+      });
+
+      res.set({
+        "Content-Type": "application/xml; charset=utf-8",
+        "Content-Disposition": 'attachment; filename="gym-bookings.xml"',
+      });
+      const declarationEnd = xml.indexOf("?>") + 2;
+      const document = `${xml.slice(0, declarationEnd)}\n${bookingsDtd}\n${xml.slice(declarationEnd).trimStart()}`;
+      return res.send(document);
+    } catch (error) {
+      return next(error);
+    }
   }
 
   /** @type {express.RequestHandler} */

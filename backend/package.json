@@ -1,12 +1,12 @@
 {
   "name": "backend",
-  "version": "0.26.2",
+  "version": "0.27.0",
   "description": "",
   "main": "index.js",
   "scripts": {
     "build:css": "npx @tailwindcss/cli -i src/public/css/style.css -o src/dist/css/tailwind.css",
-    "dev": "npm run build:css && nodemon --env-file=./src/.env src/server.mjs",
-    "prod": "npm run build:css && nodemon --env-file=./src/.envprod src/server.mjs",
+    "dev": "npm run build:css && nodemon --watch views --ext ejs,js,mjs --env-file=./src/.env src/server.mjs",
+    "prod": "npm run build:css && node --env-file=./src/.envprod src/server.mjs",
     "tailwind": "npx @tailwindcss/cli -i src/public/css/style.css -o src/dist/css/tailwind.css --watch",
     "dev-full": "npm-run-all --parallel dev tailwind",
     "doc": "npm --prefix .. run doc"
@@ -26,6 +26,7 @@
     "express-rate-limiter": "^1.3.1",
     "express-session": "^1.19.0",
     "express-validator": "^7.3.2",
+    "fast-xml-builder": "^1.3.1",
     "mysql2": "^3.24.5",
     "swagger-jsdoc": "^6.3.0",
     "swagger-ui-express": "^5.0.1",

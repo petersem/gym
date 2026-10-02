@@ -19,8 +19,11 @@ const response = () => {
     status: jest.fn(),
     render: jest.fn(),
     redirect: jest.fn(),
+    send: jest.fn(),
+    set: jest.fn(),
   };
   res.status.mockReturnValue(res);
+  res.set.mockReturnValue(res);
   return res;
 };
 
@@ -42,6 +45,383 @@ afterEach(() => {
 
 // Model spies keep booking permissions, filters, and redirects database-independent.
 describe("BookingsController", () => {
+  test("requires authentication to export bookings XML", async () => {
+    const getAll = jest.spyOn(BookingsModel, "getAll");
+    const res = response();
+
+    await BookingsController.exportBookingsXml(request(), res, next());
+
+    expect(res.status).toHaveBeenCalledWith(401);
+    expect(res.send).toHaveBeenCalledWith("Authentication required.");
+    expect(getAll).not.toHaveBeenCalled();
+  });
+
+  test("exports a member's upcoming bookings as well-formed XML", async () => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const dateValue = (date) =>
+      [
+        date.getFullYear(),
+        String(date.getMonth() + 1).padStart(2, "0"),
+        String(date.getDate()).padStart(2, "0"),
+      ].join("-");
+    const todayValue = dateValue(today);
+    const afterSevenDays = new Date(today);
+    afterSevenDays.setDate(afterSevenDays.getDate() + 7);
+    const tooLateValue = dateValue(afterSevenDays);
+    const bookings = [
+      { id: 101, session_id: 11, user_id: 7 },
+      { id: 102, session_id: 12, user_id: 7 },
+      { id: 103, session_id: 99, user_id: 7 },
+    ];
+    const getByUserId = jest
+      .spyOn(BookingsModel, "getByUserId")
+      .mockResolvedValue(bookings);
+    jest.spyOn(SessionsModel, "getAll").mockResolvedValue([
+      {
+        id: 11,
+        title: "Spin & Strength",
+        activity_id: 3,
+        location_id: 9,
+        trainer_id: 12,
+        date: todayValue,
+        time: "10:30:00",
+      },
+      {
+        id: 12,
+        title: "Next week",
+        activity_id: 3,
+        location_id: 9,
+        trainer_id: 12,
+        date: tooLateValue,
+        time: "11:00:00",
+      },
+    ]);
+    jest.spyOn(LocationModel, "getAll").mockResolvedValue([
+      {
+        id: 9,
+        name: "Central Gym",
+        street: "1 Main Street",
+        suburb: "Brisbane",
+        postcode: 4000,
+      },
+    ]);
+    jest
+      .spyOn(ActivitiesModel, "getAll")
+      .mockResolvedValue([
+        { id: 3, name: "Strength", description: "Build strength & mobility." },
+      ]);
+    jest
+      .spyOn(UsersModel, "getAll")
+      .mockResolvedValue([
+        { id: 12, first_name: "Taylor", last_name: "Trainer" },
+      ]);
+    const res = response();
+
+    await BookingsController.exportBookingsXml(
+      request({}, { booking_location_id: "9" }, {}, { id: 7, role: "member" }),
+      res,
+      next(),
+    );
+
+    expect(getByUserId).toHaveBeenCalledWith(7);
+    expect(res.set).toHaveBeenCalledWith({
+      "Content-Type": "application/xml; charset=utf-8",
+      "Content-Disposition": 'attachment; filename="gym-bookings.xml"',
+    });
+    expect(res.send.mock.calls[0][0]).toContain(
+      '<?xml version="1.0" encoding="UTF-8"?>',
+    );
+    expect(res.send.mock.calls[0][0]).toContain("<!DOCTYPE gymBookings [");
+    expect(res.send.mock.calls[0][0]).toContain(
+      "<!ELEMENT booking (id, userId, created, session)>",
+    );
+    expect(res.send.mock.calls[0][0]).toContain("<gymBookings>");
+    expect(res.send.mock.calls[0][0]).toContain(
+      "<title>Spin &amp; Strength</title>",
+    );
+    expect(res.send.mock.calls[0][0]).toContain(`<date>${todayValue}</date>`);
+    expect(res.send.mock.calls[0][0]).toContain("<time>10:30:00</time>");
+    expect(res.send.mock.calls[0][0]).toContain("<name>Central Gym</name>");
+    expect(res.send.mock.calls[0][0]).toContain(
+      "<street>1 Main Street</street>",
+    );
+    expect(res.send.mock.calls[0][0]).not.toContain("Next week");
+  });
+
+  test("applies manager filters when exporting bookings", async () => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const todayValue = [
+      today.getFullYear(),
+      String(today.getMonth() + 1).padStart(2, "0"),
+      String(today.getDate()).padStart(2, "0"),
+    ].join("-");
+    const bookings = [
+      { id: 201, session_id: 21, user_id: 7 },
+      { id: 202, session_id: 22, user_id: 8 },
+      { id: 203, session_id: 23, user_id: 7 },
+      { id: 204, session_id: 24, user_id: 7 },
+    ];
+    const getAll = jest
+      .spyOn(BookingsModel, "getAll")
+      .mockResolvedValue(bookings);
+    jest.spyOn(SessionsModel, "getAll").mockResolvedValue([
+      {
+        id: 21,
+        title: "Selected session",
+        activity_id: 3,
+        location_id: 9,
+        trainer_id: 12,
+        date: todayValue,
+        time: "09:00:00",
+      },
+      {
+        id: 22,
+        title: "Other member",
+        activity_id: 3,
+        location_id: 9,
+        trainer_id: 12,
+        date: todayValue,
+        time: "10:00:00",
+      },
+      {
+        id: 23,
+        title: "Other trainer",
+        activity_id: 3,
+        location_id: 9,
+        trainer_id: 13,
+        date: todayValue,
+        time: "11:00:00",
+      },
+      {
+        id: 24,
+        title: "Other location",
+        activity_id: 3,
+        location_id: 10,
+        trainer_id: 12,
+        date: todayValue,
+        time: "12:00:00",
+      },
+    ]);
+    jest.spyOn(LocationModel, "getAll").mockResolvedValue([
+      {
+        id: 9,
+        name: "Central Gym",
+        street: "1 Main Street",
+        suburb: "Brisbane",
+        postcode: 4000,
+      },
+    ]);
+    jest
+      .spyOn(ActivitiesModel, "getAll")
+      .mockResolvedValue([
+        { id: 3, name: "Strength", description: "Build strength." },
+      ]);
+    jest
+      .spyOn(UsersModel, "getAll")
+      .mockResolvedValue([
+        { id: 12, first_name: "Taylor", last_name: "Trainer" },
+      ]);
+    const res = response();
+
+    await BookingsController.exportBookingsXml(
+      request(
+        {},
+        {
+          booking_user_id: "7",
+          booking_trainer_id: "12",
+          booking_location_id: "9",
+        },
+        {},
+        { id: 1, role: "admin" },
+      ),
+      res,
+      next(),
+    );
+
+    expect(getAll).toHaveBeenCalled();
+    expect(res.send.mock.calls[0][0]).toContain("Selected session");
+    expect(res.send.mock.calls[0][0]).not.toContain("Other member");
+    expect(res.send.mock.calls[0][0]).not.toContain("Other trainer");
+    expect(res.send.mock.calls[0][0]).not.toContain("Other location");
+  });
+
+  test("exports bookings XML when all-trainer filter is selected", async () => {
+    jest.spyOn(BookingsModel, "getAll").mockResolvedValue([]);
+    jest.spyOn(SessionsModel, "getAll").mockResolvedValue([]);
+    jest.spyOn(LocationModel, "getAll").mockResolvedValue([]);
+    jest.spyOn(ActivitiesModel, "getAll").mockResolvedValue([]);
+    jest.spyOn(UsersModel, "getAll").mockResolvedValue([]);
+    const res = response();
+
+    await BookingsController.exportBookingsXml(
+      request(
+        {},
+        {
+          booking_user_id: "",
+          booking_trainer_id: "",
+          booking_location_id: "",
+        },
+        {},
+        { id: 1, role: "admin" },
+      ),
+      res,
+      next(),
+    );
+
+    expect(res.send).toHaveBeenCalledWith(
+      expect.stringContaining("<gymBookings></gymBookings>"),
+    );
+  });
+
+  test("keeps a trainer's own bookings when a different trainer filter is selected", async () => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const dateValue = [
+      today.getFullYear(),
+      String(today.getMonth() + 1).padStart(2, "0"),
+      String(today.getDate()).padStart(2, "0"),
+    ].join("-");
+    jest.spyOn(BookingsModel, "getAll").mockResolvedValue([
+      { id: 301, session_id: 31, user_id: 12 },
+      { id: 302, session_id: 32, user_id: 7 },
+    ]);
+    jest.spyOn(SessionsModel, "getAll").mockResolvedValue([
+      {
+        id: 31,
+        title: "Trainer's own booking",
+        activity_id: 3,
+        location_id: 9,
+        trainer_id: 13,
+        date: dateValue,
+        time: "09:00:00",
+      },
+      {
+        id: 32,
+        title: "Selected trainer",
+        activity_id: 3,
+        location_id: 9,
+        trainer_id: 13,
+        date: dateValue,
+        time: "10:00:00",
+      },
+      {
+        id: 33,
+        title: "Unselected trainer",
+        activity_id: 3,
+        location_id: 9,
+        trainer_id: 14,
+        date: dateValue,
+        time: "11:00:00",
+      },
+    ]);
+    jest.spyOn(LocationModel, "getAll").mockResolvedValue([
+      {
+        id: 9,
+        name: "Central Gym",
+        street: "1 Main Street",
+        suburb: "Brisbane",
+        postcode: 4000,
+      },
+    ]);
+    jest
+      .spyOn(ActivitiesModel, "getAll")
+      .mockResolvedValue([
+        { id: 3, name: "Strength", description: "Build strength." },
+      ]);
+    jest
+      .spyOn(UsersModel, "getAll")
+      .mockResolvedValue([
+        { id: 13, first_name: "Jamie", last_name: "Trainer" },
+      ]);
+    const res = response();
+
+    await BookingsController.exportBookingsXml(
+      request(
+        {},
+        { booking_user_id: "", booking_trainer_id: "13" },
+        {},
+        { id: 12, role: "trainer" },
+      ),
+      res,
+      next(),
+    );
+
+    expect(res.send.mock.calls[0][0]).toContain("Trainer&apos;s own booking");
+    expect(res.send.mock.calls[0][0]).toContain("Selected trainer");
+    expect(res.send.mock.calls[0][0]).not.toContain("Unselected trainer");
+  });
+
+  test("exports empty XML fields when related booking metadata is missing", async () => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const date = [
+      today.getFullYear(),
+      String(today.getMonth() + 1).padStart(2, "0"),
+      String(today.getDate()).padStart(2, "0"),
+    ].join("-");
+    jest
+      .spyOn(BookingsModel, "getByUserId")
+      .mockResolvedValue([
+        { id: 401, session_id: 41, user_id: 7, created: "2026-10-02 09:00:00" },
+      ]);
+    jest.spyOn(SessionsModel, "getAll").mockResolvedValue([
+      {
+        id: 41,
+        title: null,
+        activity_id: 30,
+        location_id: 90,
+        trainer_id: 120,
+        date,
+        time: null,
+      },
+    ]);
+    jest.spyOn(LocationModel, "getAll").mockResolvedValue([]);
+    jest.spyOn(ActivitiesModel, "getAll").mockResolvedValue([]);
+    jest.spyOn(UsersModel, "getAll").mockResolvedValue([]);
+    const res = response();
+
+    await BookingsController.exportBookingsXml(
+      request({}, {}, {}, { id: 7, role: "member" }),
+      res,
+      next(),
+    );
+
+    const xml = res.send.mock.calls[0][0];
+    expect(xml).toContain("<created>2026-10-02 09:00:00</created>");
+    expect(xml).toContain("<title></title>");
+    expect(xml).toContain("<time></time>");
+    expect(xml).toContain("<activity>");
+    expect(xml).toContain("<name></name>");
+    expect(xml).toContain("<description></description>");
+    expect(xml).toContain("<trainer>");
+    expect(xml).toContain("<firstName></firstName>");
+    expect(xml).toContain("<lastName></lastName>");
+    expect(xml).toContain("<location>");
+    expect(xml).toContain("<street></street>");
+    expect(xml).toContain("<suburb></suburb>");
+    expect(xml).toContain("<postcode></postcode>");
+  });
+
+  test("forwards bookings XML export errors", async () => {
+    const error = new Error("database error");
+    const errorNext = next();
+    jest.spyOn(BookingsModel, "getByUserId").mockRejectedValue(error);
+    jest.spyOn(SessionsModel, "getAll").mockResolvedValue([]);
+    jest.spyOn(LocationModel, "getAll").mockResolvedValue([]);
+    jest.spyOn(ActivitiesModel, "getAll").mockResolvedValue([]);
+    jest.spyOn(UsersModel, "getAll").mockResolvedValue([]);
+
+    await BookingsController.exportBookingsXml(
+      request({}, {}, {}, { id: 7, role: "member" }),
+      response(),
+      errorNext,
+    );
+
+    expect(errorNext).toHaveBeenCalledWith(error);
+  });
+
   test("renders booking management and handles load errors", async () => {
     const bookings = [{ id: 1, session_id: 4, user_id: 7 }];
     const authenticatedUser = { id: 7, role: "member" };
