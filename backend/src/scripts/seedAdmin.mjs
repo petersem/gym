@@ -14,9 +14,9 @@ try {
     );
     console.log("** New database detected **");
     console.log(
-      `Seeded admin: ${process.env.ADMIN_EMAIL} / ${process.env.ADMIN_SEED_PASSWORD}`,
+      `Created admin account: ${process.env.ADMIN_EMAIL} / ${process.env.ADMIN_SEED_PASSWORD}`,
     );
-    console.log("** Change the default admin password after seeding **");
+    console.log("** Change the default admin password after login **");
   } else {
     console.log(`Admin already exists: ${process.env.ADMIN_EMAIL}`);
   }
