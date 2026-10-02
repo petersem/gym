@@ -3,6 +3,9 @@ import session from "express-session";
 import { USER_ROLE_MEMBER, UsersModel } from "../models/UsersModel.mjs";
 import bcrypt from "bcrypt";
 
+/**
+ * AuthenticationController handles user authentication, registration, and session management.
+ */
 export class AuthenticationController {
   static middleware = express.Router();
   static routes = express.Router();
