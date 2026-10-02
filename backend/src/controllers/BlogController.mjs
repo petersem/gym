@@ -121,9 +121,9 @@ export class BlogController {
             result.affectedRows > 0
               ? res.redirect("/blogs")
               : res.status(404).render("status.ejs", {
-                status: "Blog Update Failed",
-                message: "The blog post could not be found.",
-              }),
+                  status: "Blog Update Failed",
+                  message: "The blog post could not be found.",
+                }),
           );
         })
         .catch((error) => {
@@ -158,9 +158,9 @@ export class BlogController {
             result.affectedRows > 0
               ? res.redirect("/blogs")
               : res.status(404).render("status.ejs", {
-                status: "Blog Deletion Failed",
-                message: "The blog post could not be found.",
-              }),
+                  status: "Blog Deletion Failed",
+                  message: "The blog post could not be found.",
+                }),
           );
         })
         .catch((error) => {

@@ -30,7 +30,7 @@ const request = (
 const next = () => jest.fn();
 
 beforeEach(() => {
-  jest.spyOn(console, "error").mockImplementation(() => { });
+  jest.spyOn(console, "error").mockImplementation(() => {});
 });
 
 afterEach(() => {
@@ -225,7 +225,7 @@ describe("BlogController", () => {
 
   test("returns not found for unauthenticated deletion and missing posts", async () => {
     const getById = jest.spyOn(BlogModel, "getById");
-    const log = jest.spyOn(console, "error").mockImplementation(() => { });
+    const log = jest.spyOn(console, "error").mockImplementation(() => {});
     const unauthenticatedResponse = response();
     const missingResponse = response();
 
