@@ -3,126 +3,153 @@
 
 <head>
     <%- include("partials/head.ejs") %>
-    <title>Location Management - Gym</title>
+        <title>Location Management - Gym</title>
 </head>
 
 <body>
     <main>
         <%- include("partials/header.ejs") %>
-        <%- include("partials/nav.ejs", { role, authenticatedUser }) %>
+            <%- include("partials/nav.ejs", { role, authenticatedUser }) %>
 
-        <section>
-            <h2>Locations</h2>
-            <div class="list-search">
-                <label for="location-search">Search locations</label>
-                <div class="list-search-control">
-                    <input id="location-search" type="search" value="<%= selectedSearchTerm %>" onkeydown="if (event.key === 'Enter') { event.preventDefault(); filterLocations(); }">
-                    <button type="button" class="btn-accent" onclick="filterLocations()">Search</button>
-                </div>
-            </div>
-            <div class="list-results">
-                <table class="list-results-table">
-                    <% const locationSortLink = (column) => {
-                        const params = new URLSearchParams();
-                        if (selectedSearchTerm) params.set('search_term', selectedSearchTerm);
-                        params.set('sort_by', column);
-                        params.set('sort_dir', selectedSortBy === column && selectedSortDir === 'asc' ? 'desc' : 'asc');
-                        return `/locations?${params.toString()}`;
-                    }; %>
-                    <% const locationSortAria = (column) => selectedSortBy === column
-                        ? (selectedSortDir === 'asc' ? 'ascending' : 'descending')
-                        : 'none'; %>
-                    <thead>
-                        <tr>
-                            <th scope="col" aria-sort="<%= locationSortAria('name') %>"><a class="sort-link" href="<%= locationSortLink('name') %>" aria-label="Sort by name">Name</a></th>
-                            <th scope="col" aria-sort="<%= locationSortAria('suburb') %>"><a class="sort-link" href="<%= locationSortLink('suburb') %>" aria-label="Sort by suburb">Suburb</a></th>
-                            <th scope="col" aria-sort="<%= locationSortAria('postcode') %>"><a class="sort-link" href="<%= locationSortLink('postcode') %>" aria-label="Sort by postcode">Postcode</a></th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <% if (locations.length === 0) { %>
-                            <tr><td colspan="3">No locations match this search.</td></tr>
-                        <% } %>
-                        <% locations.forEach((location) => { %>
-                            <tr>
-                                <td><a href="/locations/<%= location.id %>#location-management"><%= location.name %></a></td>
-                                <td><%= location.suburb %></td>
-                                <td><%= location.postcode %></td>
-                            </tr>
-                        <% }) %>
-                    </tbody>
-                </table>
-            </div>
-            <% if (totalPages > 1) { %>
-                <% const locationPageLink = (page) => {
-                    const params = new URLSearchParams();
-                    if (selectedSearchTerm) params.set('search_term', selectedSearchTerm);
-                    params.set('sort_by', selectedSortBy);
-                    params.set('sort_dir', selectedSortDir);
-                    params.set('page', page);
-                    return `/locations?${params.toString()}`;
-                }; %>
-                <nav class="pagination" aria-label="Locations pagination">
-                    <a class="btn-outline<%= selectedPage <= 1 ? ' is-disabled' : '' %>" href="<%= selectedPage > 1 ? locationPageLink(selectedPage - 1) : '#' %>" aria-disabled="<%= selectedPage <= 1 %>">Previous</a>
-                    <span>Page <%= selectedPage %> of <%= totalPages %></span>
-                    <a class="btn-outline<%= selectedPage >= totalPages ? ' is-disabled' : '' %>" href="<%= selectedPage < totalPages ? locationPageLink(selectedPage + 1) : '#' %>" aria-disabled="<%= selectedPage >= totalPages %>">Next</a>
-                </nav>
-            <% } %>
-        </section>
+                <section>
+                    <h2>Locations</h2>
+                    <div class="list-search">
+                        <label for="location-search">Search locations</label>
+                        <div class="list-search-control">
+                            <input id="location-search" type="search" value="<%= selectedSearchTerm %>"
+                                onkeydown="if (event.key === 'Enter') { event.preventDefault(); filterLocations(); }">
+                            <button type="button" class="btn-accent" onclick="filterLocations()">Search</button>
+                        </div>
+                    </div>
+                    <div class="list-results">
+                        <table class="list-results-table">
+                            <% const locationSortLink=(column)=> {
+                                const params = new URLSearchParams();
+                                if (selectedSearchTerm) params.set('search_term', selectedSearchTerm);
+                                params.set('sort_by', column);
+                                params.set('sort_dir', selectedSortBy === column && selectedSortDir === 'asc' ? 'desc' :
+                                'asc');
+                                return `/locations?${params.toString()}`;
+                                }; %>
+                                <% const locationSortAria=(column)=> selectedSortBy === column
+                                    ? (selectedSortDir === 'asc' ? 'ascending' : 'descending')
+                                    : 'none'; %>
+                                    <thead>
+                                        <tr>
+                                            <th scope="col" aria-sort="<%= locationSortAria('name') %>"><a
+                                                    class="sort-link" href="<%= locationSortLink('name') %>"
+                                                    aria-label="Sort by name">Name</a></th>
+                                            <th scope="col" aria-sort="<%= locationSortAria('suburb') %>"><a
+                                                    class="sort-link" href="<%= locationSortLink('suburb') %>"
+                                                    aria-label="Sort by suburb">Suburb</a></th>
+                                            <th scope="col" aria-sort="<%= locationSortAria('postcode') %>"><a
+                                                    class="sort-link" href="<%= locationSortLink('postcode') %>"
+                                                    aria-label="Sort by postcode">Postcode</a></th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <% if (locations.length===0) { %>
+                                            <tr>
+                                                <td colspan="3">No locations match this search.</td>
+                                            </tr>
+                                            <% } %>
+                                                <% locations.forEach((location)=> { %>
+                                                    <tr>
+                                                        <td><a href="/locations/<%= location.id %>#location-management">
+                                                                <%= location.name %>
+                                                            </a></td>
+                                                        <td>
+                                                            <%= location.suburb %>
+                                                        </td>
+                                                        <td>
+                                                            <%= location.postcode %>
+                                                        </td>
+                                                    </tr>
+                                                    <% }) %>
+                                    </tbody>
+                        </table>
+                    </div>
+                    <% if (totalPages> 1) { %>
+                        <% const locationPageLink=(page)=> {
+                            const params = new URLSearchParams();
+                            if (selectedSearchTerm) params.set('search_term', selectedSearchTerm);
+                            params.set('sort_by', selectedSortBy);
+                            params.set('sort_dir', selectedSortDir);
+                            params.set('page', page);
+                            return `/locations?${params.toString()}`;
+                            }; %>
+                            <nav class="pagination" aria-label="Locations pagination">
+                                <a class="btn-outline<%= selectedPage <= 1 ? ' is-disabled' : '' %>"
+                                    href="<%= selectedPage > 1 ? locationPageLink(selectedPage - 1) : '#' %>"
+                                    aria-disabled="<%= selectedPage <= 1 %>">Previous</a>
+                                <span>Page <%= selectedPage %> of <%= totalPages %></span>
+                                <a class="btn-outline<%= selectedPage >= totalPages ? ' is-disabled' : '' %>"
+                                    href="<%= selectedPage < totalPages ? locationPageLink(selectedPage + 1) : '#' %>"
+                                    aria-disabled="<%= selectedPage >= totalPages %>">Next</a>
+                            </nav>
+                            <% } %>
+                </section>
 
-        <script>
-            function filterLocations() {
-                const params = new URLSearchParams(window.location.search);
-                const searchTerm = document.getElementById('location-search').value.trim();
-                if (searchTerm) params.set('search_term', searchTerm); else params.delete('search_term');
-                params.delete('page');
-                window.location.href = `/locations${params.toString() ? `?${params}` : ''}`;
-            }
-        </script>
+                <script>
+                    function filterLocations() {
+                        const params = new URLSearchParams(window.location.search);
+                        const searchTerm = document.getElementById('location-search').value.trim();
+                        if (searchTerm) params.set('search_term', searchTerm); else params.delete('search_term');
+                        params.delete('page');
+                        window.location.href = `/locations${params.toString() ? `?${params}` : ''}`;
+                    }
+                </script>
 
-        <section id="location-management">
-            <h2>Location management - <%= selectedLocation.id ? 'Edit' : 'Create' %></h2>
-            <form action="/locations<%= selectedLocation.id ? '/' + selectedLocation.id : '' %>" method="post" class="form-grid responsive-half">
-                <label for="name">Name</label>
-                <input id="name" name="name" value="<%= selectedLocation.name %>" required>
+                <section id="location-management">
+                    <h2>Location management - <%= selectedLocation.id ? 'Edit' : 'Create' %>
+                    </h2>
+                    <form action="/locations<%= selectedLocation.id ? '/' + selectedLocation.id : '' %>" method="post"
+                        class="form-grid responsive-half">
+                        <label for="name">Name</label>
+                        <input id="name" name="name" value="<%= selectedLocation.name %>" required>
 
-                <label for="phone">Phone</label>
-                <input id="phone" name="phone" value="<%= selectedLocation.phone %>" required>
+                        <label for="phone">Phone</label>
+                        <input id="phone" name="phone" value="<%= selectedLocation.phone %>" required>
 
-                <label for="email">Email</label>
-                <input id="email" name="email" type="email" value="<%= selectedLocation.email %>" required>
+                        <label for="email">Email</label>
+                        <input id="email" name="email" type="email" value="<%= selectedLocation.email %>" required>
 
-                <label for="street">Street</label>
-                <input id="street" name="street" value="<%= selectedLocation.street %>" required>
+                        <label for="street">Street</label>
+                        <input id="street" name="street" value="<%= selectedLocation.street %>" required>
 
-                <label for="suburb">Suburb</label>
-                <input id="suburb" name="suburb" value="<%= selectedLocation.suburb %>" required>
+                        <label for="suburb">Suburb</label>
+                        <input id="suburb" name="suburb" value="<%= selectedLocation.suburb %>" required>
 
-                <label for="postcode">Postcode</label>
-                <input id="postcode" name="postcode" type="number" value="<%= selectedLocation.postcode %>" required>
+                        <label for="postcode">Postcode</label>
+                        <input id="postcode" name="postcode" type="number" value="<%= selectedLocation.postcode %>"
+                            required>
 
-                <label for="manager">Manager</label>
-                <select id="manager" name="manager" required>
-                    <% users.forEach((user) => { %>
-                        <option value="<%= user.id %>" <%= Number(selectedLocation.manager) === user.id ? 'selected' : '' %>>
-                            <%= user.last_name %>, <%= user.first_name %>
-                        </option>
-                    <% }) %>
-                </select>
+                        <label for="manager">Manager</label>
+                        <select id="manager" name="manager" required>
+                            <% users.forEach((user)=> { %>
+                                <option value="<%= user.id %>" <%=Number(selectedLocation.manager)===user.id
+                                    ? 'selected' : '' %>>
+                                    <%= user.last_name %>, <%= user.first_name %>
+                                </option>
+                                <% }) %>
+                        </select>
 
-                <p class="two-col">Updated by: <%= authenticatedUser.last_name ?? '' %>, <%= authenticatedUser.first_name ?? '' %></p>
-                <button type="submit" name="action" value="<%= selectedLocation.id ? 'update' : 'create' %>">
-                    <%= selectedLocation.id ? 'Update location' : 'Create location' %>
-                </button>
+                        <p class="two-col">Updated by: <%= authenticatedUser.last_name ?? '' %>, <%=
+                                    authenticatedUser.first_name ?? '' %>
+                        </p>
+                        <button type="submit" name="action" value="<%= selectedLocation.id ? 'update' : 'create' %>">
+                            <%= selectedLocation.id ? 'Update location' : 'Create location' %>
+                        </button>
 
-                <% if (selectedLocation.id) { %>
-                    <button type="button" onclick="window.location.href='/locations#location-management'">Clear</button>
-                    <button type="submit" name="action" value="delete">Delete location</button>
-                <% } %>
-            </form>
-        </section>
+                        <% if (selectedLocation.id) { %>
+                            <button type="button"
+                                onclick="window.location.href='/locations#location-management'">Discard</button>
+                            <button type="submit" name="action" value="delete">Delete location</button>
+                            <% } %>
+                    </form>
+                </section>
 
-        <%- include("partials/footer.ejs") %>
+                <%- include("partials/footer.ejs") %>
     </main>
 </body>
 

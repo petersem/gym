@@ -147,7 +147,8 @@
                             <%= selectedUser.id ? 'Update user' : 'Create user' %>
                         </button>
                         <% if (selectedUser.id) { %>
-                            <button type="button" onclick="window.location.href='/users#user-management'">Clear</button>
+                            <button type="button"
+                                onclick="window.location.href='/users#user-management'">Discard</button>
                             <button type="submit" name="action" value="delete">Delete user</button>
                             <% } %>
                     </form>

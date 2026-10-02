@@ -92,7 +92,7 @@ describe("shared footer layout", () => {
     expect(otherUserPage).not.toMatch(/<a href="\/blogs\/42">/);
   });
 
-  test("shows a clear-changes button only when editing a post", () => {
+  test("shows a discard button only when editing a post", () => {
     const authenticatedUser = { id: 7, role: "member" };
     const editPage = ejs.render(
       blogTemplate,
@@ -134,8 +134,8 @@ describe("shared footer layout", () => {
     );
 
     expect(editPage).toContain(
-      '<a class="btn btn-outline" href="/blogs">Clear</a>',
+      '<a class="btn btn-outline" href="/blogs">Discard</a>',
     );
-    expect(createPage).not.toContain(">Clear</a>");
+    expect(createPage).not.toContain(">Discard</a>");
   });
 });

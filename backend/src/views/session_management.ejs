@@ -3,214 +3,309 @@
 
 <head>
     <%- include("partials/head.ejs") %>
-    <title>Session Management - Gym</title>
+        <title>Session Management - Gym</title>
 </head>
 
 <body>
-    <% const formatSessionDateTime = (date, time) => new Intl.DateTimeFormat('en-AU', {
+    <% const formatSessionDateTime=(date, time)=> new Intl.DateTimeFormat('en-AU', {
         day: '2-digit', month: '2-digit', year: 'numeric',
         hour: 'numeric', minute: '2-digit', hour12: true,
-    }).format(new Date(`${String(date).slice(0, 10)}T${time}`)).replace(/^0/, '').replace(/\s+(am|pm)$/i, '$1'); %>
-    <% const storedTime = String(selectedSession.time || '09:00:00').slice(0, 5).split(':'); %>
-    <% const storedHour = Number(storedTime[0]) || 9; %>
-    <% const pickerHour = storedHour % 12 || 12; %>
-    <% const pickerMeridiem = storedHour >= 12 ? 'pm' : 'am'; %>
-    <main>
-        <%- include("partials/header.ejs") %>
-        <%- include("partials/nav.ejs", { role, authenticatedUser }) %>
+        }).format(new Date(`${String(date).slice(0, 10)}T${time}`)).replace(/^0/, '').replace(/\s+(am|pm)$/i, '$1'); %>
+        <% const storedTime=String(selectedSession.time || '09:00:00' ).slice(0, 5).split(':'); %>
+            <% const storedHour=Number(storedTime[0]) || 9; %>
+                <% const pickerHour=storedHour % 12 || 12; %>
+                    <% const pickerMeridiem=storedHour>= 12 ? 'pm' : 'am'; %>
+                        <main>
+                            <%- include("partials/header.ejs") %>
+                                <%- include("partials/nav.ejs", { role, authenticatedUser }) %>
 
-        <section>
-            <h2>Sessions</h2>
-            <div class="form-grid responsive-half session-filter-controls" role="group" aria-label="Filter sessions">
-                <label for="location-filter">Filter by location</label>
-                <select id="location-filter" onchange="filterSessions()">
-                    <option value="">All locations</option>
-                    <% locations.forEach((location) => { %>
-                        <option value="<%= location.id %>" <%= selectedLocationId === location.id ? 'selected' : '' %>><%= location.name %></option>
-                    <% }) %>
-                </select>
-                <label for="trainer-filter">Filter by trainer</label>
-                <select id="trainer-filter" onchange="filterSessions()">
-                    <% const isTrainerUser = authenticatedUser?.role === 'trainer'; %>
-                    <% const trainerFilterOptions = users.filter((user) => user.role === 'trainer'
-                        && (!isTrainerUser || Number(user.id) === Number(authenticatedUser.id))); %>
-                    <% if (!isTrainerUser) { %>
-                        <option value="">All trainers</option>
-                    <% } %>
-                    <% trainerFilterOptions.forEach((user) => { %>
-                        <option value="<%= user.id %>" <%= selectedTrainerId === user.id ? 'selected' : '' %>><%= user.last_name %>, <%= user.first_name %></option>
-                    <% }) %>
-                </select>
-            </div>
-            <div class="session-name-search">
-                <label for="session-search">Search session names</label>
-                <div class="session-search-control">
-                    <input id="session-search" type="search" value="<%= selectedSearchTerm %>" onkeydown="if (event.key === 'Enter') { event.preventDefault(); filterSessions(); }">
-                    <button type="button" class="btn-accent" onclick="filterSessions()">Search</button>
-                </div>
-            </div>
-            <div class="session-results">
-                <table class="session-results-table">
-                    <% const sessionSortLink = (column) => {
-                        const params = new URLSearchParams();
-                        if (selectedLocationId) params.set('location_id', selectedLocationId);
-                        if (selectedTrainerId) params.set('trainer_id', selectedTrainerId);
-                        if (selectedSearchTerm) params.set('search_term', selectedSearchTerm);
-                        params.set('sort_by', column);
-                        params.set('sort_dir', selectedSortBy === column && selectedSortDir === 'asc' ? 'desc' : 'asc');
-                        return `/sessions?${params.toString()}`;
-                    }; %>
-                    <% const sessionSortAria = (column) => selectedSortBy === column
-                        ? (selectedSortDir === 'asc' ? 'ascending' : 'descending')
-                        : 'none'; %>
-                    <thead>
-                        <tr>
-                            <th scope="col" aria-sort="<%= sessionSortAria('title') %>"><a class="session-sort-button" href="<%= sessionSortLink('title') %>" aria-label="Sort by session">Session</a></th>
-                            <th scope="col" aria-sort="<%= sessionSortAria('trainer') %>"><a class="session-sort-button" href="<%= sessionSortLink('trainer') %>" aria-label="Sort by trainer">Trainer</a></th>
-                            <th scope="col" aria-sort="<%= sessionSortAria('date') %>"><a class="session-sort-button" href="<%= sessionSortLink('date') %>" aria-label="Sort by date and time">Date/Time</a></th>
-                            <th scope="col" aria-sort="<%= sessionSortAria('activity') %>"><a class="session-sort-button" href="<%= sessionSortLink('activity') %>" aria-label="Sort by activity">Activity</a></th>
-                            <th scope="col" aria-sort="<%= sessionSortAria('location') %>"><a class="session-sort-button" href="<%= sessionSortLink('location') %>" aria-label="Sort by location">Location</a></th>
-                            <th scope="col" aria-sort="<%= sessionSortAria('bookings') %>"><a class="session-sort-button" href="<%= sessionSortLink('bookings') %>" aria-label="Sort by bookings">Bookings</a></th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <% if (sessions.length === 0) { %>
-                            <tr><td colspan="6">No sessions match these filters.</td></tr>
-                        <% } %>
-                        <% sessions.forEach((session) => { %>
-                            <% const trainer = users.find((user) => user.id === Number(session.trainer_id)); %>
-                            <% const activity = activities.find((item) => Number(item.id) === Number(session.activity_id)); %>
-                            <% const sessionLocation = locations.find((location) => Number(location.id) === Number(session.location_id)); %>
-                                <% const trainerName = trainer ? `${trainer.last_name}, ${trainer.first_name}` : 'Unknown trainer'; %>
-                            <tr>
-                                    <td><a href="/sessions/<%= session.id %>#session-management"><%= session.title %></a></td>
-                                    <td><%= trainerName %></td>
-                                    <td><%= formatSessionDateTime(session.date, session.time) %></td>
-                                    <td><%= activity ? activity.name : 'Unknown activity' %></td>
-                                    <td><%= sessionLocation ? sessionLocation.name : 'Unknown location' %></td>
-                                    <td><%= session.totalBookedUsers ?? 0 %></td>
-                            </tr>
-                        <% }) %>
-                    </tbody>
-                </table>
-            </div>
-            <% if (totalPages > 1) { %>
-                <% const sessionPageLink = (page) => {
-                    const params = new URLSearchParams();
-                    if (selectedLocationId) params.set('location_id', selectedLocationId);
-                    if (selectedTrainerId) params.set('trainer_id', selectedTrainerId);
-                    if (selectedSearchTerm) params.set('search_term', selectedSearchTerm);
-                    params.set('sort_by', selectedSortBy);
-                    params.set('sort_dir', selectedSortDir);
-                    params.set('page', page);
-                    return `/sessions?${params.toString()}`;
-                }; %>
-                <nav class="pagination" aria-label="Sessions pagination">
-                    <a class="btn-outline<%= selectedPage <= 1 ? ' is-disabled' : '' %>" href="<%= selectedPage > 1 ? sessionPageLink(selectedPage - 1) : '#' %>" aria-disabled="<%= selectedPage <= 1 %>">Previous</a>
-                    <span>Page <%= selectedPage %> of <%= totalPages %></span>
-                    <a class="btn-outline<%= selectedPage >= totalPages ? ' is-disabled' : '' %>" href="<%= selectedPage < totalPages ? sessionPageLink(selectedPage + 1) : '#' %>" aria-disabled="<%= selectedPage >= totalPages %>">Next</a>
-                </nav>
-            <% } %>
-        </section>
+                                    <section>
+                                        <h2>Sessions</h2>
+                                        <div class="form-grid responsive-half session-filter-controls" role="group"
+                                            aria-label="Filter sessions">
+                                            <label for="location-filter">Filter by location</label>
+                                            <select id="location-filter" onchange="filterSessions()">
+                                                <option value="">All locations</option>
+                                                <% locations.forEach((location)=> { %>
+                                                    <option value="<%= location.id %>"
+                                                        <%=selectedLocationId===location.id ? 'selected' : '' %>><%=
+                                                            location.name %>
+                                                    </option>
+                                                    <% }) %>
+                                            </select>
+                                            <label for="trainer-filter">Filter by trainer</label>
+                                            <select id="trainer-filter" onchange="filterSessions()">
+                                                <% const isTrainerUser=authenticatedUser?.role==='trainer' ; %>
+                                                    <% const trainerFilterOptions=users.filter((user)=> user.role ===
+                                                        'trainer'
+                                                        && (!isTrainerUser || Number(user.id) ===
+                                                        Number(authenticatedUser.id))); %>
+                                                        <% if (!isTrainerUser) { %>
+                                                            <option value="">All trainers</option>
+                                                            <% } %>
+                                                                <% trainerFilterOptions.forEach((user)=> { %>
+                                                                    <option value="<%= user.id %>"
+                                                                        <%=selectedTrainerId===user.id ? 'selected' : ''
+                                                                        %>><%= user.last_name %>, <%= user.first_name %>
+                                                                    </option>
+                                                                    <% }) %>
+                                            </select>
+                                        </div>
+                                        <div class="session-name-search">
+                                            <label for="session-search">Search session names</label>
+                                            <div class="session-search-control">
+                                                <input id="session-search" type="search"
+                                                    value="<%= selectedSearchTerm %>"
+                                                    onkeydown="if (event.key === 'Enter') { event.preventDefault(); filterSessions(); }">
+                                                <button type="button" class="btn-accent"
+                                                    onclick="filterSessions()">Search</button>
+                                            </div>
+                                        </div>
+                                        <div class="session-results">
+                                            <table class="session-results-table">
+                                                <% const sessionSortLink=(column)=> {
+                                                    const params = new URLSearchParams();
+                                                    if (selectedLocationId) params.set('location_id',
+                                                    selectedLocationId);
+                                                    if (selectedTrainerId) params.set('trainer_id', selectedTrainerId);
+                                                    if (selectedSearchTerm) params.set('search_term',
+                                                    selectedSearchTerm);
+                                                    params.set('sort_by', column);
+                                                    params.set('sort_dir', selectedSortBy === column && selectedSortDir
+                                                    === 'asc' ? 'desc' : 'asc');
+                                                    return `/sessions?${params.toString()}`;
+                                                    }; %>
+                                                    <% const sessionSortAria=(column)=> selectedSortBy === column
+                                                        ? (selectedSortDir === 'asc' ? 'ascending' : 'descending')
+                                                        : 'none'; %>
+                                                        <thead>
+                                                            <tr>
+                                                                <th scope="col"
+                                                                    aria-sort="<%= sessionSortAria('title') %>"><a
+                                                                        class="session-sort-button"
+                                                                        href="<%= sessionSortLink('title') %>"
+                                                                        aria-label="Sort by session">Session</a></th>
+                                                                <th scope="col"
+                                                                    aria-sort="<%= sessionSortAria('trainer') %>"><a
+                                                                        class="session-sort-button"
+                                                                        href="<%= sessionSortLink('trainer') %>"
+                                                                        aria-label="Sort by trainer">Trainer</a></th>
+                                                                <th scope="col"
+                                                                    aria-sort="<%= sessionSortAria('date') %>"><a
+                                                                        class="session-sort-button"
+                                                                        href="<%= sessionSortLink('date') %>"
+                                                                        aria-label="Sort by date and time">Date/Time</a>
+                                                                </th>
+                                                                <th scope="col"
+                                                                    aria-sort="<%= sessionSortAria('activity') %>"><a
+                                                                        class="session-sort-button"
+                                                                        href="<%= sessionSortLink('activity') %>"
+                                                                        aria-label="Sort by activity">Activity</a></th>
+                                                                <th scope="col"
+                                                                    aria-sort="<%= sessionSortAria('location') %>"><a
+                                                                        class="session-sort-button"
+                                                                        href="<%= sessionSortLink('location') %>"
+                                                                        aria-label="Sort by location">Location</a></th>
+                                                                <th scope="col"
+                                                                    aria-sort="<%= sessionSortAria('bookings') %>"><a
+                                                                        class="session-sort-button"
+                                                                        href="<%= sessionSortLink('bookings') %>"
+                                                                        aria-label="Sort by bookings">Bookings</a></th>
+                                                            </tr>
+                                                        </thead>
+                                                        <tbody>
+                                                            <% if (sessions.length===0) { %>
+                                                                <tr>
+                                                                    <td colspan="6">No sessions match these filters.
+                                                                    </td>
+                                                                </tr>
+                                                                <% } %>
+                                                                    <% sessions.forEach((session)=> { %>
+                                                                        <% const trainer=users.find((user)=> user.id ===
+                                                                            Number(session.trainer_id)); %>
+                                                                            <% const activity=activities.find((item)=>
+                                                                                Number(item.id) ===
+                                                                                Number(session.activity_id)); %>
+                                                                                <% const
+                                                                                    sessionLocation=locations.find((location)=>
+                                                                                    Number(location.id) ===
+                                                                                    Number(session.location_id)); %>
+                                                                                    <% const trainerName=trainer ?
+                                                                                        `${trainer.last_name},
+                                                                                        ${trainer.first_name}`
+                                                                                        : 'Unknown trainer' ; %>
+                                                                                        <tr>
+                                                                                            <td><a
+                                                                                                    href="/sessions/<%= session.id %>#session-management">
+                                                                                                    <%= session.title %>
+                                                                                                </a></td>
+                                                                                            <td>
+                                                                                                <%= trainerName %>
+                                                                                            </td>
+                                                                                            <td>
+                                                                                                <%= formatSessionDateTime(session.date,
+                                                                                                    session.time) %>
+                                                                                            </td>
+                                                                                            <td>
+                                                                                                <%= activity ?
+                                                                                                    activity.name
+                                                                                                    : 'Unknown activity'
+                                                                                                    %>
+                                                                                            </td>
+                                                                                            <td>
+                                                                                                <%= sessionLocation ?
+                                                                                                    sessionLocation.name
+                                                                                                    : 'Unknown location'
+                                                                                                    %>
+                                                                                            </td>
+                                                                                            <td>
+                                                                                                <%= session.totalBookedUsers
+                                                                                                    ?? 0 %>
+                                                                                            </td>
+                                                                                        </tr>
+                                                                                        <% }) %>
+                                                        </tbody>
+                                            </table>
+                                        </div>
+                                        <% if (totalPages> 1) { %>
+                                            <% const sessionPageLink=(page)=> {
+                                                const params = new URLSearchParams();
+                                                if (selectedLocationId) params.set('location_id', selectedLocationId);
+                                                if (selectedTrainerId) params.set('trainer_id', selectedTrainerId);
+                                                if (selectedSearchTerm) params.set('search_term', selectedSearchTerm);
+                                                params.set('sort_by', selectedSortBy);
+                                                params.set('sort_dir', selectedSortDir);
+                                                params.set('page', page);
+                                                return `/sessions?${params.toString()}`;
+                                                }; %>
+                                                <nav class="pagination" aria-label="Sessions pagination">
+                                                    <a class="btn-outline<%= selectedPage <= 1 ? ' is-disabled' : '' %>"
+                                                        href="<%= selectedPage > 1 ? sessionPageLink(selectedPage - 1) : '#' %>"
+                                                        aria-disabled="<%= selectedPage <= 1 %>">Previous</a>
+                                                    <span>Page <%= selectedPage %> of <%= totalPages %></span>
+                                                    <a class="btn-outline<%= selectedPage >= totalPages ? ' is-disabled' : '' %>"
+                                                        href="<%= selectedPage < totalPages ? sessionPageLink(selectedPage + 1) : '#' %>"
+                                                        aria-disabled="<%= selectedPage >= totalPages %>">Next</a>
+                                                </nav>
+                                                <% } %>
+                                    </section>
 
-        <script>
-            function filterSessions() {
-                const params = new URLSearchParams(window.location.search);
-                const location = document.getElementById('location-filter').value;
-                const trainer = document.getElementById('trainer-filter').value;
-                const searchTerm = document.getElementById('session-search').value.trim();
-                if (location) params.set('location_id', location); else params.delete('location_id');
-                if (trainer) params.set('trainer_id', trainer); else params.delete('trainer_id');
-                if (searchTerm) params.set('search_term', searchTerm); else params.delete('search_term');
-                params.delete('page');
-                window.location.href = `/sessions${params.toString() ? `?${params}` : ''}`;
-            }
-        </script>
+                                    <script>
+                                        function filterSessions() {
+                                            const params = new URLSearchParams(window.location.search);
+                                            const location = document.getElementById('location-filter').value;
+                                            const trainer = document.getElementById('trainer-filter').value;
+                                            const searchTerm = document.getElementById('session-search').value.trim();
+                                            if (location) params.set('location_id', location); else params.delete('location_id');
+                                            if (trainer) params.set('trainer_id', trainer); else params.delete('trainer_id');
+                                            if (searchTerm) params.set('search_term', searchTerm); else params.delete('search_term');
+                                            params.delete('page');
+                                            window.location.href = `/sessions${params.toString() ? `?${params}` : ''}`;
+                                        }
+                                    </script>
 
-        <section id="session-management">
-            <h2>Session management - <%= selectedSession.id ? 'Edit' : 'Create' %></h2>
-            <form action="/sessions<%= selectedSession.id ? '/' + selectedSession.id : '' %>" method="post" class="form-grid responsive-half">
-                <label for="title">Title</label>
-                <input id="title" name="title" value="<%= selectedSession.title %>" required>
-                <label for="activity-id">Activity</label>
-                <select id="activity-id" name="activityId" required>
-                    <% activities.forEach((activity) => { %>
-                        <option value="<%= activity.id %>" <%= Number(selectedSession.activity_id) === activity.id ? 'selected' : '' %>>
-                            <%= activity.name %>
-                        </option>
-                    <% }) %>
-                </select>
-                <label for="location-id">Location</label>
-                <select id="location-id" name="locationId" required>
-                    <% locations.forEach((location) => { %>
-                        <option value="<%= location.id %>" <%= Number(selectedSession.location_id) === location.id ? 'selected' : '' %>>
-                            <%= location.name %>
-                        </option>
-                    <% }) %>
-                </select>
-                <label for="trainer-id">Trainer</label>
-                <select id="trainer-id" name="trainerId" required>
-                    <% users.filter((user) => user.role === 'trainer').forEach((user) => { %>
-                        <option value="<%= user.id %>" <%= Number(selectedSession.trainer_id) === user.id ? 'selected' : '' %>>
-                            <%= user.last_name %>, <%= user.first_name %>
-                        </option>
-                    <% }) %>
-                </select>
-                <label for="date">Date</label>
-                <input id="date" name="date" type="date" value="<%= selectedSession.date %>" required>
-                <label for="time">Time</label>
-                <div>
-                    <select id="time-hour" aria-label="Hour" required>
-                        <% for (let hour = 1; hour <= 12; hour += 1) { %>
-                            <option value="<%= hour %>" <%= pickerHour === hour ? 'selected' : '' %>><%= hour %></option>
-                        <% } %>
-                    </select>
-                    :
-                    <select id="time-minute" aria-label="Minute" required>
-                        <% for (let minute = 0; minute < 60; minute += 5) { %>
-                            <option value="<%= String(minute).padStart(2, '0') %>" <%= storedTime[1] === String(minute).padStart(2, '0') ? 'selected' : '' %>><%= String(minute).padStart(2, '0') %></option>
-                        <% } %>
-                    </select>
-                    <select id="time-meridiem" aria-label="AM or PM" required>
-                        <option value="am" <%= pickerMeridiem === 'am' ? 'selected' : '' %>>am</option>
-                        <option value="pm" <%= pickerMeridiem === 'pm' ? 'selected' : '' %>>pm</option>
-                    </select>
-                    <input id="time" name="time" type="hidden" value="<%= String(storedHour).padStart(2, '0') %>:<%= storedTime[1] %>:00">
-                </div>
-                <button type="submit" name="action" value="<%= selectedSession.id ? 'update' : 'create' %>">
-                    <%= selectedSession.id ? 'Update session' : 'Create session' %>
-                </button>
-                <% if (selectedSession.id) { %>
-                    <button type="button" onclick="window.location.href='/sessions#session-management'">Clear</button>
-                <% } %>
-                <% if (selectedSession.id) { %>
-                    <button
-                        type="submit"
-                        name="action"
-                        value="delete"
-                        <%- selectedSessionHasBookings
-                            ? `onclick="return confirm('This session has existing bookings. Deleting it will also delete those bookings. Continue?')"`
-                            : '' %>
-                    >Delete session</button>
-                <% } %>
-            </form>
-        </section>
+                                    <section id="session-management">
+                                        <h2>Session management - <%= selectedSession.id ? 'Edit' : 'Create' %>
+                                        </h2>
+                                        <form
+                                            action="/sessions<%= selectedSession.id ? '/' + selectedSession.id : '' %>"
+                                            method="post" class="form-grid responsive-half">
+                                            <label for="title">Title</label>
+                                            <input id="title" name="title" value="<%= selectedSession.title %>"
+                                                required>
+                                            <label for="activity-id">Activity</label>
+                                            <select id="activity-id" name="activityId" required>
+                                                <% activities.forEach((activity)=> { %>
+                                                    <option value="<%= activity.id %>"
+                                                        <%=Number(selectedSession.activity_id)===activity.id
+                                                        ? 'selected' : '' %>>
+                                                        <%= activity.name %>
+                                                    </option>
+                                                    <% }) %>
+                                            </select>
+                                            <label for="location-id">Location</label>
+                                            <select id="location-id" name="locationId" required>
+                                                <% locations.forEach((location)=> { %>
+                                                    <option value="<%= location.id %>"
+                                                        <%=Number(selectedSession.location_id)===location.id
+                                                        ? 'selected' : '' %>>
+                                                        <%= location.name %>
+                                                    </option>
+                                                    <% }) %>
+                                            </select>
+                                            <label for="trainer-id">Trainer</label>
+                                            <select id="trainer-id" name="trainerId" required>
+                                                <% users.filter((user)=> user.role === 'trainer').forEach((user) => { %>
+                                                    <option value="<%= user.id %>"
+                                                        <%=Number(selectedSession.trainer_id)===user.id ? 'selected'
+                                                        : '' %>>
+                                                        <%= user.last_name %>, <%= user.first_name %>
+                                                    </option>
+                                                    <% }) %>
+                                            </select>
+                                            <label for="date">Date</label>
+                                            <input id="date" name="date" type="date" value="<%= selectedSession.date %>"
+                                                required>
+                                            <label for="time">Time</label>
+                                            <div>
+                                                <select id="time-hour" aria-label="Hour" required>
+                                                    <% for (let hour=1; hour <=12; hour +=1) { %>
+                                                        <option value="<%= hour %>" <%=pickerHour===hour ? 'selected'
+                                                            : '' %>><%= hour %>
+                                                        </option>
+                                                        <% } %>
+                                                </select>
+                                                :
+                                                <select id="time-minute" aria-label="Minute" required>
+                                                    <% for (let minute=0; minute < 60; minute +=5) { %>
+                                                        <option value="<%= String(minute).padStart(2, '0') %>"
+                                                            <%=storedTime[1]===String(minute).padStart(2, '0' )
+                                                            ? 'selected' : '' %>><%= String(minute).padStart(2, '0' ) %>
+                                                        </option>
+                                                        <% } %>
+                                                </select>
+                                                <select id="time-meridiem" aria-label="AM or PM" required>
+                                                    <option value="am" <%=pickerMeridiem==='am' ? 'selected' : '' %>>am
+                                                    </option>
+                                                    <option value="pm" <%=pickerMeridiem==='pm' ? 'selected' : '' %>>pm
+                                                    </option>
+                                                </select>
+                                                <input id="time" name="time" type="hidden"
+                                                    value="<%= String(storedHour).padStart(2, '0') %>:<%= storedTime[1] %>:00">
+                                            </div>
+                                            <button type="submit" name="action"
+                                                value="<%= selectedSession.id ? 'update' : 'create' %>">
+                                                <%= selectedSession.id ? 'Update session' : 'Create session' %>
+                                            </button>
+                                            <% if (selectedSession.id) { %>
+                                                <button type="button"
+                                                    onclick="window.location.href='/sessions#session-management'">Discard</button>
+                                                <% } %>
+                                                    <% if (selectedSession.id) { %>
+                                                        <button type="submit" name="action" value="delete" <%-
+                                                            selectedSessionHasBookings ?
+                                                            `onclick="return confirm('This session has existing bookings. Deleting it will also delete those bookings. Continue?')"
+                                                            ` : '' %>
+                                                            >Delete session</button>
+                                                        <% } %>
+                                        </form>
+                                    </section>
 
-        <script>
-            const updateSessionTime = () => {
-                const hour = Number(document.getElementById("time-hour").value);
-                const minute = document.getElementById("time-minute").value;
-                const meridiem = document.getElementById("time-meridiem").value;
-                let hour24 = hour % 12;
-                if (meridiem === "pm") hour24 += 12;
-                document.getElementById("time").value = `${String(hour24).padStart(2, "0")}:${minute}:00`;
-            };
-            document.querySelectorAll("#time-hour, #time-minute, #time-meridiem").forEach((picker) => picker.addEventListener("change", updateSessionTime));
-            updateSessionTime();
-        </script>
+                                    <script>
+                                        const updateSessionTime = () => {
+                                            const hour = Number(document.getElementById("time-hour").value);
+                                            const minute = document.getElementById("time-minute").value;
+                                            const meridiem = document.getElementById("time-meridiem").value;
+                                            let hour24 = hour % 12;
+                                            if (meridiem === "pm") hour24 += 12;
+                                            document.getElementById("time").value = `${String(hour24).padStart(2, "0")}:${minute}:00`;
+                                        };
+                                        document.querySelectorAll("#time-hour, #time-minute, #time-meridiem").forEach((picker) => picker.addEventListener("change", updateSessionTime));
+                                        updateSessionTime();
+                                    </script>
 
-        <%- include("partials/footer.ejs") %>
-    </main>
+                                    <%- include("partials/footer.ejs") %>
+                        </main>
 </body>
 
 </html>
