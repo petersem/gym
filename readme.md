@@ -8,6 +8,8 @@ Gym app for Tafe stage 2 assessment
 
 ![gym app](https://raw.githubusercontent.com/petersem/gym/main/gh-assets/gymapp.png)
 
+[![Architecture diagram of petersem/gym](https://gitdiagram.com/petersem/gym/diagram.png)](https://gitdiagram.com/petersem/gym?utm_source=readme&utm_medium=picture)
+
 ## Example `.env` file
 
 ```

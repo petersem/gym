@@ -151,8 +151,8 @@ export class AuthenticationController {
   }
 
   /**
-   *
-   * @param {Array<"admin" | "stock" | "sales">} allowedRoles
+   * Restrict access to users with one of the specified roles.
+   * @param {Array<"admin" | "trainer" | "member">} allowedRoles Roles allowed to access the resource.
    * @returns {express.RequestHandler}
    */
   static restrict(allowedRoles) {

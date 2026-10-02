@@ -121,21 +121,21 @@ Only a handful of DaisyUI/Tailwind classes are used in the codebase — nearly a
 layout is hand-written custom CSS (see §4). Below is every occurrence, verbatim, with the
 full `class="..."` attribute as written in the source.
 
-| Class(es)                          | File : line                                                                                                                           | Exact markup                                                                                                          |
-| ---------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------- |
-| `btn`, `btn-primary`               | [dashboard.ejs:26](../backend/src/views/dashboard.ejs#L26)                                                                            | `<a class="btn btn-primary" href="/authenticate/logout">Log out</a>`                                                  |
-| `btn`, `btn-primary`               | [dashboard.ejs:28](../backend/src/views/dashboard.ejs#L28)                                                                            | `<a class="btn btn-primary" href="/authenticate">Log in</a>`                                                          |
-| `btn`, `btn-secondary`             | [dashboard.ejs:29](../backend/src/views/dashboard.ejs#L29)                                                                            | `<a class="btn btn-secondary" href="/authenticate/register">Register</a>`                                             |
-| `btn`, `btn-outline`               | [dashboard.ejs:31](../backend/src/views/dashboard.ejs#L31)                                                                            | `<a class="btn btn-outline" href="/api-docs">API documentation</a>`                                                   |
-| `btn`, `btn-outline`               | [location_list.ejs:44](../backend/src/views/location_list.ejs#L44)                                                                    | `<a class="btn btn-outline" href="/locations/<%= location.id %>">View location</a>`                                   |
-| `btn`, `btn-primary`               | [booking_management.ejs:57](../backend/src/views/booking_management.ejs#L57)                                                          | `<button class="btn btn-primary session-book-button" type="submit" name="action" value="create" hidden>Book</button>` |
-| `card`, `bg-base-100`, `shadow-sm` | [location_list.ejs:37](../backend/src/views/location_list.ejs#L37)                                                                    | `<article class="card-tile card bg-base-100 shadow-sm">`                                                              |
-| `card`, `bg-base-100`              | [booking_management.ejs:38](../backend/src/views/booking_management.ejs#L38) / [:97](../backend/src/views/booking_management.ejs#L97) | `<article class="session-day card bg-base-100">`                                                                      |
-| `badge`, `badge-neutral`           | [partials/header.ejs:18](../backend/src/views/partials/header.ejs#L18)                                                                | `class="badge badge-neutral authenticated-user role-badge role-<%= authenticatedUser.role %>"`                        |
-| `navbar`                           | [partials/nav.ejs:1](../backend/src/views/partials/nav.ejs#L1)                                                                        | `<nav class="navbar site-nav" aria-label="Primary navigation">`                                                       |
-| `menu`, `menu-horizontal`          | [partials/nav.ejs:2](../backend/src/views/partials/nav.ejs#L2)                                                                        | `<ul class="menu menu-horizontal site-menu">`                                                                         |
-| `alert`, `alert-success`           | [booking_management.ejs:21](../backend/src/views/booking_management.ejs#L21)                                                          | `<div class="alert alert-success" role="status">Booking deleted.</div>`                                               |
-| `toggle`, `toggle-sm`              | [partials/header.ejs:13](../backend/src/views/partials/header.ejs#L13)                                                                | `<input class="toggle toggle-sm" id="theme-toggle" type="checkbox" aria-label="Use dark theme">`                      |
+| Class(es)                             | File : line                                                                                                                                           | Exact markup                                                                                                                    |
+| ------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------- |
+| `btn`, `btn-primary`                  | [dashboard.ejs:26](../backend/src/views/dashboard.ejs#L26)                                                                                            | `<a class="btn btn-primary" href="/authenticate/logout">Log out</a>`                                                            |
+| `btn`, `btn-primary`                  | [dashboard.ejs:28](../backend/src/views/dashboard.ejs#L28)                                                                                            | `<a class="btn btn-primary" href="/authenticate">Log in</a>`                                                                    |
+| `btn`, `btn-secondary`                | [dashboard.ejs:29](../backend/src/views/dashboard.ejs#L29)                                                                                            | `<a class="btn btn-secondary" href="/authenticate/register">Register</a>`                                                       |
+| `btn`, `btn-outline`                  | [dashboard.ejs:31](../backend/src/views/dashboard.ejs#L31)                                                                                            | `<a class="btn btn-outline" href="/api-docs">API documentation</a>`                                                             |
+| `btn`, `btn-outline`                  | [location_list.ejs:44](../backend/src/views/location_list.ejs#L44)                                                                                    | `<a class="btn btn-outline" href="/locations/<%= location.id %>">View location</a>`                                             |
+| `btn`, `btn-primary`                  | [booking_management.ejs:57](../backend/src/views/booking_management.ejs#L57)                                                                          | `<button class="btn btn-primary session-book-button" type="submit" name="action" value="create" hidden>Book</button>`           |
+| `card`, `bg-base-100`, `shadow-sm`    | [location_list.ejs:37](../backend/src/views/location_list.ejs#L37)                                                                                    | `<article class="card-tile card bg-base-100 shadow-sm">`                                                                        |
+| `card`, `bg-base-100`                 | [booking_management.ejs:38](../backend/src/views/booking_management.ejs#L38) / [:97](../backend/src/views/booking_management.ejs#L97)                 | `<article class="session-day card bg-base-100">`                                                                                |
+| `badge`, `badge-neutral`              | [partials/header.ejs:18](../backend/src/views/partials/header.ejs#L18)                                                                                | `class="badge badge-neutral authenticated-user role-badge role-<%= authenticatedUser.role %>"`                                  |
+| `navbar`                              | [partials/nav.ejs:1](../backend/src/views/partials/nav.ejs#L1)                                                                                        | `<nav class="navbar site-nav" aria-label="Primary navigation">`                                                                 |
+| `menu`, `menu-horizontal`             | [partials/nav.ejs:2](../backend/src/views/partials/nav.ejs#L2)                                                                                        | `<ul class="menu menu-horizontal site-menu">`                                                                                   |
+| `alert`, `alert-brand`, `alert-error` | [booking_management.ejs](../backend/src/views/booking_management.ejs#L40) / [booking_management.ejs](../backend/src/views/booking_management.ejs#L45) | `<div class="alert alert-brand fade-out-alert" role="status">` / `<div class="alert alert-error fade-out-alert" role="status">` |
+| `toggle`, `toggle-sm`                 | [partials/header.ejs:13](../backend/src/views/partials/header.ejs#L13)                                                                                | `<input class="toggle toggle-sm" id="theme-toggle" type="checkbox" aria-label="Use dark theme">`                                |
 
 That's the complete list — no other DaisyUI or raw Tailwind utility classes (`flex`,
 `grid`, `p-*`, `text-*`, `rounded-*`, etc.) appear anywhere in the views. Every other class
@@ -230,17 +230,14 @@ The logged-in user's name badge in the header (`.badge.badge-neutral.authenticat
 in [partials/header.ejs:18](../backend/src/views/partials/header.ejs#L18)) is colour-coded by
 role, set in `style.css`:
 
-| Role           | Border/background                                                                                         | Text colour                                       |
-| -------------- | --------------------------------------------------------------------------------------------------------- | ------------------------------------------------- |
-| `role-admin`   | `--gym-coral` (`#d96e4c` light / `#f09576` dark)                                                          | `#ffffff`                                         |
-| `role-trainer` | `--gym-forest` (`#1d4a38` light / `#286247` dark) — **overridden to `#a1d5b0` in dark mode** for contrast | `#ffffff`                                         |
-| `role-member`  | `--gym-citron` (`#d3ee78` light / `#d5f078` dark)                                                         | `var(--gym-ink)` (adapts automatically per theme) |
+| Role           | Border/background | Text colour |
+| -------------- | ----------------- | ----------- |
+| `role-admin`   | `gold`            | `#000000`   |
+| `role-trainer` | `silver`          | `#000000`   |
+| `role-member`  | `#cd7f32`         | `#000000`   |
 
-The dark-theme override for `role-trainer` (`:root[data-theme="dark"] .role-badge.role-trainer`)
-is the only role whose border/background doesn't just follow its token automatically —
-`--gym-forest` gets too dark against the dark nav/header background, so a lighter green is
-hardcoded for that combination only. Follow this pattern (token first, hardcoded dark
-override only if needed for contrast) if you add a new role.
+These role badge colors are fixed in both themes using `--gym-admin`, `--gym-trainer`, and
+`--gym-member`. Keep the text color and background pairing readable if changing or adding a role.
 
 ### Responsive behaviour
 
@@ -264,7 +261,7 @@ wraps, and multi-column layouts (`.checkout-layout`, `.half-half-layout`,
 | Locations (public list)    | [location_list.ejs](../backend/src/views/location_list.ejs)             | `.search-form`, `.card-list`, `.card-tile card bg-base-100 shadow-sm`, `.btn-outline`, `.btn-accent` (search button)                                                        |
 | Location details           | [location_details.ejs](../backend/src/views/location_details.ejs)       | `.data-list`, `.data-list-heading`                                                                                                                                          |
 | Sessions                   | [session_management.ejs](../backend/src/views/session_management.ejs)   | `.session-filter-controls` (`.form-grid.responsive-half`), `.session-name-search(-control)`, `.session-results(-table)`, `.session-sort-button` — **do not rename, see §4** |
-| Bookings                   | [booking_management.ejs](../backend/src/views/booking_management.ejs)   | `.alert.alert-success`, `.session-calendar`, `.session-day card bg-base-100`, `.available-session*`, `.btn.btn-primary`                                                     |
+| Bookings                   | [booking_management.ejs](../backend/src/views/booking_management.ejs)   | `.alert.alert-brand`, `.alert.alert-error`, `.session-calendar`, `.session-day card bg-base-100`, `.available-session*`, `.btn.btn-primary`                                 |
 | Blog                       | [blog_management.ejs](../backend/src/views/blog_management.ejs)         | `.search-form`, `.card-tile`, `.two-col`, `.form-grid.responsive-half`                                                                                                      |
 | Users                      | [user_management.ejs](../backend/src/views/user_management.ejs)         | Same `.list-*` pattern as Activities                                                                                                                                        |
 | Header/Nav/Footer partials | [partials/](../backend/src/views/partials/)                             | `.site-header`, `navbar`/`menu` (DaisyUI), `badge`/`badge-neutral` + `.role-badge.role-*`, `toggle.toggle-sm`, `.site-footer`                                               |

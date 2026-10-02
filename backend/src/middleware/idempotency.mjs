@@ -17,9 +17,13 @@ function hashRequest(body) {
 }
 
 /**
- * idempotencyMiddleware
- * @param {Object} options This is optional, but can include any of the following options: <pre><code>{ headerName: `xxx', requiredForMethods: ['POST', 'PUT', 'PATCH'], ttlMs: milliseconds, cleanupIntervalM: minutes}</code></pre>
- * @returns {null}
+ * Create middleware that rejects duplicate requests with an idempotency key.
+ * @param {object} [options] Middleware configuration overrides.
+ * @param {string} [options.headerName="Idempotency-Key"] Header containing the idempotency key.
+ * @param {string[]} [options.requiredForMethods=["POST"]] HTTP methods that require idempotency keys.
+ * @param {number} [options.ttlMs=86400000] How long stored responses remain valid, in milliseconds.
+ * @param {number} [options.cleanupIntervalM=60] Interval between cleanup runs, in minutes.
+ * @returns {express.RequestHandler} Configured Express middleware.
  */
 export function idempotencyMiddleware(options = {}) {
   const config = { ...defaultOptions, ...options };
