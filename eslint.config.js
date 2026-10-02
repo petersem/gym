@@ -16,7 +16,7 @@ export default [
 
     rules: {
       // Keep existing unused bindings visible without blocking lint.
-      "no-unused-vars": "warn",
+      "no-unused-vars": ["warn", { argsIgnorePattern: "^_" }],
       "no-console": "off",
       eqeqeq: ["error", "always", { null: "ignore" }],
       curly: "error",
