@@ -47,6 +47,7 @@ try {
 const app = express();
 const port = process.env.PORT || 3000;
 
+app.set("trust proxy", 1); // add reverse proxy support for correct client IP detection behind proxies
 app.set("view engine", "ejs");
 app.set("views", path.join(import.meta.dirname, "views"));
 app.locals.version = appVersion;
