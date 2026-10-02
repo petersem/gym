@@ -19,7 +19,8 @@
 
                         <% if (authenticatedUser) { %>
                             <section>
-                                <h2>Blog management</h2>
+                                <h2>BLOG - <%= selectedBlog.id ? 'UPDATE' : 'CREATE' %>
+                                </h2>
                                 <form action="/blogs<%= selectedBlog.id ? '/' + selectedBlog.id : '' %>" method="post"
                                     class="form-grid responsive-half">
                                     <label for="title">Subject</label>

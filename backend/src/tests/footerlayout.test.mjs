@@ -142,6 +142,8 @@ describe("shared footer layout", () => {
       '<a class="btn btn-outline" href="/blogs">Discard</a>',
     );
     expect(createPage).not.toContain(">Discard</a>");
+    expect(editPage).toMatch(/<h2>\s*BLOG - UPDATE\s*<\/h2>/);
+    expect(createPage).toMatch(/<h2>\s*BLOG - CREATE\s*<\/h2>/);
   });
 
   test("offers bookings XML download to authenticated booking viewers", () => {
