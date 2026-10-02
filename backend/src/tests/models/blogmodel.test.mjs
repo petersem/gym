@@ -9,15 +9,7 @@ const row = {
   create_date: "2026-09-23 10:00:00",
 };
 
-const blog = new BlogModel(
-  31,
-  row.subject,
-  row.body,
-  7,
-  row.create_date,
-  0,
-  null,
-);
+const blog = new BlogModel(31, row.subject, row.body, 7, row.create_date);
 
 afterEach(() => {
   jest.restoreAllMocks();
@@ -37,20 +29,10 @@ describe("BlogModel unit tests", () => {
       content: "Legacy body",
       user_id: "7",
       created: "2026-09-24 10:00:00",
-      deleted: 0,
-      updated_by: "3",
     };
 
     expect(BlogModel.tableToModel(legacyRow)).toEqual(
-      new BlogModel(
-        32,
-        "Legacy title",
-        "Legacy body",
-        7,
-        legacyRow.created,
-        0,
-        3,
-      ),
+      new BlogModel(32, "Legacy title", "Legacy body", 7, legacyRow.created),
     );
   });
 
@@ -64,15 +46,7 @@ describe("BlogModel unit tests", () => {
 
     await expect(BlogModel.getAll()).resolves.toEqual([
       blog,
-      new BlogModel(
-        32,
-        "Nutrition Basics",
-        row.body,
-        7,
-        row.create_date,
-        0,
-        null,
-      ),
+      new BlogModel(32, "Nutrition Basics", row.body, 7, row.create_date),
     ]);
     expect(query).toHaveBeenCalledWith(
       "SELECT * FROM blog ORDER BY create_date DESC, id DESC",
