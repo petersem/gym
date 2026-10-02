@@ -276,8 +276,8 @@ export class BookingsController {
           : null;
         const availableSessions = availableLocationId
           ? sessions.filter(
-            (session) => Number(session.location_id) === availableLocationId,
-          )
+              (session) => Number(session.location_id) === availableLocationId,
+            )
           : sessions;
         const bookingSessions = sessions.filter((session) => {
           const matchesLocation =
@@ -422,9 +422,9 @@ export class BookingsController {
           result.affectedRows > 0
             ? res.redirect(bookingPageUrl(req))
             : res.status(404).render("status.ejs", {
-              status: "Booking Update Failed",
-              message: "The booking could not be found.",
-            }),
+                status: "Booking Update Failed",
+                message: "The booking could not be found.",
+              }),
         )
         .catch((error) => {
           console.error(error);
@@ -437,27 +437,27 @@ export class BookingsController {
       const deleteBooking =
         req.authenticatedUser?.role === "trainer"
           ? BookingsModel.getById(booking.id)
-            .then((existingBooking) =>
-              SessionsModel.getById(existingBooking.session_id).then(
-                (session) => ({ existingBooking, session }),
-              ),
-            )
-            .then(({ existingBooking, session }) => {
-              const ownsSession =
-                Number(session.trainer_id) ===
-                Number(req.authenticatedUser.id);
-              const ownsBooking =
-                Number(existingBooking.user_id) ===
-                Number(req.authenticatedUser.id);
-              if (!ownsSession && !ownsBooking) {
-                return res.status(403).render("status.ejs", {
-                  status: "Booking Deletion Forbidden",
-                  message:
-                    "You can only delete bookings for your own sessions or your own bookings",
-                });
-              }
-              return BookingsModel.delete(booking.id);
-            })
+              .then((existingBooking) =>
+                SessionsModel.getById(existingBooking.session_id).then(
+                  (session) => ({ existingBooking, session }),
+                ),
+              )
+              .then(({ existingBooking, session }) => {
+                const ownsSession =
+                  Number(session.trainer_id) ===
+                  Number(req.authenticatedUser.id);
+                const ownsBooking =
+                  Number(existingBooking.user_id) ===
+                  Number(req.authenticatedUser.id);
+                if (!ownsSession && !ownsBooking) {
+                  return res.status(403).render("status.ejs", {
+                    status: "Booking Deletion Forbidden",
+                    message:
+                      "You can only delete bookings for your own sessions or your own bookings",
+                  });
+                }
+                return BookingsModel.delete(booking.id);
+              })
           : BookingsModel.delete(booking.id);
       return deleteBooking
         .then((result) =>
@@ -466,9 +466,9 @@ export class BookingsController {
             : result.affectedRows > 0
               ? res.redirect(bookingPageUrl(req, { bookingDeleted: true }))
               : res.status(404).render("status.ejs", {
-                status: "Booking Deletion Failed",
-                message: "The booking could not be found.",
-              }),
+                  status: "Booking Deletion Failed",
+                  message: "The booking could not be found.",
+                }),
         )
         .catch((error) => {
           console.error(error);
