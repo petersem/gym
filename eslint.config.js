@@ -4,6 +4,7 @@ import globals from "globals";
 import prettierRecommended from "eslint-plugin-prettier/recommended";
 
 export default [
+  { ignores: ["backend/src/public/docs/**"] },
   js.configs.recommended,
 
   {
