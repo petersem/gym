@@ -127,7 +127,7 @@ export class UsersController {
 
     if (action === "create") {
       UsersModel.create(user)
-        .then((result) => {
+        .then(() => {
           res.redirect("/users");
         })
         .catch((error) => {

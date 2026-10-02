@@ -1,4 +1,4 @@
-import { logDanger, logWarning, logInfo } from "../utilities/logger.mjs";
+import { logDanger, logInfo } from "../utilities/logger.mjs";
 
 /**
  * ### Defines the errorMiddleware function
@@ -8,7 +8,7 @@ import { logDanger, logWarning, logInfo } from "../utilities/logger.mjs";
 export const errorMiddleware = function () {
   console.log(logInfo, `Error Middleware: Activated`);
 
-  return (err, req, res, next) => {
+  return (err, req, res, _next) => {
     if (process.env?.NODE_ENV === "development") {
       console.log(logDanger, err);
     } else {

@@ -1,3 +1,4 @@
+// eslint-disable-next-line no-unused-vars -- Referenced by the JSDoc return type.
 import express from "express";
 import { logDanger, logWarning, logInfo } from "../utilities/logger.mjs";
 

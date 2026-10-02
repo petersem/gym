@@ -65,7 +65,7 @@ export class ActivitiesController {
         authenticatedUser: req.authenticatedUser ?? {},
         role: "admin",
       });
-    } catch (error) {
+    } catch {
       res.status(500).render("status.ejs", {
         status: "Database Error",
         message: "Activities could not be loaded.",
@@ -110,7 +110,7 @@ export class ActivitiesController {
         status: "Invalid Action",
         message: "The form doesn't support this action.",
       });
-    } catch (error) {
+    } catch {
       return res.status(500).render("status.ejs", {
         status: "Database Error",
         message: "The activity could not be saved.",

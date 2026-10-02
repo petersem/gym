@@ -72,6 +72,7 @@ describe("UsersController load test", () => {
     const durationMs = performance.now() - startedAt;
     const requestsPerSecond = (requestCount / durationMs) * 1000;
 
+    expect(requestsPerSecond).toBeGreaterThan(0);
     expect(responses).toHaveLength(requestCount);
     expect(responses.filter((response) => response.status !== 302)).toEqual([]);
     expect(responses.map((response) => response.location)).toEqual(

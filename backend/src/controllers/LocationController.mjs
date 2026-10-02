@@ -188,7 +188,7 @@ export class LocationController {
         });
     } else if (formData.action === "update") {
       LocationModel.update(location)
-        .then((result) => {
+        .then(() => {
           res.redirect(303, "/locations");
         })
         .catch((error) => {

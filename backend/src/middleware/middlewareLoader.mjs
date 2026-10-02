@@ -5,7 +5,7 @@ export { idempotencyMiddleware } from "./idempotency.mjs";
 export { rateLimit } from "express-rate-limit";
 export { swaggerSpec } from "../swagger.config.mjs";
 export { fileURLToPath } from "url";
-import { logDanger, logWarning, logInfo } from "../utilities/logger.mjs";
+import { logWarning } from "../utilities/logger.mjs";
 
 // express limiter
 // if prod, 200 calls per 15 minutes
@@ -36,7 +36,7 @@ export const limiterOptions = {
         `Rate limit execeeded for ${req.ip.replace("::ffff:", "")}. ${options.message} (after ${options.windowMs / 60 / 1000} minutes)`,
       );
   },
-  skip: (req, res) => allowList.includes(req.ip.replace("::ffff:", "")), // use whitelist
+  skip: (req) => allowList.includes(req.ip.replace("::ffff:", "")), // use whitelist
   // TODO - store: ... , // Redis, Memcached, etc.
 };
 

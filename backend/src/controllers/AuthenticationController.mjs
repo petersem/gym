@@ -1,11 +1,6 @@
 import express from "express";
 import session from "express-session";
-import {
-  USER_ROLE_ADMIN,
-  USER_ROLE_TRAINER,
-  USER_ROLE_MEMBER,
-  UsersModel,
-} from "../models/UsersModel.mjs";
+import { USER_ROLE_MEMBER, UsersModel } from "../models/UsersModel.mjs";
 import bcrypt from "bcrypt";
 
 export class AuthenticationController {
