@@ -48,7 +48,7 @@ export const sanitiser = function (action = "fail") {
 
             // ignore if password field
             if (key.toLowerCase().includes("password")) {
-              return;
+              continue;
             }
 
             switch (action.toLowerCase()) {
