@@ -3,107 +3,149 @@
 
 <head>
     <%- include("partials/head.ejs") %>
-    <title>Blog Management - Gym</title>
+        <title>Blog Management - Gym</title>
 </head>
 
 <body>
-    <% const formatCreated = (created) => new Intl.DateTimeFormat('en-AU', {
+    <% const formatCreated=(created)=> new Intl.DateTimeFormat('en-AU', {
         day: '2-digit', month: 'short', year: 'numeric',
         hour: 'numeric', minute: '2-digit', hour12: true,
-    }).format(new Date(created)).replace(/\s+(am|pm)$/i, '$1'); %>
-    <% const canDeleteBlog = (blog) => Boolean(authenticatedUser && (authenticatedUser.role === 'admin' || Number(authenticatedUser.id) === Number(blog.user_id))); %>
-    <main>
-        <%- include("partials/header.ejs") %>
-        <%- include("partials/nav.ejs", { role, authenticatedUser }) %>
+        }).format(new Date(created)).replace(/\s+(am|pm)$/i, '$1'); %>
+        <% const canManageBlog=(blog)=> Boolean(authenticatedUser && (authenticatedUser.role === 'admin' ||
+            Number(authenticatedUser.id) === Number(blog.user_id))); %>
+            <main>
+                <%- include("partials/header.ejs") %>
+                    <%- include("partials/nav.ejs", { role, authenticatedUser }) %>
 
-        <% if (authenticatedUser) { %>
-        <section>
-            <h2>Blog management</h2>
-            <form action="/blogs<%= selectedBlog.id ? '/' + selectedBlog.id : '' %>" method="post" class="form-grid responsive-half">
-                <label for="title">Subject</label>
-                <input id="title" name="title" value="<%= selectedBlog.title %>" required>
-                <label for="content">Body</label>
-                <textarea id="content" name="content" required><%= selectedBlog.content %></textarea>
-                <% if (selectedBlog.id) { %>
-                    <% const author = users.find((user) => user.id === Number(selectedBlog.user_id)); %>
-                    <label>Author</label>
-                    <p><%= author ? `${author.last_name}, ${author.first_name}` : 'Unknown user' %></p>
-                    <input type="hidden" name="userId" value="<%= selectedBlog.user_id %>">
-                <% } %>
-                <% if (selectedBlog.id) { %>
-                    <p class="two-col">Created: <%= selectedBlog.created %></p>
-                <% } %>
-                <input type="hidden" name="deleted" value="0">
-                <button type="submit" name="action" value="<%= selectedBlog.id ? 'update' : 'create' %>">
-                    <%= selectedBlog.id ? 'Update post' : 'Create post' %>
-                </button>
-                <% if (selectedBlog.id && canDeleteBlog(selectedBlog)) { %>
-                    <button type="submit" name="action" value="delete">Delete post</button>
-                <% } %>
-            </form>
-        </section>
-        <% } %>
-
-        <section id="posts">
-            <h2>Posts</h2>
-            <form action="/blogs#posts" method="get">
-                <div class="list-search">
-                    <label for="search-term">Search posts</label>
-                    <div class="list-search-control">
-                        <input type="search" name="search_term" id="search-term" value="<%= selectedSearchTerm %>">
-                        <button type="submit" class="btn-accent">Search</button>
-                    </div>
-                </div>
-                <div class="list-search">
-                    <label for="sort-by">Sort by</label>
-                    <div class="list-search-control">
-                        <select name="sort_by" id="sort-by" onchange="this.form.submit()">
-                            <option value="created" <%= selectedSortBy === 'created' ? 'selected' : '' %>>Created</option>
-                            <option value="title" <%= selectedSortBy === 'title' ? 'selected' : '' %>>Subject</option>
-                        </select>
-                        <select name="sort_dir" id="sort-dir" onchange="this.form.submit()">
-                            <option value="asc" <%= selectedSortDir === 'asc' ? 'selected' : '' %>>Ascending</option>
-                            <option value="desc" <%= selectedSortDir === 'desc' ? 'selected' : '' %>>Descending</option>
-                        </select>
-                    </div>
-                </div>
-            </form>
-            <ul>
-                <% blogs.forEach((blog) => { %>
-                    <% const author = users.find((user) => user.id === Number(blog.user_id)); %>
-                    <li>
-                        <article class="card-tile">
-                            <h3><a href="/blogs/<%= blog.id %>"><%= blog.title %></a></h3>
-                            <p><strong>Created:</strong> <%= formatCreated(blog.created) %> &nbsp;<strong>By:</strong> <%= author ? `${author.last_name}, ${author.first_name}` : 'Unknown user' %></p>
-                            <p><%= blog.content %></p>
-                            <% if (canDeleteBlog(blog)) { %>
-                                <form action="/blogs/<%= blog.id %>" method="post">
-                                    <button type="submit" name="action" value="delete">Delete post</button>
+                        <% if (authenticatedUser) { %>
+                            <section>
+                                <h2>Blog management</h2>
+                                <form action="/blogs<%= selectedBlog.id ? '/' + selectedBlog.id : '' %>" method="post"
+                                    class="form-grid responsive-half">
+                                    <label for="title">Subject</label>
+                                    <input id="title" name="title" value="<%= selectedBlog.title %>" required>
+                                    <label for="content">Body</label>
+                                    <textarea id="content" name="content"
+                                        required><%= selectedBlog.content %></textarea>
+                                    <% if (selectedBlog.id) { %>
+                                        <% const author=users.find((user)=> user.id === Number(selectedBlog.user_id));
+                                            %>
+                                            <label>Author</label>
+                                            <p>
+                                                <%= author ? `${author.last_name}, ${author.first_name}`
+                                                    : 'Unknown user' %>
+                                            </p>
+                                            <input type="hidden" name="userId" value="<%= selectedBlog.user_id %>">
+                                            <% } %>
+                                                <% if (selectedBlog.id) { %>
+                                                    <p class="two-col">Created: <%= selectedBlog.created %>
+                                                    </p>
+                                                    <% } %>
+                                                        <input type="hidden" name="deleted" value="0">
+                                                        <button type="submit" name="action"
+                                                            value="<%= selectedBlog.id ? 'update' : 'create' %>">
+                                                            <%= selectedBlog.id ? 'Update post' : 'Create post' %>
+                                                        </button>
+                                                        <% if (selectedBlog.id) { %>
+                                                            <a class="btn btn-outline" href="/blogs">Clear</a>
+                                                            <% } %>
+                                                                <% if (selectedBlog.id && canManageBlog(selectedBlog)) {
+                                                                    %>
+                                                                    <button type="submit" name="action"
+                                                                        value="delete">Delete
+                                                                        post</button>
+                                                                    <% } %>
                                 </form>
+                            </section>
                             <% } %>
-                        </article>
-                    </li>
-                <% }) %>
-            </ul>
-            <% if (totalPages > 1) { %>
-                <% const blogPageLink = (page) => {
-                    const params = new URLSearchParams();
-                    if (selectedSearchTerm) params.set('search_term', selectedSearchTerm);
-                    params.set('sort_by', selectedSortBy);
-                    params.set('sort_dir', selectedSortDir);
-                    params.set('page', page);
-                    return `/blogs?${params.toString()}#posts`;
-                }; %>
-                <nav class="pagination" aria-label="Posts pagination">
-                    <a class="btn-outline<%= selectedPage <= 1 ? ' is-disabled' : '' %>" href="<%= selectedPage > 1 ? blogPageLink(selectedPage - 1) : '#' %>" aria-disabled="<%= selectedPage <= 1 %>">Previous</a>
-                    <span>Page <%= selectedPage %> of <%= totalPages %></span>
-                    <a class="btn-outline<%= selectedPage >= totalPages ? ' is-disabled' : '' %>" href="<%= selectedPage < totalPages ? blogPageLink(selectedPage + 1) : '#' %>" aria-disabled="<%= selectedPage >= totalPages %>">Next</a>
-                </nav>
-            <% } %>
-        </section>
 
-        <%- include("partials/footer.ejs") %>
-    </main>
+                                <section id="posts">
+                                    <h2>Posts</h2>
+                                    <form action="/blogs#posts" method="get">
+                                        <div class="list-search">
+                                            <label for="search-term">Search posts</label>
+                                            <div class="list-search-control">
+                                                <input type="search" name="search_term" id="search-term"
+                                                    value="<%= selectedSearchTerm %>">
+                                                <button type="submit" class="btn-accent">Search</button>
+                                            </div>
+                                        </div>
+                                        <div class="list-search">
+                                            <label for="sort-by">Sort by</label>
+                                            <div class="list-search-control">
+                                                <select name="sort_by" id="sort-by" onchange="this.form.submit()">
+                                                    <option value="created" <%=selectedSortBy==='created' ? 'selected'
+                                                        : '' %>>Created</option>
+                                                    <option value="title" <%=selectedSortBy==='title' ? 'selected' : ''
+                                                        %>>Subject</option>
+                                                </select>
+                                                <select name="sort_dir" id="sort-dir" onchange="this.form.submit()">
+                                                    <option value="asc" <%=selectedSortDir==='asc' ? 'selected' : '' %>
+                                                        >Ascending</option>
+                                                    <option value="desc" <%=selectedSortDir==='desc' ? 'selected' : ''
+                                                        %>>Descending</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                    </form>
+                                    <ul>
+                                        <% blogs.forEach((blog)=> { %>
+                                            <% const author=users.find((user)=> user.id === Number(blog.user_id)); %>
+                                                <li>
+                                                    <article class="card-tile">
+                                                        <h3>
+                                                            <% if (canManageBlog(blog)) { %>
+                                                                <a href="/blogs/<%= blog.id %>">
+                                                                    <%= blog.title %>
+                                                                </a>
+                                                                <% } else { %>
+                                                                    <span>
+                                                                        <%= blog.title %>
+                                                                    </span>
+                                                                    <% } %>
+                                                        </h3>
+                                                        <p><strong>Created:</strong>
+                                                            <%= formatCreated(blog.created) %>
+                                                                &nbsp;<strong>By:</strong>
+                                                                <%= author ? `${author.last_name}, ${author.first_name}`
+                                                                    : 'Unknown user' %>
+                                                        </p>
+                                                        <p>
+                                                            <%= blog.content %>
+                                                        </p>
+                                                        <% if (canManageBlog(blog)) { %>
+                                                            <form action="/blogs/<%= blog.id %>" method="post">
+                                                                <button type="submit" name="action"
+                                                                    value="delete">Delete post</button>
+                                                            </form>
+                                                            <% } %>
+                                                    </article>
+                                                </li>
+                                                <% }) %>
+                                    </ul>
+                                    <% if (totalPages> 1) { %>
+                                        <% const blogPageLink=(page)=> {
+                                            const params = new URLSearchParams();
+                                            if (selectedSearchTerm) params.set('search_term', selectedSearchTerm);
+                                            params.set('sort_by', selectedSortBy);
+                                            params.set('sort_dir', selectedSortDir);
+                                            params.set('page', page);
+                                            return `/blogs?${params.toString()}#posts`;
+                                            }; %>
+                                            <nav class="pagination" aria-label="Posts pagination">
+                                                <a class="btn-outline<%= selectedPage <= 1 ? ' is-disabled' : '' %>"
+                                                    href="<%= selectedPage > 1 ? blogPageLink(selectedPage - 1) : '#' %>"
+                                                    aria-disabled="<%= selectedPage <= 1 %>">Previous</a>
+                                                <span>Page <%= selectedPage %> of <%= totalPages %></span>
+                                                <a class="btn-outline<%= selectedPage >= totalPages ? ' is-disabled' : '' %>"
+                                                    href="<%= selectedPage < totalPages ? blogPageLink(selectedPage + 1) : '#' %>"
+                                                    aria-disabled="<%= selectedPage >= totalPages %>">Next</a>
+                                            </nav>
+                                            <% } %>
+                                </section>
+
+                                <%- include("partials/footer.ejs") %>
+            </main>
 </body>
 
 </html>

@@ -2,6 +2,11 @@ import express from "express";
 import { BlogModel } from "../models/BlogModel.mjs";
 import { UsersModel } from "../models/UsersModel.mjs";
 
+const canManageBlog = (user, blog) =>
+  Boolean(
+    user && (user.role === "admin" || Number(user.id) === Number(blog.user_id)),
+  );
+
 /** HTTP handlers for blog posts. */
 export class BlogController {
   /** @type {express.Router} */
@@ -95,16 +100,39 @@ export class BlogController {
           });
         });
     } else if (req.body.action === "update") {
-      return BlogModel.update(blog)
-        .then((result) =>
-          result.affectedRows > 0
-            ? res.redirect("/blogs")
-            : res.status(404).render("status.ejs", {
+      if (!req.authenticatedUser) {
+        return res.status(401).render("status.ejs", {
+          status: "Unauthenticated",
+          message: "Please log in before updating a blog post.",
+        });
+      }
+      return BlogModel.getById(blog.id)
+        .then((existingBlog) => {
+          if (!canManageBlog(req.authenticatedUser, existingBlog)) {
+            return res.status(403).render("status.ejs", {
+              status: "Access Forbidden",
+              message: "You can only update your own posts.",
+            });
+          }
+          if (req.authenticatedUser.role !== "admin") {
+            blog.user_id = existingBlog.user_id;
+          }
+          return BlogModel.update(blog).then((result) =>
+            result.affectedRows > 0
+              ? res.redirect("/blogs")
+              : res.status(404).render("status.ejs", {
                 status: "Blog Update Failed",
                 message: "The blog post could not be found.",
               }),
-        )
+          );
+        })
         .catch((error) => {
+          if (error === "not found") {
+            return res.status(404).render("status.ejs", {
+              status: "Blog Update Failed",
+              message: "The blog post could not be found.",
+            });
+          }
           console.error(error);
           res.status(500).render("status.ejs", {
             status: "Database Error",
@@ -112,32 +140,27 @@ export class BlogController {
           });
         });
     } else if (req.body.action === "delete") {
+      if (!req.authenticatedUser) {
+        return res.status(401).render("status.ejs", {
+          status: "Unauthenticated",
+          message: "Please log in before deleting a blog post.",
+        });
+      }
       return BlogModel.getById(blog.id)
         .then((existingBlog) => {
-          const canDelete =
-            req.authenticatedUser &&
-            (req.authenticatedUser.role === "admin" ||
-              Number(req.authenticatedUser.id) ===
-                Number(existingBlog.user_id));
-          if (!canDelete) {
-            return res
-              .status(req.authenticatedUser ? 403 : 401)
-              .render("status.ejs", {
-                status: req.authenticatedUser
-                  ? "Access Forbidden"
-                  : "Unauthenticated",
-                message: req.authenticatedUser
-                  ? "You can only delete your own posts."
-                  : "Please log in before deleting a blog post.",
-              });
+          if (!canManageBlog(req.authenticatedUser, existingBlog)) {
+            return res.status(403).render("status.ejs", {
+              status: "Access Forbidden",
+              message: "You can only delete your own posts.",
+            });
           }
           return BlogModel.delete(blog.id).then((result) =>
             result.affectedRows > 0
               ? res.redirect("/blogs")
               : res.status(404).render("status.ejs", {
-                  status: "Blog Deletion Failed",
-                  message: "The blog post could not be found.",
-                }),
+                status: "Blog Deletion Failed",
+                message: "The blog post could not be found.",
+              }),
           );
         })
         .catch((error) => {
@@ -194,10 +217,23 @@ export class BlogController {
   /** @type {express.RequestHandler} */
   static async update(req, res, next) {
     try {
-      res.json(
-        await BlogModel.update({ ...req.body, id: Number(req.params.id) }),
-      );
+      if (!req.authenticatedUser) {
+        return res.status(401).json({ message: "Authentication required." });
+      }
+      const id = Number(req.params.id);
+      const existingBlog = await BlogModel.getById(id);
+      if (!canManageBlog(req.authenticatedUser, existingBlog)) {
+        return res.status(403).json({ message: "Access forbidden." });
+      }
+      const userId =
+        req.authenticatedUser.role === "admin"
+          ? (req.body.user_id ?? existingBlog.user_id)
+          : existingBlog.user_id;
+      res.json(await BlogModel.update({ ...req.body, id, user_id: userId }));
     } catch (error) {
+      if (error === "not found") {
+        return res.status(404).json({ message: "Blog post not found." });
+      }
       next(error);
     }
   }
@@ -205,8 +241,19 @@ export class BlogController {
   /** @type {express.RequestHandler} */
   static async delete(req, res, next) {
     try {
+      if (!req.authenticatedUser) {
+        return res.status(401).json({ message: "Authentication required." });
+      }
+      const id = Number(req.params.id);
+      const existingBlog = await BlogModel.getById(id);
+      if (!canManageBlog(req.authenticatedUser, existingBlog)) {
+        return res.status(403).json({ message: "Access forbidden." });
+      }
       res.json(await BlogModel.delete(Number(req.params.id)));
     } catch (error) {
+      if (error === "not found") {
+        return res.status(404).json({ message: "Blog post not found." });
+      }
       next(error);
     }
   }

@@ -36,8 +36,6 @@ export class BlogModel extends DatabaseModel {
       row.body ?? row.content,
       Number(row.user_id),
       row.create_date ?? row.created,
-      row.deleted ?? 0,
-      row.updated_by == null ? null : Number(row.updated_by),
     );
   }
 

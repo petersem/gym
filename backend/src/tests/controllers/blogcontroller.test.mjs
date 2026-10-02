@@ -30,7 +30,7 @@ const request = (
 const next = () => jest.fn();
 
 beforeEach(() => {
-  jest.spyOn(console, "error").mockImplementation(() => {});
+  jest.spyOn(console, "error").mockImplementation(() => { });
 });
 
 afterEach(() => {
@@ -146,6 +146,52 @@ describe("BlogController", () => {
     );
   });
 
+  test("allows authors and admins to update posts but rejects other users", async () => {
+    const existingBlog = new BlogModel(2, "Post", "Body", 7, new Date(), 0, 0);
+    jest.spyOn(BlogModel, "getById").mockResolvedValue(existingBlog);
+    const updatePost = jest
+      .spyOn(BlogModel, "update")
+      .mockResolvedValue({ affectedRows: 1 });
+    const authorResponse = response();
+    const otherUserResponse = response();
+    const adminResponse = response();
+
+    await BlogController.handleBlogManagement(
+      request(
+        { id: "2" },
+        {},
+        { action: "update", title: "Owner edit", userId: "8" },
+        { id: 7, role: "member" },
+      ),
+      authorResponse,
+    );
+    expect(updatePost).toHaveBeenCalledWith(
+      expect.objectContaining({ title: "Owner edit", user_id: 7 }),
+    );
+    const callsAfterAuthorUpdate = updatePost.mock.calls.length;
+
+    await BlogController.handleBlogManagement(
+      request({ id: "2" }, {}, { action: "update" }, { id: 8, role: "member" }),
+      otherUserResponse,
+    );
+    expect(otherUserResponse.status).toHaveBeenCalledWith(403);
+    expect(updatePost).toHaveBeenCalledTimes(callsAfterAuthorUpdate);
+
+    await BlogController.handleBlogManagement(
+      request(
+        { id: "2" },
+        {},
+        { action: "update", userId: "8" },
+        { id: 8, role: "admin" },
+      ),
+      adminResponse,
+    );
+    expect(adminResponse.redirect).toHaveBeenCalledWith("/blogs");
+    expect(updatePost).toHaveBeenLastCalledWith(
+      expect.objectContaining({ user_id: 8 }),
+    );
+  });
+
   test("allows authors and admins to delete posts but rejects other users", async () => {
     const existingBlog = new BlogModel(2, "Post", "Body", 7, new Date(), 0, 0);
     jest.spyOn(BlogModel, "getById").mockResolvedValue(existingBlog);
@@ -179,7 +225,7 @@ describe("BlogController", () => {
 
   test("returns not found for unauthenticated deletion and missing posts", async () => {
     const getById = jest.spyOn(BlogModel, "getById");
-    const log = jest.spyOn(console, "error").mockImplementation(() => {});
+    const log = jest.spyOn(console, "error").mockImplementation(() => { });
     const unauthenticatedResponse = response();
     const missingResponse = response();
 
@@ -192,6 +238,13 @@ describe("BlogController", () => {
     );
     expect(unauthenticatedResponse.status).toHaveBeenCalledWith(401);
 
+    const unauthenticatedUpdateResponse = response();
+    await BlogController.handleBlogManagement(
+      request({ id: "2" }, {}, { action: "update" }, null),
+      unauthenticatedUpdateResponse,
+    );
+    expect(unauthenticatedUpdateResponse.status).toHaveBeenCalledWith(401);
+
     getById.mockRejectedValue("not found");
     await BlogController.handleBlogManagement(
       request(
@@ -203,6 +256,18 @@ describe("BlogController", () => {
       missingResponse,
     );
     expect(missingResponse.status).toHaveBeenCalledWith(404);
+
+    const missingUpdateResponse = response();
+    await BlogController.handleBlogManagement(
+      request(
+        { id: "999" },
+        {},
+        { action: "update" },
+        { id: 7, role: "member" },
+      ),
+      missingUpdateResponse,
+    );
+    expect(missingUpdateResponse.status).toHaveBeenCalledWith(404);
     expect(log).not.toHaveBeenCalled();
   });
 
@@ -229,7 +294,7 @@ describe("BlogController", () => {
   test("handles blog CRUD requests and forwards errors", async () => {
     const res = response();
     const errorNext = next();
-    jest.spyOn(BlogModel, "getById").mockResolvedValue({ id: 2 });
+    jest.spyOn(BlogModel, "getById").mockResolvedValue({ id: 2, user_id: 7 });
     jest.spyOn(BlogModel, "create").mockResolvedValue({ insertId: 2 });
     jest.spyOn(BlogModel, "update").mockResolvedValue({ affectedRows: 1 });
     jest.spyOn(BlogModel, "delete").mockResolvedValue({ affectedRows: 1 });
@@ -247,7 +312,11 @@ describe("BlogController", () => {
     );
     await BlogController.delete(request({ id: "2" }), res, errorNext);
 
-    expect(BlogModel.update).toHaveBeenCalledWith({ title: "Updated", id: 2 });
+    expect(BlogModel.update).toHaveBeenCalledWith({
+      title: "Updated",
+      id: 2,
+      user_id: 7,
+    });
     expect(BlogModel.delete).toHaveBeenCalledWith(2);
     expect(res.status).toHaveBeenCalledWith(201);
 
@@ -272,6 +341,105 @@ describe("BlogController", () => {
     await BlogController.delete(request({ id: "1" }), res, errorNext);
 
     expect(errorNext).toHaveBeenCalledTimes(4);
+  });
+
+  test("JSON updates and deletes reject other users and unauthenticated requests", async () => {
+    const getById = jest
+      .spyOn(BlogModel, "getById")
+      .mockResolvedValue({ id: 2, user_id: 7 });
+    const updatePost = jest
+      .spyOn(BlogModel, "update")
+      .mockResolvedValue({ affectedRows: 1 });
+    const deletePost = jest
+      .spyOn(BlogModel, "delete")
+      .mockResolvedValue({ affectedRows: 1 });
+    const errorNext = next();
+    const forbiddenUpdate = response();
+    const forbiddenDelete = response();
+    const unauthenticatedUpdate = response();
+    const unauthenticatedDelete = response();
+
+    await BlogController.update(
+      request({ id: "2" }, {}, {}, { id: 8, role: "member" }),
+      forbiddenUpdate,
+      errorNext,
+    );
+    await BlogController.delete(
+      request({ id: "2" }, {}, {}, { id: 8, role: "member" }),
+      forbiddenDelete,
+      errorNext,
+    );
+    await BlogController.update(
+      request({ id: "2" }, {}, {}, null),
+      unauthenticatedUpdate,
+      errorNext,
+    );
+    await BlogController.delete(
+      request({ id: "2" }, {}, {}, null),
+      unauthenticatedDelete,
+      errorNext,
+    );
+
+    expect(forbiddenUpdate.status).toHaveBeenCalledWith(403);
+    expect(forbiddenDelete.status).toHaveBeenCalledWith(403);
+    expect(unauthenticatedUpdate.status).toHaveBeenCalledWith(401);
+    expect(unauthenticatedDelete.status).toHaveBeenCalledWith(401);
+    expect(updatePost).not.toHaveBeenCalled();
+    expect(deletePost).not.toHaveBeenCalled();
+    expect(getById).toHaveBeenCalledTimes(2);
+    expect(errorNext).not.toHaveBeenCalled();
+  });
+
+  test("JSON updates and deletes return not found for missing posts", async () => {
+    jest.spyOn(BlogModel, "getById").mockRejectedValue("not found");
+    const updateResponse = response();
+    const deleteResponse = response();
+    const errorNext = next();
+
+    await BlogController.update(
+      request({ id: "999" }),
+      updateResponse,
+      errorNext,
+    );
+    await BlogController.delete(
+      request({ id: "999" }),
+      deleteResponse,
+      errorNext,
+    );
+
+    expect(updateResponse.status).toHaveBeenCalledWith(404);
+    expect(deleteResponse.status).toHaveBeenCalledWith(404);
+    expect(errorNext).not.toHaveBeenCalled();
+  });
+
+  test("JSON admins can reassign a post or retain its current owner", async () => {
+    jest.spyOn(BlogModel, "getById").mockResolvedValue({ id: 2, user_id: 7 });
+    const updatePost = jest
+      .spyOn(BlogModel, "update")
+      .mockResolvedValue({ affectedRows: 1 });
+    const admin = { id: 1, role: "admin" };
+
+    await BlogController.update(
+      request({ id: "2" }, {}, { title: "Reassigned", user_id: 8 }, admin),
+      response(),
+      next(),
+    );
+    await BlogController.update(
+      request({ id: "2" }, {}, { title: "Same owner" }, admin),
+      response(),
+      next(),
+    );
+
+    expect(updatePost).toHaveBeenNthCalledWith(1, {
+      title: "Reassigned",
+      user_id: 8,
+      id: 2,
+    });
+    expect(updatePost).toHaveBeenNthCalledWith(2, {
+      title: "Same owner",
+      id: 2,
+      user_id: 7,
+    });
   });
 
   test("rejects blog creation without an authenticated user", () => {
