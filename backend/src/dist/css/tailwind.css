@@ -2734,6 +2734,32 @@ main {
   background: rgba(255, 255, 255, 0.12);
   color: #ffffff;
 }
+.mobile-menu {
+  display: none;
+  width: 100%;
+}
+.mobile-menu-toggle {
+  display: flex;
+  min-height: 44px;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  border-radius: 3px;
+  font-size: 14px;
+  font-weight: 600;
+  list-style: none;
+  cursor: pointer;
+}
+.mobile-menu-toggle::-webkit-details-marker {
+  display: none;
+}
+.mobile-menu-toggle:hover, .mobile-menu-toggle:focus-visible {
+  background: rgba(255, 255, 255, 0.12);
+}
+.mobile-menu-toggle:focus-visible {
+  outline: 2px solid var(--gym-citron);
+  outline-offset: -2px;
+}
 main > section {
   margin: 0 0 36px;
   padding: 0 0 30px;
@@ -3316,8 +3342,19 @@ section > ul:not(.menu) > li {
   .site-menu.menu {
     gap: 0;
   }
+  .site-menu.desktop-menu {
+    display: none;
+  }
+  .mobile-menu {
+    display: block;
+  }
+  .mobile-menu .site-menu {
+    flex-direction: column;
+    flex-wrap: nowrap;
+    padding-top: 5px;
+  }
   .site-menu li > a {
-    min-height: 36px;
+    min-height: 44px;
     padding: 7px 10px;
     font-size: 13px;
   }

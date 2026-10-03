@@ -1,21 +1,16 @@
 <nav class="navbar site-nav" aria-label="Primary navigation">
-    <ul class="menu menu-horizontal site-menu">
-        <li><a href="/">Dashboard</a></li>
-        <li><a href="/bookings">Bookings</a></li>
-    <% if (typeof authenticatedUser !== 'undefined' && (authenticatedUser.role === "admin" || authenticatedUser.role === "trainer")) { %>
-        <li><a href="/sessions">Sessions</a></li>
-    <% } %>
-    <% if (typeof authenticatedUser !== 'undefined' && authenticatedUser.role === "admin" ) { %>
-        <li><a href="/activities">Activities</a></li>
-        <li><a href="/locations">Locations</a></li>
-        <li><a href="/users">Users</a></li>
-    <% } %>
-        <li><a href="/blogs">Blogs</a></li>
-    <% if (typeof authenticatedUser !== 'undefined' && authenticatedUser) { %>
-        <li><a href="/authenticate/logout">Log out</a></li>
-    <% } else { %>
-        <li><a href="/authenticate">Log in</a></li>
-        <li><a href="/authenticate/register">Register</a></li>
-    <% } %>
+    <ul class="menu menu-horizontal site-menu desktop-menu">
+        <%- include('nav-links.ejs') %>
     </ul>
+    <details class="mobile-menu">
+        <summary class="mobile-menu-toggle">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true" focusable="false">
+                <path d="M3 6h18M3 12h18M3 18h18" />
+            </svg>
+            <span>Menu</span>
+        </summary>
+        <ul class="menu site-menu">
+            <%- include('nav-links.ejs') %>
+        </ul>
+    </details>
 </nav>

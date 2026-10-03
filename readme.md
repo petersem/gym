@@ -10,6 +10,13 @@ Gym app for Tafe stage 2 assessment
 
 [![Architecture diagram of petersem/gym](https://gitdiagram.com/petersem/gym/diagram.png)](https://gitdiagram.com/petersem/gym?utm_source=readme&utm_medium=picture)
 
+## Navigation
+
+On screens up to 760px wide, primary navigation collapses into a hamburger
+menu. The native HTML `details`/`summary` control supports mouse, touch, and
+keyboard toggling without JavaScript. Desktop navigation remains expanded,
+and both layouts use the same role-based links.
+
 ## Form validation
 
 Backend login, registration, and all management POST forms define their
