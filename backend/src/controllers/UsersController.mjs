@@ -93,8 +93,15 @@ export class UsersController {
         .matches(/^\+?[\d ().-]+$/)
         .withMessage("Phone must contain digits and standard phone separators.")
         .bail()
-        .custom((value) => /\d/.test(value))
-        .withMessage("Phone must contain digits."),
+        .custom((value) => {
+          const number = value.replace(/[ ().-]/g, "");
+          return (
+            /^(?:0[23478]\d{8}|\+61[23478]\d{8})$/.test(number) ||
+            /^13\d{4}$/.test(number) ||
+            /^(?:1300|1800)\d{6}$/.test(number)
+          );
+        })
+        .withMessage("Phone must be a valid Australian phone number."),
       body("dob")
         .customSanitizer((value) => (value === "" ? null : value))
         .optional({ values: "null" })

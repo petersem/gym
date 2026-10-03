@@ -43,7 +43,7 @@ const userForm = (email) =>
     role: "member",
     email,
     password: "Load-test-password-123",
-    phone: "555-0199",
+    phone: "0412 345 678",
     dob: "2000-01-01",
     deleted: "0",
     updatedBy: "1",

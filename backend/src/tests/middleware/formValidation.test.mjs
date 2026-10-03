@@ -10,7 +10,7 @@ const user = {
   lastName: "Lovelace",
   email: "ada@example.com",
   password: "password123",
-  phone: "+61 (02) 1234-5678",
+  phone: "+61 (2) 1234-5678",
   dob: "",
 };
 const validForms = {
@@ -300,6 +300,49 @@ describe("form validation", () => {
         })
       ).valid,
     ).toBe(false);
+  });
+
+  test.each([
+    "0412 345 678",
+    "+61 412 345 678",
+    "(02) 1234-5678",
+    "+61 2 1234 5678",
+    "13 12 34",
+    "1300 123 456",
+    "1800 123 456",
+  ])("accepts Australian user phone number %s", async (phone) => {
+    for (const action of ["create", "update"]) {
+      expect(
+        (
+          await validate(
+            "users",
+            { ...validForms.users, action, phone },
+            action === "update" ? { id: "1" } : {},
+          )
+        ).valid,
+      ).toBe(true);
+    }
+  });
+
+  test.each([
+    "555-0100",
+    "1234567890",
+    "+1 212 555 0100",
+    "0412 345 67",
+    "0912 345 678",
+    "+61 (02) 1234-5678",
+  ])("rejects invalid Australian user phone number %s", async (phone) => {
+    for (const action of ["create", "update"]) {
+      expect(
+        (
+          await validate(
+            "users",
+            { ...validForms.users, action, phone },
+            action === "update" ? { id: "1" } : {},
+          )
+        ).valid,
+      ).toBe(false);
+    }
   });
 
   test.each(["00:00", "23:59:59", "1:30", "12:00 AM", "1:30 pm"])(
