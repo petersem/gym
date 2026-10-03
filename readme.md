@@ -57,7 +57,7 @@ and startup script.
 services:
   gymdb:
     image: petersem/gym-db:latest
-    container_name: gym-db
+    container_name: gymdb
     restart: unless-stopped
     environment:
       MYSQL_DATABASE: ${DB_NAME}
@@ -69,8 +69,9 @@ services:
     ports:
       - ${DB_PORT}:3306
     volumes:
-      - db-data:/var/lib/mysql
+      - gymdb-data:/var/lib/mysql
     healthcheck:
+      # $$ defers expansion to the container so the healthcheck uses its own root password.
       test:
         [
           "CMD-SHELL",
@@ -80,9 +81,9 @@ services:
       timeout: 5s
       retries: 10
 
-  app:
+  gymapp:
     image: petersem/gym:latest
-    container_name: gym-app
+    container_name: gymapp
     restart: unless-stopped
     ports:
       - "3001:3000"
@@ -95,7 +96,7 @@ services:
       DB_PASSWORD: ${DB_PASSWORD}
       DB_NAME: ${DB_NAME}
       ADMIN_EMAIL: ${ADMIN_EMAIL}
-      ADMIN_SEED_PASSWORD: ${ADMIN_SEED_PASSWORD}
+      ADMIN_SEED_PASSWORD: ${ADMIN_PASSWORD}
     command:
       [
         "sh",
@@ -107,5 +108,5 @@ services:
         condition: service_healthy
 
 volumes:
-  db-data:
+  gymdb-data:
 ```
