@@ -108,6 +108,26 @@ describe("UsersController unit tests", () => {
     expect(log).toHaveBeenCalledWith(error);
   });
 
+  test("loads an off-page user and falls back when it is missing", async () => {
+    jest.spyOn(UsersModel, "list").mockResolvedValue({ users: [], total: 0 });
+    const getById = jest
+      .spyOn(UsersModel, "getById")
+      .mockResolvedValueOnce(existingUser)
+      .mockRejectedValueOnce("not found");
+    const res = response();
+
+    UsersController.viewUserManagement(request({ id: "7" }), res);
+    await flushPromises();
+    UsersController.viewUserManagement(request({ id: "999" }), res);
+    await flushPromises();
+
+    expect(getById).toHaveBeenCalledWith("7");
+    expect(res.render.mock.calls[0][1].selectedUser).toBe(existingUser);
+    expect(res.render.mock.calls[1][1].selectedUser).toMatchObject({
+      id: null,
+    });
+  });
+
   test("renders a complete empty user when no user is selected", async () => {
     jest.spyOn(UsersModel, "list").mockResolvedValue({ users: [], total: 0 });
     const res = response();

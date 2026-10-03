@@ -69,6 +69,87 @@ describe("form validation", () => {
     }
   });
 
+  test("rethrows errors passed to next by the test helper", async () => {
+    const req = {
+      body: {},
+      originalUrl: "/authenticate",
+      session: { save: (callback) => callback(new Error("store down")) },
+    };
+    await expect(runFormValidation("login", req, {})).rejects.toThrow(
+      "store down",
+    );
+  });
+
+  test("refuses to redirect outside the form's own route", async () => {
+    const req = { body: {}, params: {}, originalUrl: "/elsewhere" };
+    await expect(runFormValidation("activities", req, {})).rejects.toThrow(
+      "Validation used outside a supported form route.",
+    );
+  });
+
+  test("returns to the base path when the URL ID is not a record ID", async () => {
+    const { valid, res } = await validate(
+      "activities",
+      { ...validForms.activities, action: "update" },
+      { id: "abc" },
+    );
+    expect(valid).toBe(false);
+    expect(res.redirect).toHaveBeenCalledWith(
+      303,
+      "/activities#form-validation",
+    );
+  });
+
+  test.each([
+    ["activities", "deleted"],
+    ["activities", "updatedBy"],
+    ["users", "deleted"],
+    ["blogs", "userId"],
+    ["blogs", "deleted"],
+    ["blogs", "updatedBy"],
+    ["locations", "deleted"],
+  ])("checks the optional %s %s number field", async (form, field) => {
+    const body = { ...validForms[form], action: "create" };
+    expect((await validate(form, { ...body, [field]: 1 })).valid).toBe(true);
+    const { valid, req } = await validate(form, { ...body, [field]: 1.5 });
+    expect(valid).toBe(false);
+    expect(
+      req.session.formFeedback[req.originalUrl].errors[field],
+    ).toBeDefined();
+  });
+
+  test("treats a blank session date as missing", async () => {
+    const { valid, req } = await validate("sessions", {
+      ...validForms.sessions,
+      action: "create",
+      date: "",
+    });
+    expect(valid).toBe(false);
+    expect(req.session.formFeedback[req.originalUrl].errors.date).toBe(
+      "Date must be a date.",
+    );
+  });
+
+  test("rejects a stored-looking hash when the user cannot be loaded", async () => {
+    const getById = jest
+      .spyOn(UsersModel, "getById")
+      .mockRejectedValue("not found");
+    try {
+      const { valid } = await validate(
+        "users",
+        {
+          ...validForms.users,
+          action: "update",
+          password: `$2b$10$${"a".repeat(53)}`,
+        },
+        { id: "1" },
+      );
+      expect(valid).toBe(false);
+    } finally {
+      getById.mockRestore();
+    }
+  });
+
   test("does not store passwords or authentication keys in feedback", async () => {
     const { req } = await validate("users", {
       ...validForms.users,

@@ -87,14 +87,13 @@ describe("shared footer layout", () => {
     const adminPage = renderBlogPage({ id: 8, role: "admin" });
     const otherUserPage = renderBlogPage({ id: 8, role: "member" });
 
-    expect(ownerPage).toMatch(
-      /<a href="\/blogs\/42">\s*Training notes\s*<\/a>/,
-    );
-    expect(adminPage).toMatch(
-      /<a href="\/blogs\/42">\s*Training notes\s*<\/a>/,
-    );
+    // Title links keep the current sort and page so the edit form opens on the same list page.
+    const postLink =
+      /<a href="\/blogs\/42\?sort_by=created&amp;sort_dir=desc&amp;page=1">\s*Training notes\s*<\/a>/;
+    expect(ownerPage).toMatch(postLink);
+    expect(adminPage).toMatch(postLink);
     expect(otherUserPage).toMatch(/<span>\s*Training notes\s*<\/span>/);
-    expect(otherUserPage).not.toMatch(/<a href="\/blogs\/42">/);
+    expect(otherUserPage).not.toMatch(/<a href="\/blogs\/42/);
   });
 
   test("shows a discard button only when editing a post", () => {

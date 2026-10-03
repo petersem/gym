@@ -51,6 +51,30 @@ describe("LocationController", () => {
     );
   });
 
+  test("loads an off-page location and falls back when it is missing", async () => {
+    const location = { id: 9, name: "North Gym" };
+    jest
+      .spyOn(LocationModel, "list")
+      .mockResolvedValue({ locations: [], total: 0 });
+    jest.spyOn(UsersModel, "getAll").mockResolvedValue([]);
+    const getById = jest
+      .spyOn(LocationModel, "getById")
+      .mockResolvedValueOnce(location)
+      .mockRejectedValueOnce("not found");
+    const res = response();
+
+    LocationController.viewLocationManagement(request({}, { id: "9" }), res);
+    await flushPromises();
+    LocationController.viewLocationManagement(request({}, { id: "999" }), res);
+    await flushPromises();
+
+    expect(getById).toHaveBeenCalledWith("9");
+    expect(res.render.mock.calls[0][1].selectedLocation).toBe(location);
+    expect(res.render.mock.calls[1][1].selectedLocation).toMatchObject({
+      id: null,
+    });
+  });
+
   test("uses selected location sort options in management and list views", async () => {
     const list = jest
       .spyOn(LocationModel, "list")
