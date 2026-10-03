@@ -15,7 +15,6 @@ Gym app for Tafe stage 2 assessment
 Backend login, registration, and all management POST forms define their
 `express-validator` rules in their respective [controllers](backend/src/controllers). Authentication uses `loginValidation` and `registerValidation`. Management controllers use `formValidation`.
 
-
 - The shared [form validation utility](backend/src/utilities/formValidation.mjs) only provides
   action/ID validation for management forms and saving feedback before redirecting.
 - The [feedback middleware](backend/src/middleware/formFeedback.mjs) only exposes
@@ -51,14 +50,15 @@ DATA_SEED=true
 
 ## Example `compose.yaml` file
 
+Only this file and a `.env` file are needed. The `petersem/gym-db` image includes the schema, optional seed data
+and startup script.
+
 ```
 services:
   gymdb:
-    image: mysql:8.0
+    image: petersem/gym-db:latest
     container_name: gym-db
     restart: unless-stopped
-    entrypoint: ["bash", "/opt/gym/start-db.sh"]
-    command: ["mysqld"]
     environment:
       MYSQL_DATABASE: ${DB_NAME}
       MYSQL_USER: ${DB_USER}
@@ -70,20 +70,11 @@ services:
       - ${DB_PORT}:3306
     volumes:
       - db-data:/var/lib/mysql
-      - ./db/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql:ro
-      - ./db/seed-if-enabled.sh:/docker-entrypoint-initdb.d/02-seed.sh:ro
-      - ./db/seed.sql:/opt/gym/seed.sql:ro
-      - ./db/start-db.sh:/opt/gym/start-db.sh:ro
     healthcheck:
       test:
         [
-          "CMD",
-          "mysqladmin",
-          "ping",
-          "-h",
-          "127.0.0.1",
-          "-uroot",
-          "-prootpassword",
+          "CMD-SHELL",
+          'MYSQL_PWD="$$MYSQL_ROOT_PASSWORD" mysqladmin ping -h 127.0.0.1 -uroot',
         ]
       interval: 10s
       timeout: 5s

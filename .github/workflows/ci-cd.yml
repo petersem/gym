@@ -145,6 +145,24 @@ jobs:
           tags: ${{ steps.metadata.outputs.tags }}
           labels: ${{ steps.metadata.outputs.labels }}
 
+      - name: Generate database image tags
+        id: db-metadata
+        uses: docker/metadata-action@v5
+        with:
+          images: docker.io/${{ env.IMAGE_NAME }}-db
+          tags: |
+            type=raw,value=latest
+            type=semver,pattern={{version}}
+
+      - name: Build and push database image
+        uses: docker/build-push-action@v6
+        with:
+          context: ./db
+          platforms: linux/amd64
+          push: true
+          tags: ${{ steps.db-metadata.outputs.tags }}
+          labels: ${{ steps.db-metadata.outputs.labels }}
+
       - name: Update Docker Hub README
         uses: peter-evans/dockerhub-description@v5
         with:
