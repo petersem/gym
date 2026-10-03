@@ -4,9 +4,10 @@ import { UsersModel } from "../../models/UsersModel.mjs";
 let userId;
 
 afterAll(async () => {
-  if (userId) {
-    await UsersModel.query("DELETE FROM users WHERE id = ?", [userId]);
-  }
+  await UsersModel.query("DELETE FROM users WHERE id = ? OR email LIKE ?", [
+    userId ?? 0,
+    "e2e-model-%",
+  ]);
   await UsersModel.connection.end();
 });
 

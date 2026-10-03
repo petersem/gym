@@ -32,6 +32,18 @@
                                 <%- include("partials/header.ejs") %>
                                     <%- include("partials/nav.ejs", { role, authenticatedUser }) %>
 
+                                        <% if (typeof hasFormFeedback !== 'undefined' && hasFormFeedback && authenticatedUser) { %>
+                                            <section id="booking-validation">
+                                                <h2>Correct booking submission</h2>
+                                                <form action="<%= formDestination %>" method="post" novalidate class="form-grid responsive-half">
+                                                    <%- include("partials/form-errors.ejs", { fields: ['sessionId', 'userId'] }) %>
+                                                    <%- include("partials/form-field.ejs", { field: 'sessionId', id: 'booking-session-id', label: 'Session', type: 'select', options: sessions.map((session) => ({ value: session.id, label: session.title })) }) %>
+                                                    <%- include("partials/form-field.ejs", { field: 'userId', id: 'booking-user-id', label: 'User', type: 'select', options: (canManageBookings ? users : [authenticatedUser]).map((user) => ({ value: user.id, label: `${user.last_name}, ${user.first_name}` })) }) %>
+                                                    <button type="submit" name="action" value="<%= formAction %>">Retry booking</button>
+                                                </form>
+                                            </section>
+                                        <% } %>
+
                                         <section>
                                             <div class="section-heading-row">
                                                 <h2>Available sessions next 7 days</h2>
@@ -91,7 +103,7 @@
                                                                                         </button>
                                                                                         <form class="session-book-form"
                                                                                             action="/bookings"
-                                                                                            method="post">
+                                                                                            method="post" novalidate>
                                                                                             <input type="hidden"
                                                                                                 name="sessionId"
                                                                                                 value="<%= session.id %>">
@@ -257,7 +269,7 @@
                                                                                                                     { %>
                                                                                                                     <form
                                                                                                                         action="/bookings/<%= booking.id %><%= canManageBookings ? '?' + bookingFilterQuery : '' %>"
-                                                                                                                        method="post">
+                                                                                                                        method="post" novalidate>
                                                                                                                         <button
                                                                                                                             type="submit"
                                                                                                                             name="action"

@@ -21,13 +21,11 @@
                             <section>
                                 <h2>BLOG - <%= selectedBlog.id ? 'UPDATE' : 'CREATE' %>
                                 </h2>
-                                <form action="/blogs<%= selectedBlog.id ? '/' + selectedBlog.id : '' %>" method="post"
-                                    class="form-grid responsive-half">
-                                    <label for="title">Subject</label>
-                                    <input id="title" name="title" value="<%= selectedBlog.title %>" required>
-                                    <label for="content">Body</label>
-                                    <textarea id="content" name="content"
-                                        required><%= selectedBlog.content %></textarea>
+                                <form action="<%= typeof hasFormFeedback !== 'undefined' && hasFormFeedback ? formDestination : '/blogs' + (selectedBlog.id ? '/' + selectedBlog.id : '') %>" method="post"
+                                    novalidate class="form-grid responsive-half">
+                                    <%- include("partials/form-errors.ejs", { fields: ['title', 'content'] }) %>
+                                    <%- include("partials/form-field.ejs", { field: 'title', id: 'title', label: 'Subject', value: selectedBlog.title }) %>
+                                    <%- include("partials/form-field.ejs", { field: 'content', id: 'content', label: 'Body', type: 'textarea', value: selectedBlog.content }) %>
                                     <% if (selectedBlog.id) { %>
                                         <% const author=users.find((user)=> user.id === Number(selectedBlog.user_id));
                                             %>
@@ -96,7 +94,7 @@
                                                     <article class="card-tile">
                                                         <h3>
                                                             <% if (canManageBlog(blog)) { %>
-                                                                <a href="/blogs/<%= blog.id %>">
+                                                                <a href="/blogs/<%= blog.id %>?<%= new URLSearchParams({ ...(selectedSearchTerm ? { search_term: selectedSearchTerm } : {}), sort_by: selectedSortBy, sort_dir: selectedSortDir, page: selectedPage }) %>">
                                                                     <%= blog.title %>
                                                                 </a>
                                                                 <% } else { %>
@@ -115,7 +113,7 @@
                                                             <%= blog.content %>
                                                         </p>
                                                         <% if (canManageBlog(blog)) { %>
-                                                            <form action="/blogs/<%= blog.id %>" method="post">
+                                                            <form action="/blogs/<%= blog.id %>" method="post" novalidate>
                                                                 <button type="submit" name="action"
                                                                     value="delete">Delete post</button>
                                                             </form>

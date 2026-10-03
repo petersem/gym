@@ -10,7 +10,20 @@ let sessionId;
 
 const user = async () => (await UsersModel.getAll())[0];
 
+// Model deletes are soft for activities and locations, so remove rows directly.
 afterAll(async () => {
+  await SessionsModel.query(
+    "DELETE s FROM sessions s JOIN activities a ON a.id = s.activity_id WHERE a.id = ? OR a.name LIKE ?",
+    [activityId ?? 0, "E2E Session Activity %"],
+  );
+  await LocationModel.query(
+    "DELETE FROM locations WHERE id = ? OR name LIKE ?",
+    [locationId ?? 0, "E2E Session Location %"],
+  );
+  await ActivitiesModel.query(
+    "DELETE FROM activities WHERE id = ? OR name LIKE ?",
+    [activityId ?? 0, "E2E Session Activity %"],
+  );
   await SessionsModel.connection.end();
 });
 

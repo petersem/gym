@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "build:css": "npx @tailwindcss/cli -i src/public/css/style.css -o src/dist/css/tailwind.css",
-    "dev": "npm run build:css && nodemon --watch views --ext ejs,js,mjs --env-file=./src/.env src/server.mjs",
+    "dev": "npm run build:css && nodemon --watch src --ext ejs,js,mjs --ignore src/dist --env-file=./src/.env src/server.mjs",
     "prod": "npm run build:css && node --env-file=./src/.envprod src/server.mjs",
     "tailwind": "npx @tailwindcss/cli -i src/public/css/style.css -o src/dist/css/tailwind.css --watch",
     "dev-full": "npm-run-all --parallel dev tailwind",

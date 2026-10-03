@@ -42,6 +42,10 @@ describe("ActivitiesController", () => {
       expect.objectContaining({ activities }),
     );
 
+    const getById = jest
+      .spyOn(ActivitiesModel, "getById")
+      .mockRejectedValueOnce("not found")
+      .mockResolvedValueOnce({ id: 20, name: "Page two" });
     await ActivitiesController.viewActivityManagement(
       request({ id: "999" }),
       res,
@@ -50,6 +54,18 @@ describe("ActivitiesController", () => {
       "activity_management.ejs",
       expect.objectContaining({
         selectedActivity: expect.objectContaining({ id: null }),
+      }),
+    );
+
+    await ActivitiesController.viewActivityManagement(
+      request({ id: "20" }),
+      res,
+    );
+    expect(getById).toHaveBeenLastCalledWith("20");
+    expect(res.render).toHaveBeenLastCalledWith(
+      "activity_management.ejs",
+      expect.objectContaining({
+        selectedActivity: { id: 20, name: "Page two" },
       }),
     );
 

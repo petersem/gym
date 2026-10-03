@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, jest, test } from "@jest/globals";
 import bcrypt from "bcrypt";
+import { runFormValidation } from "../helpers/formValidation.mjs";
 import { AuthenticationController } from "../../controllers/AuthenticationController.mjs";
 import {
   USER_ROLE_ADMIN,
@@ -143,18 +144,17 @@ describe("AuthenticationController", () => {
   test("rejects incomplete registration data", async () => {
     const res = response();
 
-    await AuthenticationController.handleRegister(
+    await runFormValidation(
+      "register",
       request({ email: "ada@example.com" }),
       res,
     );
 
-    expect(res.status).toHaveBeenCalledWith(400);
-    expect(res.render).toHaveBeenCalledWith(
-      "status.ejs",
-      expect.objectContaining({
-        status: "Registration Failed.",
-      }),
+    expect(res.redirect).toHaveBeenCalledWith(
+      303,
+      "/authenticate/register#form-validation",
     );
+    expect(res.render).not.toHaveBeenCalled();
   });
 
   test("reports registration database errors", async () => {

@@ -27,6 +27,7 @@ import {
   swaggerSpec,
 } from "./middleware/middlewareLoader.mjs";
 import { logInfo } from "./utilities/logger.mjs";
+import { formFeedback } from "./middleware/formFeedback.mjs";
 
 let appVersion = pkg.version;
 try {
@@ -64,6 +65,7 @@ const limiter = rateLimit(limiterOptions);
 app.use(cors(corsOptions));
 app.use(limiter);
 app.use(AuthenticationController.middleware);
+app.use(formFeedback);
 app.use(sanitiser("reject"));
 app.use(idempotencyMiddleware(devOptions));
 

@@ -5,11 +5,10 @@ import { UsersModel } from "../../models/UsersModel.mjs";
 let locationId;
 
 afterAll(async () => {
-  if (locationId) {
-    await LocationModel.query("DELETE FROM locations WHERE id = ?", [
-      locationId,
-    ]);
-  }
+  await LocationModel.query(
+    "DELETE FROM locations WHERE id = ? OR name LIKE ?",
+    [locationId ?? 0, "E2E Location %"],
+  );
   await LocationModel.connection.end();
 });
 

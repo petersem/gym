@@ -5,7 +5,16 @@ import { UsersModel } from "../../models/UsersModel.mjs";
 let userId;
 let blogId;
 
+// User deletes are soft, so remove the author and any remaining posts directly.
 afterAll(async () => {
+  await BlogModel.query(
+    "DELETE b FROM blog b JOIN users u ON u.id = b.user_id WHERE u.id = ? OR u.email LIKE ?",
+    [userId ?? 0, "e2e-blog-%"],
+  );
+  await UsersModel.query("DELETE FROM users WHERE id = ? OR email LIKE ?", [
+    userId ?? 0,
+    "e2e-blog-%",
+  ]);
   await BlogModel.connection.end();
 });
 

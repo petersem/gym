@@ -1,0 +1,43 @@
+<%#
+  Labelled form field that refills submitted values and shows its validation error.
+  Locals:
+    field   - name submitted with the form, also the key in formErrors and formValues.
+    id      - element ID; the error message uses `${id}-error`.
+    label   - visible label text.
+    type    - input type, or 'textarea' or 'select'. Defaults to 'text'.
+    value   - value to show when there is no submitted value.
+    options - for selects, an array of { value, label }.
+    keep    - for passwords, show `value` again after a failed submission.
+  Password fields are blank after a failed submission unless `keep` is true.
+%>
+<%
+const errors = typeof formErrors !== 'undefined' ? formErrors : {};
+const values = typeof formValues !== 'undefined' ? formValues : {};
+const fallback = typeof value !== 'undefined' ? value : '';
+const inputType = typeof type !== 'undefined' ? type : 'text';
+const keepValue = typeof keep !== 'undefined' && keep;
+const submitted = inputType === 'password' && !keepValue && typeof hasFormFeedback !== 'undefined' && hasFormFeedback;
+const currentValue = submitted ? '' : Object.hasOwn(values, field) ? values[field] : fallback;
+// A value of 0 or empty means nothing has been chosen yet.
+const isUnselected = currentValue == null || String(currentValue) === '' || String(currentValue) === '0';
+const errorId = `${id}-error`;
+%>
+<label for="<%= id %>"><%= label %></label>
+<div class="form-field">
+    <% if (inputType === 'textarea') { %>
+        <textarea id="<%= id %>" name="<%= field %>" aria-invalid="<%= Boolean(errors[field]) %>"<% if (errors[field]) { %> aria-describedby="<%= errorId %>"<% } %>><%= currentValue %></textarea>
+    <% } else if (inputType === 'select') { %>
+        <select id="<%= id %>" name="<%= field %>" aria-invalid="<%= Boolean(errors[field]) %>"<% if (errors[field]) { %> aria-describedby="<%= errorId %>"<% } %>>
+            <%# Add a placeholder, or keep a value that is not in the options so it is not silently replaced. %>
+            <% if (!options.some((option) => String(option.value) === String(currentValue ?? ''))) { %>
+                <option value="<%= isUnselected ? '' : currentValue %>" selected><%= isUnselected ? 'Select an option' : `Invalid selection (${currentValue})` %></option>
+            <% } %>
+            <% options.forEach((option) => { %>
+                <option value="<%= option.value %>"<% if (String(option.value) === String(currentValue)) { %> selected<% } %>><%= option.label %></option>
+            <% }) %>
+        </select>
+    <% } else { %>
+        <input id="<%= id %>" name="<%= field %>" type="<%= inputType %>" value="<%= currentValue ?? '' %>" aria-invalid="<%= Boolean(errors[field]) %>"<% if (errors[field]) { %> aria-describedby="<%= errorId %>"<% } %>>
+    <% } %>
+    <%- include("form-error.ejs", { field, errorId }) %>
+</div>

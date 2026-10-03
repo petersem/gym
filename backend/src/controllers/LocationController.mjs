@@ -2,11 +2,94 @@ import express from "express";
 import { LocationModel } from "../models/LocationModel.mjs";
 import { UsersModel } from "../models/UsersModel.mjs";
 import { AuthenticationController } from "./AuthenticationController.mjs";
+import { body } from "express-validator";
+import { management } from "../utilities/formValidation.mjs";
 
 /** HTTP handlers for locations. */
 export class LocationController {
   /** @type {express.Router} */
   static routes = express.Router();
+
+  /**
+   * Validation for the location management form. Field rules run for create
+   * and update only; limits match the locations table columns.
+   * @type {express.RequestHandler[]}
+   */
+  static formValidation = management(
+    "/locations",
+    ["name", "phone", "email", "street", "suburb", "postcode", "manager"],
+    [
+      body("name")
+        .isString()
+        .withMessage("Name must be text.")
+        .bail()
+        .trim()
+        .isLength({ min: 1, max: 100 })
+        .withMessage("Name must contain 1-100 characters."),
+      body("phone")
+        .isString()
+        .withMessage("Phone must be text.")
+        .bail()
+        .trim()
+        .isLength({ min: 1, max: 20 })
+        .withMessage("Phone must contain 1-20 characters.")
+        .bail()
+        .matches(/^\+?[\d ().-]+$/)
+        .withMessage("Phone must contain digits and standard phone separators.")
+        .bail()
+        .custom((value) => /\d/.test(value))
+        .withMessage("Phone must contain digits."),
+      body("email")
+        .isString()
+        .withMessage("Email must be text.")
+        .bail()
+        .trim()
+        .isLength({ min: 1, max: 45 })
+        .withMessage("Email must contain 1-45 characters.")
+        .bail()
+        .isEmail()
+        .withMessage("Email must be valid."),
+      body("street")
+        .isString()
+        .withMessage("Street must be text.")
+        .bail()
+        .trim()
+        .isLength({ min: 1, max: 100 })
+        .withMessage("Street must contain 1-100 characters."),
+      body("suburb")
+        .isString()
+        .withMessage("Suburb must be text.")
+        .bail()
+        .trim()
+        .isLength({ min: 1, max: 100 })
+        .withMessage("Suburb must contain 1-100 characters."),
+      body("postcode")
+        .custom(
+          (value) => typeof value === "string" || Number.isSafeInteger(value),
+        )
+        .withMessage("Postcode must be a valid number.")
+        .bail()
+        .isInt({ min: 0, max: 9999, allow_leading_zeroes: false })
+        .withMessage("Postcode must be an integer between 0 and 9999."),
+      body("manager")
+        .custom(
+          (value) => typeof value === "string" || Number.isSafeInteger(value),
+        )
+        .withMessage("Manager must be a valid number.")
+        .bail()
+        .isInt({ min: 1, max: 2147483647, allow_leading_zeroes: false })
+        .withMessage("Manager must be an integer between 1 and 2147483647."),
+      body("deleted")
+        .optional()
+        .custom(
+          (value) => typeof value === "string" || Number.isSafeInteger(value),
+        )
+        .withMessage("Deleted must be a valid number.")
+        .bail()
+        .isInt({ min: 0, max: 1, allow_leading_zeroes: false })
+        .withMessage("Deleted must be an integer between 0 and 1."),
+    ],
+  );
 
   static {
     this.routes.get(
@@ -26,17 +109,24 @@ export class LocationController {
     this.routes.post(
       "/",
       AuthenticationController.restrict(["admin"]),
+      this.formValidation,
       this.handleLocationManagement,
     );
 
     this.routes.post(
       "/:id",
       AuthenticationController.restrict(["admin"]),
+      this.formValidation,
       this.handleLocationManagement,
     );
   }
 
-  /** @type {express.RequestHandler} */
+  /**
+   * Renders the location management page with a filtered, sorted and paginated
+   * location list. Loads the location in the URL into the edit form, even when it
+   * is not on the current page.
+   * @type {express.RequestHandler}
+   */
   static viewLocationManagement(req, res) {
     const selectedLocationId = req.params.id;
     const selectedSearchTerm = String(req.query.search_term ?? "").trim();
@@ -57,11 +147,15 @@ export class LocationController {
     });
 
     Promise.all([locationsPromise, UsersModel.getAll()])
-      .then(([{ locations, total }, users]) => {
+      .then(async ([{ locations, total }, users]) => {
         const selectedLocation =
           locations.find(
             (location) => String(location.id) === selectedLocationId,
-          ) ?? new LocationModel(null, "", "", "", "", "", 0, 0, 0, 0);
+          ) ??
+          (selectedLocationId
+            ? await LocationModel.getById(selectedLocationId).catch(() => null)
+            : null) ??
+          new LocationModel(null, "", "", "", "", "", 0, 0, 0, 0);
 
         res.render("location_management.ejs", {
           locations,
@@ -152,7 +246,10 @@ export class LocationController {
       });
   }
 
-  /** @type {express.RequestHandler} */
+  /**
+   * Creates, updates or deletes a location from the validated management form.
+   * @type {express.RequestHandler}
+   */
   static handleLocationManagement(req, res) {
     const authenticatedUserId = Number(req.authenticatedUser?.id);
     if (!Number.isInteger(authenticatedUserId) || authenticatedUserId <= 0) {

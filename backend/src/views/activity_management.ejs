@@ -53,7 +53,7 @@
                                                 <% activities.forEach((activity)=> { %>
                                                     <tr>
                                                         <td><a
-                                                                href="/activities/<%= activity.id %>#activity-management">
+                                                                href="/activities/<%= activity.id %>?<%= new URLSearchParams({ ...(selectedSearchTerm ? { search_term: selectedSearchTerm } : {}), sort_by: selectedSortBy, sort_dir: selectedSortDir, page: selectedPage }) %>#activity-management">
                                                                 <%= activity.name %>
                                                             </a></td>
                                                         <td>
@@ -98,14 +98,11 @@
                 <section id="activity-management">
                     <h2>Activity management - <%= selectedActivity.id ? 'Edit' : 'Create' %>
                     </h2>
-                    <form action="/activities<%= selectedActivity.id ? '/' + selectedActivity.id : '' %>" method="post"
-                        class="form-grid responsive-half">
-                        <label for="name">Name</label>
-                        <input id="name" name="name" value="<%= selectedActivity.name %>" required>
-
-                        <label for="description">Description</label>
-                        <textarea id="description" name="description"
-                            required><%= selectedActivity.description %></textarea>
+                    <form action="<%= typeof hasFormFeedback !== 'undefined' && hasFormFeedback ? formDestination : '/activities' + (selectedActivity.id ? '/' + selectedActivity.id : '') %>" method="post"
+                        novalidate class="form-grid responsive-half">
+                        <%- include("partials/form-errors.ejs", { fields: ['name', 'description'] }) %>
+                        <%- include("partials/form-field.ejs", { field: 'name', id: 'name', label: 'Name', value: selectedActivity.name }) %>
+                        <%- include("partials/form-field.ejs", { field: 'description', id: 'description', label: 'Description', type: 'textarea', value: selectedActivity.description }) %>
 
                         <input type="hidden" name="updatedBy" value="<%= authenticatedUser.id ?? 0 %>">
                         <button type="submit" name="action" value="<%= selectedActivity.id ? 'update' : 'create' %>">

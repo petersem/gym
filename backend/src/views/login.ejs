@@ -11,11 +11,10 @@
         <%- include("partials/header.ejs") %>
         <%- include("partials/nav.ejs", { role: "", authenticatedUser: undefined }) %>
         <section>
-            <form action="/authenticate" method="post" class="form-grid responsive-half margin-auto">
-                <label for="username">Username:</label>
-                <input type="text" name="username" id="username" />
-                <label for="password">Password:</label>
-                <input type="password" name="password" id="password" />
+            <form action="/authenticate" method="post" novalidate class="form-grid responsive-half margin-auto">
+                <%- include("partials/form-errors.ejs", { fields: ['username', 'password'] }) %>
+                <%- include("partials/form-field.ejs", { field: 'username', id: 'username', label: 'Username:' }) %>
+                <%- include("partials/form-field.ejs", { field: 'password', id: 'password', label: 'Password:', type: 'password' }) %>
                 <a href="/" class="link-button">Back</a>
                 <input type="submit" value="Login" />
             </form>

@@ -1,4 +1,4 @@
-import {
+﻿import {
   afterEach,
   beforeEach,
   describe,
@@ -12,6 +12,7 @@ import { UsersModel } from "../../models/UsersModel.mjs";
 import { ActivitiesModel } from "../../models/ActivitiesModel.mjs";
 import { LocationModel } from "../../models/LocationModel.mjs";
 import { BookingsModel } from "../../models/BookingsModel.mjs";
+import { runFormValidation } from "../helpers/formValidation.mjs";
 
 const response = () => {
   const res = {
@@ -540,27 +541,23 @@ describe("SessionsController", () => {
     );
   });
 
-  test("rejects incomplete session data", () => {
+  test("rejects incomplete session data", async () => {
     const res = response();
 
-    SessionsController.handleSessionManagement(
+    await runFormValidation(
+      "sessions",
       request({}, {}, { action: "create", title: "Incomplete" }),
       res,
     );
 
-    expect(res.status).toHaveBeenCalledWith(400);
-    expect(res.render).toHaveBeenCalledWith(
-      "status.ejs",
-      expect.objectContaining({
-        status: "Invalid Session",
-      }),
-    );
+    expect(res.redirect).toHaveBeenCalledWith(303, "/sessions#form-validation");
+    expect(res.render).not.toHaveBeenCalled();
   });
 
   test.each([
     [
       { activityId: "bad" },
-      "Activity, location, and trainer must be valid selections.",
+      "Activity must be an integer between 1 and 2147483647.",
     ],
     [
       {
@@ -570,44 +567,77 @@ describe("SessionsController", () => {
         date: "26/09/2026",
         time: "10:00",
       },
-      "Date and time must be valid.",
+      "Date must use YYYY-MM-DD.",
     ],
     [
       {
         activityId: "1",
         locationId: "2",
         trainerId: "3",
-        date: "2026-09-26",
+        date: "2099-09-26",
         time: "bad",
       },
-      "Date and time must be valid.",
+      "Time must be a valid 24-hour or AM/PM time.",
     ],
-  ])("rejects invalid session fields", (fields, message) => {
+    [{ date: "2000-01-01" }, "Date cannot be earlier than today."],
+  ])("rejects invalid session fields", async (fields, message) => {
     const res = response();
 
-    SessionsController.handleSessionManagement(
-      request(
-        {},
-        {},
-        {
-          action: "create",
-          title: "Test session",
-          date: "2026-09-26",
-          time: "10:00",
-          activityId: "1",
-          locationId: "2",
-          trainerId: "3",
-          ...fields,
-        },
-      ),
-      res,
+    const req = request(
+      {},
+      {},
+      {
+        action: "create",
+        title: "Test session",
+        date: "2099-09-26",
+        time: "10:00",
+        activityId: "1",
+        locationId: "2",
+        trainerId: "3",
+        ...fields,
+      },
     );
+    await runFormValidation("sessions", req, res);
 
-    expect(res.status).toHaveBeenCalledWith(400);
-    expect(res.render).toHaveBeenCalledWith(
-      "status.ejs",
-      expect.objectContaining({ message }),
-    );
+    expect(res.redirect).toHaveBeenCalledWith(303, "/sessions#form-validation");
+    expect(
+      Object.values(req.session.formFeedback["/sessions"].errors),
+    ).toContain(message);
+  });
+
+  test("allows today for new sessions and past dates for updates", async () => {
+    const now = new Date();
+    const today = [
+      now.getFullYear(),
+      String(now.getMonth() + 1).padStart(2, "0"),
+      String(now.getDate()).padStart(2, "0"),
+    ].join("-");
+    const fields = {
+      title: "Test session",
+      time: "10:00",
+      activityId: "1",
+      locationId: "2",
+      trainerId: "3",
+    };
+
+    expect(
+      await runFormValidation(
+        "sessions",
+        request({}, {}, { ...fields, action: "create", date: today }),
+        response(),
+      ),
+    ).toBe(true);
+    expect(
+      await runFormValidation(
+        "sessions",
+        request(
+          { id: "1" },
+          {},
+          { ...fields, action: "update", date: "2000-01-01" },
+        ),
+        response(),
+      ),
+    ).toBe(true);
   });
 
   test("forwards errors from session JSON handlers", async () => {

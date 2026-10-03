@@ -5,6 +5,8 @@ import { ActivitiesModel } from "../models/ActivitiesModel.mjs";
 import { LocationModel } from "../models/LocationModel.mjs";
 import { BookingsModel } from "../models/BookingsModel.mjs";
 import { AuthenticationController } from "./AuthenticationController.mjs";
+import { body } from "express-validator";
+import { management } from "../utilities/formValidation.mjs";
 
 /**
  * Converts a session time from an HTML time input or 12-hour input to MySQL format.
@@ -34,14 +36,6 @@ const normalizeSessionTime = (value) => {
   }
   return `${String(hour).padStart(2, "0")}:${minute}:00`;
 };
-
-/**
- * Checks whether a value represents a positive numeric identifier.
- * @param {unknown} value Candidate identifier.
- * @returns {boolean} Whether the identifier is positive and integral.
- */
-const isPositiveId = (value) =>
-  Number.isInteger(Number(value)) && Number(value) > 0;
 
 const SESSION_SORT_COLUMNS = [
   "title",
@@ -127,6 +121,99 @@ export class SessionsController {
   /** @type {express.Router} */
   static routes = express.Router();
 
+  /**
+   * Validation for the session management form. Field rules run for create
+   * and update only, and new sessions cannot be dated before today.
+   * @type {express.RequestHandler[]}
+   */
+  static formValidation = management(
+    "/sessions",
+    ["title", "activityId", "locationId", "trainerId", "date", "time"],
+    [
+      body("title")
+        .isString()
+        .withMessage("Title must be text.")
+        .bail()
+        .trim()
+        .isLength({ min: 1, max: 200 })
+        .withMessage("Title must contain 1-200 characters."),
+      body("activityId")
+        .custom(
+          (value) => typeof value === "string" || Number.isSafeInteger(value),
+        )
+        .withMessage("Activity must be a valid number.")
+        .bail()
+        .isInt({ min: 1, max: 2147483647, allow_leading_zeroes: false })
+        .withMessage("Activity must be an integer between 1 and 2147483647."),
+      body("locationId")
+        .custom(
+          (value) => typeof value === "string" || Number.isSafeInteger(value),
+        )
+        .withMessage("Location must be a valid number.")
+        .bail()
+        .isInt({ min: 1, max: 2147483647, allow_leading_zeroes: false })
+        .withMessage("Location must be an integer between 1 and 2147483647."),
+      body("trainerId")
+        .custom(
+          (value) => typeof value === "string" || Number.isSafeInteger(value),
+        )
+        .withMessage("Trainer must be a valid number.")
+        .bail()
+        .isInt({ min: 1, max: 2147483647, allow_leading_zeroes: false })
+        .withMessage("Trainer must be an integer between 1 and 2147483647."),
+      body("date")
+        .customSanitizer((value) => (value === "" ? null : value))
+        .isString()
+        .withMessage("Date must be a date.")
+        .bail()
+        .matches(/^\d{4}-\d{2}-\d{2}$/)
+        .withMessage("Date must use YYYY-MM-DD.")
+        .bail()
+        .isISO8601({ strict: true, strictSeparator: true })
+        .withMessage("Date must be a real calendar date.")
+        .bail()
+        // Existing sessions may already be in the past, so only new ones are checked.
+        .custom((value, { req }) => {
+          if (req.body.action !== "create") {
+            return true;
+          }
+          const now = new Date();
+          const today = [
+            now.getFullYear(),
+            String(now.getMonth() + 1).padStart(2, "0"),
+            String(now.getDate()).padStart(2, "0"),
+          ].join("-");
+          return value >= today;
+        })
+        .withMessage("Date cannot be earlier than today."),
+      body("time")
+        .isString()
+        .withMessage("Time must be text.")
+        .bail()
+        .trim()
+        .isLength({ min: 1, max: 11 })
+        .withMessage("Time must contain 1-11 characters.")
+        .bail()
+        // Accepts 24-hour picker values (HH:MM or HH:MM:SS) and 12-hour times (h:mm am/pm).
+        .custom((value) => {
+          const picker = value.match(/^(\d{1,2}):([0-5]\d)(?::([0-5]\d))?$/);
+          if (picker) {
+            return Number(picker[1]) <= 23;
+          }
+          const clock = value.match(/^(\d{1,2}):([0-5]\d)\s*(am|pm)$/i);
+          return Boolean(
+            clock && Number(clock[1]) >= 1 && Number(clock[1]) <= 12,
+          );
+        })
+        .withMessage("Time must be a valid 24-hour or AM/PM time."),
+    ],
+    {
+      activityId: "activity_id",
+      locationId: "location_id",
+      trainerId: "trainer_id",
+    },
+  );
+
   static {
     this.routes.get(
       "/",
@@ -141,16 +228,23 @@ export class SessionsController {
     this.routes.post(
       "/",
       AuthenticationController.restrict(["admin", "trainer"]),
+      this.formValidation,
       this.handleSessionManagement,
     );
     this.routes.post(
       "/:id",
       AuthenticationController.restrict(["admin", "trainer"]),
+      this.formValidation,
       this.handleSessionManagement,
     );
   }
 
-  /** @type {express.RequestHandler} */
+  /**
+   * Renders the session management page with sessions for the next seven days,
+   * filtered by search term and trainer, and loads the session in the URL into
+   * the edit form.
+   * @type {express.RequestHandler}
+   */
   static viewSessionManagement(req, res) {
     return Promise.all([
       SessionsModel.getAll(),
@@ -262,42 +356,16 @@ export class SessionsController {
       });
   }
 
-  /** @type {express.RequestHandler} */
+  /**
+   * Creates, updates or deletes a session from the validated management form.
+   * @type {express.RequestHandler}
+   */
   static handleSessionManagement(req, res) {
     const title = req.body.title;
     const activityId = req.body.activityId ?? req.body.activity_id;
     const locationId = req.body.locationId ?? req.body.location_id;
     const trainerId = req.body.trainerId ?? req.body.trainer_id;
     const { date, time } = req.body;
-    if (
-      [title, activityId, locationId, trainerId, date, time].some(
-        (field) => !String(field ?? "").trim(),
-      )
-    ) {
-      return res.status(400).render("status.ejs", {
-        status: "Invalid Session",
-        message: "All session fields are required.",
-      });
-    }
-
-    if (![activityId, locationId, trainerId].every(isPositiveId)) {
-      return res.status(400).render("status.ejs", {
-        status: "Invalid Session",
-        message: "Activity, location, and trainer must be valid selections.",
-      });
-    }
-
-    if (
-      !/^\d{4}-\d{2}-\d{2}$/.test(date) ||
-      (!/^\d{1,2}:\d{2}(?::\d{2})?$/.test(time) &&
-        !/^\d{1,2}:\d{2}\s*(am|pm)$/i.test(time))
-    ) {
-      return res.status(400).render("status.ejs", {
-        status: "Invalid Session",
-        message: "Date and time must be valid.",
-      });
-    }
-
     const session = new SessionsModel(
       req.params.id ? Number(req.params.id) : null,
       Number(activityId),
@@ -305,7 +373,7 @@ export class SessionsController {
       Number(trainerId),
       date,
       normalizeSessionTime(time),
-      title.trim(),
+      req.body.action === "delete" ? undefined : title.trim(),
     );
 
     if (req.body.action === "create") {

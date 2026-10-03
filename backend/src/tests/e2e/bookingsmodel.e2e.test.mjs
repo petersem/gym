@@ -11,7 +11,28 @@ let locationId;
 let sessionId;
 let bookingId;
 
+// Model deletes are soft for users, activities and locations, so remove rows directly.
 afterAll(async () => {
+  await BookingsModel.query(
+    "DELETE b FROM bookings b JOIN users u ON u.id = b.user_id WHERE u.id = ? OR u.email LIKE ?",
+    [userId ?? 0, "e2e-booking-%"],
+  );
+  await SessionsModel.query(
+    "DELETE s FROM sessions s JOIN activities a ON a.id = s.activity_id WHERE a.id = ? OR a.name LIKE ?",
+    [activityId ?? 0, "E2E Booking Activity %"],
+  );
+  await LocationModel.query(
+    "DELETE FROM locations WHERE id = ? OR name LIKE ?",
+    [locationId ?? 0, "E2E Booking Location %"],
+  );
+  await ActivitiesModel.query(
+    "DELETE FROM activities WHERE id = ? OR name LIKE ?",
+    [activityId ?? 0, "E2E Booking Activity %"],
+  );
+  await UsersModel.query("DELETE FROM users WHERE id = ? OR email LIKE ?", [
+    userId ?? 0,
+    "e2e-booking-%",
+  ]);
   await BookingsModel.connection.end();
 });
 

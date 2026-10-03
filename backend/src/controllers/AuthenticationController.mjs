@@ -2,13 +2,120 @@ import express from "express";
 import session from "express-session";
 import { USER_ROLE_MEMBER, UsersModel } from "../models/UsersModel.mjs";
 import bcrypt from "bcrypt";
+import { body } from "express-validator";
+import { rejectInvalidForm } from "../utilities/formValidation.mjs";
 
 /**
  * AuthenticationController handles user authentication, registration, and session management.
  */
 export class AuthenticationController {
+  /**
+   * Session and authenticated-user middleware.
+   * @type {express.Router}
+   */
   static middleware = express.Router();
+  /**
+   * Login, registration and logout routes.
+   * @type {express.Router}
+   */
   static routes = express.Router();
+
+  /**
+   * Validation for the login form. Only the email is refilled after an error.
+   * @type {express.RequestHandler[]}
+   */
+  static loginValidation = [
+    body("username")
+      .isString()
+      .withMessage("Email must be text.")
+      .bail()
+      .trim()
+      .isLength({ min: 1, max: 100 })
+      .withMessage("Email must contain 1-100 characters.")
+      .bail()
+      .isEmail()
+      .withMessage("Email must be valid."),
+    body("password")
+      .isString()
+      .withMessage("Password is required.")
+      .bail()
+      .notEmpty()
+      .withMessage("Password is required."),
+    rejectInvalidForm("/authenticate", ["username"]),
+  ];
+
+  /**
+   * Validation for the registration form. Limits match the users table columns;
+   * the password is limited to 72 UTF-8 bytes because bcrypt ignores the rest.
+   * @type {express.RequestHandler[]}
+   */
+  static registerValidation = [
+    body("firstName")
+      .isString()
+      .withMessage("First name must be text.")
+      .bail()
+      .trim()
+      .isLength({ min: 1, max: 45 })
+      .withMessage("First name must contain 1-45 characters."),
+    body("lastName")
+      .isString()
+      .withMessage("Last name must be text.")
+      .bail()
+      .trim()
+      .isLength({ min: 1, max: 45 })
+      .withMessage("Last name must contain 1-45 characters."),
+    body("email")
+      .isString()
+      .withMessage("Email must be text.")
+      .bail()
+      .trim()
+      .isLength({ min: 1, max: 100 })
+      .withMessage("Email must contain 1-100 characters.")
+      .bail()
+      .isEmail()
+      .withMessage("Email must be valid."),
+    body("password")
+      .isString()
+      .withMessage("Password is required.")
+      .bail()
+      .custom(
+        (value) => value.length >= 8 && Buffer.byteLength(value, "utf8") <= 72,
+      )
+      .withMessage(
+        "Password must be at least 8 characters and at most 36 characters.",
+      ),
+    body("phone")
+      .isString()
+      .withMessage("Phone must be text.")
+      .bail()
+      .trim()
+      .isLength({ min: 1, max: 20 })
+      .withMessage("Phone must contain 1-20 characters.")
+      .bail()
+      .matches(/^\+?[\d ().-]+$/)
+      .withMessage("Phone must contain digits and standard phone separators.")
+      .bail()
+      .custom((value) => /\d/.test(value))
+      .withMessage("Phone must contain digits."),
+    body("dob")
+      .customSanitizer((value) => (value === "" ? null : value))
+      .optional({ values: "null" })
+      .isString()
+      .withMessage("Date of birth must be a date.")
+      .bail()
+      .matches(/^\d{4}-\d{2}-\d{2}$/)
+      .withMessage("Date of birth must use YYYY-MM-DD.")
+      .bail()
+      .isISO8601({ strict: true, strictSeparator: true })
+      .withMessage("Date of birth must be a real calendar date."),
+    rejectInvalidForm("/authenticate/register", [
+      "firstName",
+      "lastName",
+      "email",
+      "phone",
+      "dob",
+    ]),
+  ];
 
   static {
     this.middleware.use(
@@ -22,9 +129,9 @@ export class AuthenticationController {
     this.middleware.use(this.#sessionAuthenticationProvider);
 
     this.routes.get("/", this.viewLogin);
-    this.routes.post("/", this.handleLogin);
+    this.routes.post("/", this.loginValidation, this.handleLogin);
     this.routes.get("/register", this.viewRegister);
-    this.routes.post("/register", this.handleRegister);
+    this.routes.post("/register", this.registerValidation, this.handleRegister);
 
     this.routes.delete("/", this.handleLogout);
     this.routes.get("/logout", this.handleLogout);
@@ -64,8 +171,6 @@ export class AuthenticationController {
     const username = req.body["username"];
     const password = req.body["password"];
 
-    // TODO: Add validation
-
     try {
       const user = await UsersModel.getByUsername(username);
       const isCorrectPassword = await bcrypt.compare(password, user.password);
@@ -99,13 +204,6 @@ export class AuthenticationController {
 
   static async handleRegister(req, res) {
     const { firstName, lastName, email, password, phone, dob } = req.body;
-
-    if (!firstName || !lastName || !email || !password || !phone) {
-      return res.status(400).render("status.ejs", {
-        status: "Registration Failed.",
-        message: "All required fields must be completed.",
-      });
-    }
 
     try {
       const passwordHash = await bcrypt.hash(password, 10);

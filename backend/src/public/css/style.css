@@ -611,6 +611,26 @@ form.form-grid {
   grid-column: 1 / -1;
 }
 
+.form-field {
+  min-width: 0;
+}
+
+.form-grid > .form-field input,
+.form-grid > .form-field textarea,
+.form-grid > .form-field select {
+  width: 100%;
+}
+
+.field-error,
+.form-errors {
+  color: var(--color-error);
+}
+
+.field-error {
+  margin: 6px 0 0;
+  font-size: 13px;
+}
+
 .form-grid > div select {
   width: auto;
   min-width: 74px;

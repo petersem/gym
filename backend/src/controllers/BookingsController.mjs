@@ -5,6 +5,8 @@ import { SessionsModel } from "../models/SessionsModel.mjs";
 import { LocationModel } from "../models/LocationModel.mjs";
 import { ActivitiesModel } from "../models/ActivitiesModel.mjs";
 import XMLBuilder from "fast-xml-builder";
+import { body } from "express-validator";
+import { management } from "../utilities/formValidation.mjs";
 
 const xmlBuilder = new XMLBuilder({
   ignoreAttributes: false,
@@ -77,12 +79,41 @@ export class BookingsController {
   /** @type {express.Router} */
   static routes = express.Router();
 
+  /**
+   * Validation for the booking management form. Field rules run for create and
+   * update only.
+   * @type {express.RequestHandler[]}
+   */
+  static formValidation = management(
+    "/bookings",
+    ["sessionId", "userId"],
+    [
+      body("sessionId")
+        .custom(
+          (value) => typeof value === "string" || Number.isSafeInteger(value),
+        )
+        .withMessage("Session must be a valid number.")
+        .bail()
+        .isInt({ min: 1, max: 2147483647, allow_leading_zeroes: false })
+        .withMessage("Session must be an integer between 1 and 2147483647."),
+      body("userId")
+        .custom(
+          (value) => typeof value === "string" || Number.isSafeInteger(value),
+        )
+        .withMessage("User must be a valid number.")
+        .bail()
+        .isInt({ min: 1, max: 2147483647, allow_leading_zeroes: false })
+        .withMessage("User must be an integer between 1 and 2147483647."),
+    ],
+    { sessionId: "session_id", userId: "user_id" },
+  );
+
   static {
     this.routes.get("/", this.viewBookingManagement);
     this.routes.get("/export.xml", this.exportBookingsXml);
     this.routes.get("/:id", this.viewBookingManagement);
-    this.routes.post("/", this.handleBookingManagement);
-    this.routes.post("/:id", this.handleBookingManagement);
+    this.routes.post("/", this.formValidation, this.handleBookingManagement);
+    this.routes.post("/:id", this.formValidation, this.handleBookingManagement);
   }
 
   /** @type {express.RequestHandler} */
@@ -229,7 +260,11 @@ export class BookingsController {
     }
   }
 
-  /** @type {express.RequestHandler} */
+  /**
+   * Renders the booking management page. Admins and trainers see all bookings;
+   * members see only their own. Loads the booking in the URL into the edit form.
+   * @type {express.RequestHandler}
+   */
   static viewBookingManagement(req, res) {
     const canManageBookings = ["admin", "trainer"].includes(
       req.authenticatedUser?.role,
@@ -397,7 +432,10 @@ export class BookingsController {
       });
   }
 
-  /** @type {express.RequestHandler} */
+  /**
+   * Creates, updates or deletes a booking from the validated management form.
+   * @type {express.RequestHandler}
+   */
   static handleBookingManagement(req, res) {
     const booking = new BookingsModel(
       req.params.id ? Number(req.params.id) : null,

@@ -6,11 +6,10 @@ const owner = async () => (await UsersModel.getAll())[0];
 let activityId;
 
 afterAll(async () => {
-  if (activityId) {
-    await ActivitiesModel.query("DELETE FROM activities WHERE id = ?", [
-      activityId,
-    ]);
-  }
+  await ActivitiesModel.query(
+    "DELETE FROM activities WHERE id = ? OR name LIKE ?",
+    [activityId ?? 0, "E2E Activity %"],
+  );
   await ActivitiesModel.connection.end();
 });
 

@@ -1,6 +1,8 @@
 import express from "express";
 import { ActivitiesModel } from "../models/ActivitiesModel.mjs";
 import { AuthenticationController } from "./AuthenticationController.mjs";
+import { body } from "express-validator";
+import { management } from "../utilities/formValidation.mjs";
 
 /** HTTP handlers for activities.
  * @class
@@ -8,6 +10,51 @@ import { AuthenticationController } from "./AuthenticationController.mjs";
 export class ActivitiesController {
   /** @type {express.Router} */
   static routes = express.Router();
+
+  /**
+   * Validation for the activity management form. Field rules run for create
+   * and update only; limits match the activities table columns.
+   * @type {express.RequestHandler[]}
+   */
+  static formValidation = management(
+    "/activities",
+    ["name", "description"],
+    [
+      body("name")
+        .isString()
+        .withMessage("Name must be text.")
+        .bail()
+        .trim()
+        .isLength({ min: 1, max: 45 })
+        .withMessage("Name must contain 1-45 characters."),
+      body("description")
+        .isString()
+        .withMessage("Must have a description.")
+        .bail()
+        .trim()
+        .isLength({ min: 1, max: 150 })
+        .withMessage("Description must contain 1-150 characters."),
+      body("deleted")
+        .optional()
+        .custom(
+          (value) => typeof value === "string" || Number.isSafeInteger(value),
+        )
+        .withMessage("Deleted must be a valid number.")
+        .bail()
+        .isInt({ min: 0, max: 1, allow_leading_zeroes: false })
+        .withMessage("Deleted must be an integer between 0 and 1."),
+      body("updatedBy")
+        .optional()
+        .custom(
+          (value) => typeof value === "string" || Number.isSafeInteger(value),
+        )
+        .withMessage("Updated by must be a valid number.")
+        .bail()
+        .isInt({ min: 0, max: 2147483647, allow_leading_zeroes: false })
+        .withMessage("Updated by must be an integer between 0 and 2147483647."),
+    ],
+    { updatedBy: "updated_by" },
+  );
 
   static {
     this.routes.get(
@@ -23,16 +70,23 @@ export class ActivitiesController {
     this.routes.post(
       "/",
       AuthenticationController.restrict("admin"),
+      this.formValidation,
       this.handleActivityManagement,
     );
     this.routes.post(
       "/:id",
       AuthenticationController.restrict("admin"),
+      this.formValidation,
       this.handleActivityManagement,
     );
   }
 
-  /** @type {express.RequestHandler} */
+  /**
+   * Renders the activity management page with a filtered, sorted and paginated
+   * activity list. Loads the activity in the URL into the edit form, even when it
+   * is not on the current page.
+   * @type {express.RequestHandler}
+   */
   static async viewActivityManagement(req, res) {
     const selectedSearchTerm = String(req.query.search_term ?? "").trim();
     const selectedSortBy = Object.keys(
@@ -53,6 +107,9 @@ export class ActivitiesController {
       });
       const selectedActivity =
         activities.find((activity) => String(activity.id) === req.params.id) ??
+        (req.params.id
+          ? await ActivitiesModel.getById(req.params.id).catch(() => null)
+          : null) ??
         new ActivitiesModel(null, "", "", 0, 0);
       res.render("activity_management.ejs", {
         activities,
@@ -73,7 +130,10 @@ export class ActivitiesController {
     }
   }
 
-  /** @type {express.RequestHandler} */
+  /**
+   * Creates, updates or deletes an activity from the validated management form.
+   * @type {express.RequestHandler}
+   */
   static async handleActivityManagement(req, res) {
     const activity = new ActivitiesModel(
       req.params.id ? Number(req.params.id) : null,

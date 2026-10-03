@@ -1,6 +1,8 @@
 import express from "express";
 import { BlogModel } from "../models/BlogModel.mjs";
 import { UsersModel } from "../models/UsersModel.mjs";
+import { body } from "express-validator";
+import { management } from "../utilities/formValidation.mjs";
 
 const canManageBlog = (user, blog) =>
   Boolean(
@@ -12,14 +14,73 @@ export class BlogController {
   /** @type {express.Router} */
   static routes = express.Router();
 
+  /**
+   * Validation for the blog post form. Field rules run for create and update
+   * only; limits match the blog table columns.
+   * @type {express.RequestHandler[]}
+   */
+  static formValidation = management(
+    "/blogs",
+    ["title", "content", "userId"],
+    [
+      body("title")
+        .isString()
+        .withMessage("Title must be text.")
+        .bail()
+        .trim()
+        .isLength({ min: 1, max: 100 })
+        .withMessage("Title must contain 1-100 characters."),
+      body("content")
+        .isString()
+        .withMessage("Content must be text.")
+        .bail()
+        .trim()
+        .isLength({ min: 1, max: 250 })
+        .withMessage("Content must contain 1-250 characters."),
+      body("userId")
+        .optional()
+        .custom(
+          (value) => typeof value === "string" || Number.isSafeInteger(value),
+        )
+        .withMessage("Author must be a valid number.")
+        .bail()
+        .isInt({ min: 1, max: 2147483647, allow_leading_zeroes: false })
+        .withMessage("Author must be an integer between 1 and 2147483647."),
+      body("deleted")
+        .optional()
+        .custom(
+          (value) => typeof value === "string" || Number.isSafeInteger(value),
+        )
+        .withMessage("Deleted must be a valid number.")
+        .bail()
+        .isInt({ min: 0, max: 1, allow_leading_zeroes: false })
+        .withMessage("Deleted must be an integer between 0 and 1."),
+      body("updatedBy")
+        .optional()
+        .custom(
+          (value) => typeof value === "string" || Number.isSafeInteger(value),
+        )
+        .withMessage("Updated by must be a valid number.")
+        .bail()
+        .isInt({ min: 0, max: 2147483647, allow_leading_zeroes: false })
+        .withMessage("Updated by must be an integer between 0 and 2147483647."),
+    ],
+    { userId: "user_id", updatedBy: "updated_by" },
+  );
+
   static {
     this.routes.get("/", this.viewBlogManagement);
     this.routes.get("/:id", this.viewBlogManagement);
-    this.routes.post("/", this.handleBlogManagement);
-    this.routes.post("/:id", this.handleBlogManagement);
+    this.routes.post("/", this.formValidation, this.handleBlogManagement);
+    this.routes.post("/:id", this.formValidation, this.handleBlogManagement);
   }
 
-  /** @type {express.RequestHandler} */
+  /**
+   * Renders the blog page with a searched, sorted and paginated list of posts.
+   * Loads the post in the URL into the edit form, even when it is not on the
+   * current page.
+   * @type {express.RequestHandler}
+   */
   static viewBlogManagement(req, res) {
     const selectedSearchTerm = String(req.query.search_term ?? "").trim();
     const selectedSortBy = Object.keys(BlogModel.SORTABLE_COLUMNS).includes(
@@ -38,9 +99,12 @@ export class BlogController {
       pageSize,
     });
     return Promise.all([blogsPromise, UsersModel.getAll()])
-      .then(([{ blogs, total }, users]) => {
+      .then(async ([{ blogs, total }, users]) => {
         const selectedBlog =
           blogs.find((blog) => String(blog.id) === req.params.id) ??
+          (req.params.id
+            ? await BlogModel.getById(req.params.id).catch(() => null)
+            : null) ??
           new BlogModel(null, "", "", 0, "", 0, 0);
         res.render("blog_management.ejs", {
           blogs,
@@ -64,7 +128,10 @@ export class BlogController {
       });
   }
 
-  /** @type {express.RequestHandler} */
+  /**
+   * Creates, updates or deletes a blog post from the validated form.
+   * @type {express.RequestHandler}
+   */
   static handleBlogManagement(req, res) {
     const authenticatedUserId = Number(req.authenticatedUser?.id);
     if (

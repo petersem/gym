@@ -1,0 +1,10 @@
+<%#
+  Validation message for one field, shown below it.
+  Locals:
+    field   - field name to look up in formErrors.
+    errorId - ID for the message, referenced by the field's aria-describedby.
+%>
+<% const fieldErrors = typeof formErrors !== 'undefined' ? formErrors : {}; %>
+<% if (fieldErrors[field]) { %>
+    <p id="<%= errorId %>" class="field-error" role="alert"><%= fieldErrors[field] %></p>
+<% } %>

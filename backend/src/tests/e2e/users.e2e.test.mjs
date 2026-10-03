@@ -42,6 +42,10 @@ afterAll(async () => {
   await new Promise((resolve, reject) => {
     server.close((error) => (error ? reject(error) : resolve()));
   });
+  await UsersModel.query(
+    "DELETE FROM users WHERE email LIKE ? OR email LIKE ? OR email LIKE ?",
+    ["e2e-create-%", "e2e-update-%", "e2e-delete-%"],
+  );
   await UsersModel.connection.end();
 });
 
@@ -118,6 +122,5 @@ describe("UsersController end-to-end flow", () => {
       id: createdUserId,
       deleted: 1,
     });
-    createdUserId = undefined;
   });
 });

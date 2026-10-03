@@ -51,11 +51,24 @@ describe("BlogController", () => {
       expect.objectContaining({ blogs }),
     );
 
+    const getById = jest
+      .spyOn(BlogModel, "getById")
+      .mockRejectedValueOnce("not found")
+      .mockResolvedValueOnce({ id: 30, title: "Page two" });
     await BlogController.viewBlogManagement(request({ id: "999" }), res);
     expect(res.render).toHaveBeenCalledWith(
       "blog_management.ejs",
       expect.objectContaining({
         selectedBlog: expect.objectContaining({ id: null }),
+      }),
+    );
+
+    await BlogController.viewBlogManagement(request({ id: "30" }), res);
+    expect(getById).toHaveBeenLastCalledWith("30");
+    expect(res.render).toHaveBeenLastCalledWith(
+      "blog_management.ejs",
+      expect.objectContaining({
+        selectedBlog: { id: 30, title: "Page two" },
       }),
     );
 

@@ -11,8 +11,13 @@
         day: '2-digit', month: '2-digit', year: 'numeric',
         hour: 'numeric', minute: '2-digit', hour12: true,
         }).format(new Date(`${String(date).slice(0, 10)}T${time}`)).replace(/^0/, '').replace(/\s+(am|pm)$/i, '$1'); %>
-        <% const storedTime=String(selectedSession.time || '09:00:00' ).slice(0, 5).split(':'); %>
-            <% const storedHour=Number(storedTime[0]) || 9; %>
+        <%
+        const timeValue = typeof formValues !== 'undefined' && Object.hasOwn(formValues, 'time') ? formValues.time : selectedSession.time || '09:00:00';
+        const timeMatch = String(timeValue).match(/^(\d{1,2}):(\d{2})(?::\d{2})?\s*(am|pm)?$/i);
+        const storedTime = timeMatch ? [timeMatch[1], timeMatch[2]] : ['9', '00'];
+        const rawHour = Number(storedTime[0]);
+        const storedHour = timeMatch?.[3] ? rawHour % 12 + (timeMatch[3].toLowerCase() === 'pm' ? 12 : 0) : rawHour;
+        %>
                 <% const pickerHour=storedHour % 12 || 12; %>
                     <% const pickerMeridiem=storedHour>= 12 ? 'pm' : 'am'; %>
                         <main>
@@ -208,47 +213,19 @@
                                         <h2>Session management - <%= selectedSession.id ? 'Edit' : 'Create' %>
                                         </h2>
                                         <form
-                                            action="/sessions<%= selectedSession.id ? '/' + selectedSession.id : '' %>"
-                                            method="post" class="form-grid responsive-half">
-                                            <label for="title">Title</label>
-                                            <input id="title" name="title" value="<%= selectedSession.title %>"
-                                                required>
-                                            <label for="activity-id">Activity</label>
-                                            <select id="activity-id" name="activityId" required>
-                                                <% activities.forEach((activity)=> { %>
-                                                    <option value="<%= activity.id %>"
-                                                        <%=Number(selectedSession.activity_id)===activity.id
-                                                        ? 'selected' : '' %>>
-                                                        <%= activity.name %>
-                                                    </option>
-                                                    <% }) %>
-                                            </select>
-                                            <label for="location-id">Location</label>
-                                            <select id="location-id" name="locationId" required>
-                                                <% locations.forEach((location)=> { %>
-                                                    <option value="<%= location.id %>"
-                                                        <%=Number(selectedSession.location_id)===location.id
-                                                        ? 'selected' : '' %>>
-                                                        <%= location.name %>
-                                                    </option>
-                                                    <% }) %>
-                                            </select>
-                                            <label for="trainer-id">Trainer</label>
-                                            <select id="trainer-id" name="trainerId" required>
-                                                <% users.filter((user)=> user.role === 'trainer').forEach((user) => { %>
-                                                    <option value="<%= user.id %>"
-                                                        <%=Number(selectedSession.trainer_id)===user.id ? 'selected'
-                                                        : '' %>>
-                                                        <%= user.last_name %>, <%= user.first_name %>
-                                                    </option>
-                                                    <% }) %>
-                                            </select>
-                                            <label for="date">Date</label>
-                                            <input id="date" name="date" type="date" value="<%= selectedSession.date %>"
-                                                required>
-                                            <label for="time">Time</label>
-                                            <div>
-                                                <select id="time-hour" aria-label="Hour" required>
+                                            action="<%= typeof hasFormFeedback !== 'undefined' && hasFormFeedback ? formDestination : '/sessions' + (selectedSession.id ? '/' + selectedSession.id : '') %>"
+                                            method="post" novalidate class="form-grid responsive-half">
+                                            <%- include("partials/form-errors.ejs", { fields: ['title', 'activityId', 'locationId', 'trainerId', 'date', 'time'] }) %>
+                                            <%- include("partials/form-field.ejs", { field: 'title', id: 'title', label: 'Title', value: selectedSession.title }) %>
+                                            <%- include("partials/form-field.ejs", { field: 'activityId', id: 'activity-id', label: 'Activity', type: 'select', value: selectedSession.activity_id, options: activities.map((activity) => ({ value: activity.id, label: activity.name })) }) %>
+                                            <%- include("partials/form-field.ejs", { field: 'locationId', id: 'location-id', label: 'Location', type: 'select', value: selectedSession.location_id, options: locations.map((location) => ({ value: location.id, label: location.name })) }) %>
+                                            <%- include("partials/form-field.ejs", { field: 'trainerId', id: 'trainer-id', label: 'Trainer', type: 'select', value: selectedSession.trainer_id, options: users.filter((user) => user.role === 'trainer').map((user) => ({ value: user.id, label: `${user.last_name}, ${user.first_name}` })) }) %>
+                                            <%- include("partials/form-field.ejs", { field: 'date', id: 'date', label: 'Date', type: 'date', value: selectedSession.date }) %>
+                                            <label id="time-label" for="time-hour">Time</label>
+                                            <div role="group" aria-labelledby="time-label"
+                                                aria-invalid="<%= typeof formErrors !== 'undefined' && Boolean(formErrors.time) %>"
+                                                <% if (typeof formErrors !== 'undefined' && formErrors.time) { %>aria-describedby="time-error"<% } %>>
+                                                <select id="time-hour" aria-label="Hour">
                                                     <% for (let hour=1; hour <=12; hour +=1) { %>
                                                         <option value="<%= hour %>" <%=pickerHour===hour ? 'selected'
                                                             : '' %>><%= hour %>
@@ -256,22 +233,22 @@
                                                         <% } %>
                                                 </select>
                                                 :
-                                                <select id="time-minute" aria-label="Minute" required>
-                                                    <% for (let minute=0; minute < 60; minute +=5) { %>
+                                                <select id="time-minute" aria-label="Minute">
+                                                    <% for (let minute=0; minute < 60; minute +=1) { %>
                                                         <option value="<%= String(minute).padStart(2, '0') %>"
                                                             <%=storedTime[1]===String(minute).padStart(2, '0' )
                                                             ? 'selected' : '' %>><%= String(minute).padStart(2, '0' ) %>
                                                         </option>
                                                         <% } %>
                                                 </select>
-                                                <select id="time-meridiem" aria-label="AM or PM" required>
+                                                <select id="time-meridiem" aria-label="AM or PM">
                                                     <option value="am" <%=pickerMeridiem==='am' ? 'selected' : '' %>>am
                                                     </option>
                                                     <option value="pm" <%=pickerMeridiem==='pm' ? 'selected' : '' %>>pm
                                                     </option>
                                                 </select>
-                                                <input id="time" name="time" type="hidden"
-                                                    value="<%= String(storedHour).padStart(2, '0') %>:<%= storedTime[1] %>:00">
+                                                <input id="time" name="time" type="hidden" value="<%= timeValue %>">
+                                                <%- include("partials/form-error.ejs", { field: 'time', errorId: 'time-error' }) %>
                                             </div>
                                             <button type="submit" name="action"
                                                 value="<%= selectedSession.id ? 'update' : 'create' %>">
@@ -301,7 +278,7 @@
                                             document.getElementById("time").value = `${String(hour24).padStart(2, "0")}:${minute}:00`;
                                         };
                                         document.querySelectorAll("#time-hour, #time-minute, #time-meridiem").forEach((picker) => picker.addEventListener("change", updateSessionTime));
-                                        updateSessionTime();
+                                        document.getElementById("time").form.addEventListener("submit", updateSessionTime);
                                     </script>
 
                                     <%- include("partials/footer.ejs") %>
