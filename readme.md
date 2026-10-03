@@ -22,7 +22,6 @@ Backend login, registration, and all management POST forms define their
 - Invalid submissions redirect (HTTP 303) to the originating form GET page before password hashing or model writes.
 - Validation feedback displays messages beneath each field and preserves non-sensitive entered values and URL
   filters.
-- Passwords and authentication keys are never saved in feedback. Password inputs are cleared after rejection and must be re-entered.
 - Invalid-form redirects include `#form-validation`, scrolling the reloaded page to the error summary at the start of the create/edit form.
 - When errors are displayed, a page-show handler also focuses and scrolls to the summary after page loading, including repeated invalid submissions to the same URL.
 - The booking calendar shows a correction form for rejected booking submissions.
