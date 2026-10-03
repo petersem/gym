@@ -14,23 +14,24 @@ Backend login, registration, and all management POST forms define their
 and `registerValidation`; management controllers use `formValidation`.
 These definitions specify required fields, limits, formats, optional fields, and messages
 directly with `body()` chains.
+
 - The shared [form validation utility](backend/src/utilities/formValidation.mjs) only provides
-action/ID validation for management forms and saving feedback before redirecting.
+  action/ID validation for management forms and saving feedback before redirecting.
 - The [feedback middleware](backend/src/middleware/formFeedback.mjs) only exposes
-saved errors and values to EJS; it does not define field-specific rules.
-- Invalid submissions redirect (HTTP 303) to the originating form GET page before password hashing or model writes. 
+  saved errors and values to EJS; it does not define field-specific rules.
+- Invalid submissions redirect (HTTP 303) to the originating form GET page before password hashing or model writes.
 - Validation feedback displays messages beneath each field and preserves non-sensitive entered values and URL
-filters. 
+  filters.
 - Passwords and authentication keys are never saved in feedback. Password inputs are cleared after rejection and must be re-entered.
 - Invalid-form redirects include `#form-validation`, scrolling the reloaded page to the error summary at the start of the create/edit form.
 - When errors are displayed, a page-show handler also focuses and scrolls to the summary after page loading, including repeated invalid submissions to the same URL.
 - The booking calendar shows a correction form for rejected booking submissions.
 - Rules enforce required text, database column lengths, email and phone formats,
 - Supported roles/actions, integer IDs, real calendar dates, and valid session
-times (24-hour or AM/PM).
-- New passwords require at least 8 characters and no more than 36. 
+  times (24-hour or AM/PM).
+- New passwords require at least 8 characters and no more than 36.
 - EJS forms contain no required/length/pattern validation rules and use
-`novalidate` so submissions reach the server. (Project **MUST** be all server-side)
+  `novalidate` so submissions reach the server. (Project **MUST** be all server-side)
 - This validation covers HTML form routes, not the API handlers.
 
 ![gym app](https://raw.githubusercontent.com/petersem/gym/main/gh-assets/gymapp.png)
