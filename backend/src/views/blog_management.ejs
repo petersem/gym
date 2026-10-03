@@ -94,8 +94,8 @@
                                                     <article class="card-tile">
                                                         <h3>
                                                             <% if (canManageBlog(blog)) { %>
-                                                                <a href="/blogs/<%= blog.id %>?<%= new URLSearchParams({ ...(selectedSearchTerm ? { search_term: selectedSearchTerm } : {}), sort_by: selectedSortBy, sort_dir: selectedSortDir, page: selectedPage }) %>">
-                                                                    <%= blog.title %>
+                                                                <a href="/blogs/<%= blog.id %>?<%= new URLSearchParams({ ...(selectedSearchTerm ? { search_term: selectedSearchTerm } : {}), sort_by: selectedSortBy, sort_dir: selectedSortDir, page: selectedPage }) %>" title="Edit post">
+                                                                    <%= blog.title %>  
                                                                 </a>
                                                                 <% } else { %>
                                                                     <span>
@@ -106,7 +106,7 @@
                                                         <p><strong>Created:</strong>
                                                             <%= formatCreated(blog.created) %>
                                                                 &nbsp;<strong>By:</strong>
-                                                                <%= author ? `${author.last_name}, ${author.first_name}`
+                                                                <%= author ? `${author.first_name}`
                                                                     : 'Unknown user' %>
                                                         </p>
                                                         <p>

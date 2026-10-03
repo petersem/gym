@@ -13,6 +13,29 @@ const stylesheet = readFileSync(
 );
 
 describe("responsive primary navigation", () => {
+  test("stacks the theme toggle below the signed-in user's name badge", () => {
+    const header = readFileSync(
+      new URL("../views/partials/header.ejs", import.meta.url),
+      "utf8",
+    );
+    const html = ejs.render(header, {
+      authenticatedUser: {
+        role: "member",
+        first_name: "Test",
+        last_name: "Member",
+      },
+    });
+    expect(html.indexOf("authenticated-user")).toBeLessThan(
+      html.indexOf("theme-toggle-control"),
+    );
+    expect(stylesheet).toMatch(
+      /\.user-controls\s*\{[^}]*flex-direction:\s*column;[^}]*align-items:\s*flex-end;/,
+    );
+    const guestHtml = ejs.render(header, {});
+    expect(guestHtml).not.toContain("authenticated-user");
+    expect(guestHtml).toContain('id="theme-toggle"');
+  });
+
   test.each([
     [
       undefined,

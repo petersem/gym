@@ -8,11 +8,6 @@
     </a>
     <span class="site-kicker">When you want results, fast!</span>
     <div class="user-controls">
-        <label class="theme-toggle-control" for="theme-toggle" title="Switch between light and dark themes">
-            <span>Light</span>
-            <input class="toggle toggle-sm" id="theme-toggle" type="checkbox" aria-label="Use dark theme">
-            <span>Dark</span>
-        </label>
         <% if (typeof authenticatedUser !== 'undefined' && authenticatedUser) { %>
             <span
                 class="badge badge-neutral authenticated-user role-badge role-<%= authenticatedUser.role %>"
@@ -21,6 +16,11 @@
                 <%= authenticatedUser.first_name %> <%= authenticatedUser.last_name %>
             </span>
         <% } %>
+        <label class="theme-toggle-control" for="theme-toggle" title="Switch between light and dark themes">
+            <span>Light</span>
+            <input class="toggle toggle-sm" id="theme-toggle" type="checkbox" aria-label="Use dark theme">
+            <span>Dark</span>
+        </label>
     </div>
     <script>
         const themeToggle = document.getElementById("theme-toggle");
