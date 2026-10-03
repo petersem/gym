@@ -6,14 +6,15 @@ Gym app for Tafe stage 2 assessment
 - Backend API (coming soon)
 - Frontend React app (coming soon)
 
+![gym app](https://raw.githubusercontent.com/petersem/gym/main/gh-assets/gymapp.png)
+
+[![Architecture diagram of petersem/gym](https://gitdiagram.com/petersem/gym/diagram.png)](https://gitdiagram.com/petersem/gym?utm_source=readme&utm_medium=picture)
+
 ## Form validation
 
 Backend login, registration, and all management POST forms define their
-`express-validator` rules in their respective
-[controllers](backend/src/controllers). Authentication uses `loginValidation`
-and `registerValidation`; management controllers use `formValidation`.
-These definitions specify required fields, limits, formats, optional fields, and messages
-directly with `body()` chains.
+`express-validator` rules in their respective [controllers](backend/src/controllers). Authentication uses `loginValidation` and `registerValidation`. Management controllers use `formValidation`.
+
 
 - The shared [form validation utility](backend/src/utilities/formValidation.mjs) only provides
   action/ID validation for management forms and saving feedback before redirecting.
@@ -33,10 +34,6 @@ directly with `body()` chains.
 - EJS forms contain no required/length/pattern validation rules and use
   `novalidate` so submissions reach the server. (Project **MUST** be all server-side)
 - This validation covers HTML form routes, not the API handlers.
-
-![gym app](https://raw.githubusercontent.com/petersem/gym/main/gh-assets/gymapp.png)
-
-[![Architecture diagram of petersem/gym](https://gitdiagram.com/petersem/gym/diagram.png)](https://gitdiagram.com/petersem/gym?utm_source=readme&utm_medium=picture)
 
 ## Example `.env` file
 
