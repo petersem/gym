@@ -1,18 +1,13 @@
 {
-	"version": "2.0.0",
-	"tasks": [
-		{
-			"label": "Backend development",
-			"type": "shell",
-			"command": "npm",
-			"args": [
-				"run",
-				"dev-full",
-				"--workspace",
-				"backend"
-			],
-			"isBackground": true,
-			"problemMatcher": []
-		}
-	]
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Backend development",
+      "type": "shell",
+      "command": "npm",
+      "args": ["run", "dev-full", "--workspace", "backend"],
+      "isBackground": true,
+      "problemMatcher": []
+    }
+  ]
 }
