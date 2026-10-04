@@ -216,12 +216,13 @@
                                             action="<%= typeof hasFormFeedback !== 'undefined' && hasFormFeedback ? formDestination : '/sessions' + (selectedSession.id ? '/' + selectedSession.id : '') %>"
                                             method="post" novalidate class="form-grid responsive-half">
                                             <%- include("partials/form-errors.ejs", { fields: ['title', 'activityId', 'locationId', 'trainerId', 'date', 'time'] }) %>
-                                            <%- include("partials/form-field.ejs", { field: 'title', id: 'title', label: 'Title', value: selectedSession.title }) %>
-                                            <%- include("partials/form-field.ejs", { field: 'activityId', id: 'activity-id', label: 'Activity', type: 'select', value: selectedSession.activity_id, options: activities.map((activity) => ({ value: activity.id, label: activity.name })) }) %>
-                                            <%- include("partials/form-field.ejs", { field: 'locationId', id: 'location-id', label: 'Location', type: 'select', value: selectedSession.location_id, options: locations.map((location) => ({ value: location.id, label: location.name })) }) %>
-                                            <%- include("partials/form-field.ejs", { field: 'trainerId', id: 'trainer-id', label: 'Trainer', type: 'select', value: selectedSession.trainer_id, options: users.filter((user) => user.role === 'trainer').map((user) => ({ value: user.id, label: `${user.last_name}, ${user.first_name}` })) }) %>
-                                            <%- include("partials/form-field.ejs", { field: 'date', id: 'date', label: 'Date', type: 'date', value: selectedSession.date }) %>
-                                            <label id="time-label" for="time-hour">Time</label>
+                                            <p class="two-col">* Required fields</p>
+                                            <%- include("partials/form-field.ejs", { field: 'title', id: 'title', label: 'Title', requiredField: true, value: selectedSession.title }) %>
+                                            <%- include("partials/form-field.ejs", { field: 'activityId', id: 'activity-id', label: 'Activity', requiredField: true, type: 'select', value: selectedSession.activity_id, options: activities.map((activity) => ({ value: activity.id, label: activity.name })) }) %>
+                                            <%- include("partials/form-field.ejs", { field: 'locationId', id: 'location-id', label: 'Location', requiredField: true, type: 'select', value: selectedSession.location_id, options: locations.map((location) => ({ value: location.id, label: location.name })) }) %>
+                                            <%- include("partials/form-field.ejs", { field: 'trainerId', id: 'trainer-id', label: 'Trainer', requiredField: true, type: 'select', value: selectedSession.trainer_id, options: users.filter((user) => user.role === 'trainer').map((user) => ({ value: user.id, label: `${user.last_name}, ${user.first_name}` })) }) %>
+                                            <%- include("partials/form-field.ejs", { field: 'date', id: 'date', label: 'Date', requiredField: true, type: 'date', value: selectedSession.date }) %>
+                                            <label id="time-label" for="time-hour">Time *</label>
                                             <div role="group" aria-labelledby="time-label"
                                                 aria-invalid="<%= typeof formErrors !== 'undefined' && Boolean(formErrors.time) %>"
                                                 <% if (typeof formErrors !== 'undefined' && formErrors.time) { %>aria-describedby="time-error"<% } %>>

@@ -37,8 +37,9 @@
                                                 <h2>Correct booking submission</h2>
                                                 <form action="<%= formDestination %>" method="post" novalidate class="form-grid responsive-half">
                                                     <%- include("partials/form-errors.ejs", { fields: ['sessionId', 'userId'] }) %>
-                                                    <%- include("partials/form-field.ejs", { field: 'sessionId', id: 'booking-session-id', label: 'Session', type: 'select', options: sessions.map((session) => ({ value: session.id, label: session.title })) }) %>
-                                                    <%- include("partials/form-field.ejs", { field: 'userId', id: 'booking-user-id', label: 'User', type: 'select', options: (canManageBookings ? users : [authenticatedUser]).map((user) => ({ value: user.id, label: `${user.last_name}, ${user.first_name}` })) }) %>
+                                                    <p class="two-col">* Required fields</p>
+                                                    <%- include("partials/form-field.ejs", { field: 'sessionId', id: 'booking-session-id', label: 'Session', requiredField: true, type: 'select', options: sessions.map((session) => ({ value: session.id, label: session.title })) }) %>
+                                                    <%- include("partials/form-field.ejs", { field: 'userId', id: 'booking-user-id', label: 'User', requiredField: true, type: 'select', options: (canManageBookings ? users : [authenticatedUser]).map((user) => ({ value: user.id, label: `${user.last_name}, ${user.first_name}` })) }) %>
                                                     <button type="submit" name="action" value="<%= formAction %>">Retry booking</button>
                                                 </form>
                                             </section>

@@ -106,13 +106,14 @@
                     <form action="<%= typeof hasFormFeedback !== 'undefined' && hasFormFeedback ? formDestination : '/locations' + (selectedLocation.id ? '/' + selectedLocation.id : '') %>" method="post"
                         novalidate class="form-grid responsive-half">
                         <%- include("partials/form-errors.ejs", { fields: ['name', 'phone', 'email', 'street', 'suburb', 'postcode', 'manager'] }) %>
-                        <%- include("partials/form-field.ejs", { field: 'name', id: 'name', label: 'Name', value: selectedLocation.name }) %>
-                        <%- include("partials/form-field.ejs", { field: 'phone', id: 'phone', label: 'Phone', value: selectedLocation.phone }) %>
-                        <%- include("partials/form-field.ejs", { field: 'email', id: 'email', label: 'Email', type: 'email', value: selectedLocation.email }) %>
-                        <%- include("partials/form-field.ejs", { field: 'street', id: 'street', label: 'Street', value: selectedLocation.street }) %>
-                        <%- include("partials/form-field.ejs", { field: 'suburb', id: 'suburb', label: 'Suburb', value: selectedLocation.suburb }) %>
-                        <%- include("partials/form-field.ejs", { field: 'postcode', id: 'postcode', label: 'Postcode', value: selectedLocation.postcode }) %>
-                        <%- include("partials/form-field.ejs", { field: 'manager', id: 'manager', label: 'Manager', type: 'select', value: selectedLocation.manager, options: users.map((user) => ({ value: user.id, label: `${user.last_name}, ${user.first_name}` })) }) %>
+                        <p class="two-col">* Required fields</p>
+                        <%- include("partials/form-field.ejs", { field: 'name', id: 'name', label: 'Name', requiredField: true, value: selectedLocation.name }) %>
+                        <%- include("partials/form-field.ejs", { field: 'phone', id: 'phone', label: 'Phone', requiredField: true, value: selectedLocation.phone }) %>
+                        <%- include("partials/form-field.ejs", { field: 'email', id: 'email', label: 'Email', requiredField: true, type: 'email', value: selectedLocation.email }) %>
+                        <%- include("partials/form-field.ejs", { field: 'street', id: 'street', label: 'Street', requiredField: true, value: selectedLocation.street }) %>
+                        <%- include("partials/form-field.ejs", { field: 'suburb', id: 'suburb', label: 'Suburb', requiredField: true, value: selectedLocation.suburb }) %>
+                        <%- include("partials/form-field.ejs", { field: 'postcode', id: 'postcode', label: 'Postcode', requiredField: true, value: selectedLocation.postcode }) %>
+                        <%- include("partials/form-field.ejs", { field: 'manager', id: 'manager', label: 'Manager', requiredField: true, type: 'select', value: selectedLocation.manager, options: users.map((user) => ({ value: user.id, label: `${user.last_name}, ${user.first_name}` })) }) %>
 
                         <p class="two-col">Updated by: <%= authenticatedUser.last_name ?? '' %>, <%=
                                     authenticatedUser.first_name ?? '' %>

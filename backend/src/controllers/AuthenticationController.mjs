@@ -21,7 +21,7 @@ export class AuthenticationController {
   static routes = express.Router();
 
   /**
-   * Validation for the login form. Only the email is refilled after an error.
+   * Validation for the login form. Only the email is refilled after an error, not the password.
    * @type {express.RequestHandler[]}
    */
   static loginValidation = [

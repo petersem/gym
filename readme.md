@@ -38,6 +38,9 @@ Backend login, registration, and all management POST forms define their
 - New passwords require at least 8 characters and no more than 36.
 - EJS forms contain no required/length/pattern validation rules and use
   `novalidate` so submissions reach the server. (Project **MUST** be all server-side)
+- Required field labels show `*`, with a `* Required fields` note in each data-entry
+  form. These visual markers match server validation; date of birth and search/filter
+  controls remain optional.
 - This validation covers HTML form routes, not the API handlers.
 
 ## Example `.env` file

@@ -28,7 +28,7 @@ afterEach(() => {
 // Mocked model calls keep location handler behavior independent of MySQL.
 describe("LocationController", () => {
   test("renders location management and selected location", async () => {
-    const locations = [{ id: 1, name: "Central Gym" }];
+    const locations = [{ id: 1, name: "Central Gym", postcode: 3000 }];
     const users = [{ id: 1, first_name: "Ada", last_name: "Lovelace" }];
     jest
       .spyOn(LocationModel, "list")
@@ -52,7 +52,7 @@ describe("LocationController", () => {
   });
 
   test("loads an off-page location and falls back when it is missing", async () => {
-    const location = { id: 9, name: "North Gym" };
+    const location = { id: 9, name: "North Gym", postcode: 3001 };
     jest
       .spyOn(LocationModel, "list")
       .mockResolvedValue({ locations: [], total: 0 });
@@ -72,6 +72,7 @@ describe("LocationController", () => {
     expect(res.render.mock.calls[0][1].selectedLocation).toBe(location);
     expect(res.render.mock.calls[1][1].selectedLocation).toMatchObject({
       id: null,
+      postcode: "",
     });
   });
 
@@ -123,7 +124,7 @@ describe("LocationController", () => {
     expect(res.render).toHaveBeenCalledWith(
       "location_management.ejs",
       expect.objectContaining({
-        selectedLocation: expect.objectContaining({ id: null }),
+        selectedLocation: expect.objectContaining({ id: null, postcode: "" }),
       }),
     );
 

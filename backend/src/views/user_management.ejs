@@ -120,12 +120,13 @@
                     <form action="<%= typeof hasFormFeedback !== 'undefined' && hasFormFeedback ? formDestination : '/users' + (selectedUser.id ? '/' + selectedUser.id : '') %>" method="post"
                         novalidate class="form-grid responsive-half">
                         <%- include("partials/form-errors.ejs", { fields: ['firstName', 'lastName', 'role', 'email', 'password', 'phone', 'dob'] }) %>
-                        <%- include("partials/form-field.ejs", { field: 'firstName', id: 'first-name', label: 'First name', value: selectedUser.first_name }) %>
-                        <%- include("partials/form-field.ejs", { field: 'lastName', id: 'last-name', label: 'Last name', value: selectedUser.last_name }) %>
-                        <%- include("partials/form-field.ejs", { field: 'role', id: 'role', label: 'Role', type: 'select', value: selectedUser.role, options: ['admin', 'trainer', 'member'].map((role) => ({ value: role, label: role })) }) %>
-                        <%- include("partials/form-field.ejs", { field: 'email', id: 'email', label: 'Email', type: 'email', value: selectedUser.email }) %>
-                        <%- include("partials/form-field.ejs", { field: 'password', id: 'password', label: 'Password', type: 'password', value: selectedUser.password, keep: typeof formValues !== 'undefined' && formValues.passwordUnchanged === '1' }) %>
-                        <%- include("partials/form-field.ejs", { field: 'phone', id: 'phone', label: 'Phone', value: selectedUser.phone }) %>
+                        <p class="two-col">* Required fields</p>
+                        <%- include("partials/form-field.ejs", { field: 'firstName', id: 'first-name', label: 'First name', requiredField: true, value: selectedUser.first_name }) %>
+                        <%- include("partials/form-field.ejs", { field: 'lastName', id: 'last-name', label: 'Last name', requiredField: true, value: selectedUser.last_name }) %>
+                        <%- include("partials/form-field.ejs", { field: 'role', id: 'role', label: 'Role', requiredField: true, type: 'select', value: selectedUser.role, options: ['admin', 'trainer', 'member'].map((role) => ({ value: role, label: role })) }) %>
+                        <%- include("partials/form-field.ejs", { field: 'email', id: 'email', label: 'Email', requiredField: true, type: 'email', value: selectedUser.email }) %>
+                        <%- include("partials/form-field.ejs", { field: 'password', id: 'password', label: 'Password', requiredField: true, type: 'password', value: selectedUser.password, keep: typeof formValues !== 'undefined' && formValues.passwordUnchanged === '1' }) %>
+                        <%- include("partials/form-field.ejs", { field: 'phone', id: 'phone', label: 'Phone', requiredField: true, value: selectedUser.phone }) %>
                         <%- include("partials/form-field.ejs", { field: 'dob', id: 'dob', label: 'Date of birth', type: 'date', value: selectedUser.dob }) %>
                         <input type="hidden" name="deleted" value="<%= selectedUser.deleted || 0 %>">
                         <input type="hidden" name="authenticationKey"

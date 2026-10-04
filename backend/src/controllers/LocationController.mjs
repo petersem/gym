@@ -155,7 +155,7 @@ export class LocationController {
           (selectedLocationId
             ? await LocationModel.getById(selectedLocationId).catch(() => null)
             : null) ??
-          new LocationModel(null, "", "", "", "", "", 0, 0, 0, 0);
+          new LocationModel(null, "", "", "", "", "", "", 0, 0, 0);
 
         res.render("location_management.ejs", {
           locations,
@@ -267,7 +267,7 @@ export class LocationController {
       formData.email,
       formData.street,
       formData.suburb,
-      Number(formData.postcode ?? 0),
+      Number(formData.postcode),
       Number(formData.manager ?? 0),
       Number(formData.deleted ?? 0),
       authenticatedUserId,

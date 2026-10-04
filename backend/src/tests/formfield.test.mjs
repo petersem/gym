@@ -65,6 +65,37 @@ describe("password fields after failed submissions", () => {
       hasFormFeedback: true,
     });
 
+  describe("required field indicators", () => {
+    test.each(["text", "select", "textarea"])(
+      "marks required %s fields without adding browser validation",
+      async (type) => {
+        const html = await ejs.renderFile(template, {
+          field: "example",
+          id: "example",
+          label: "Example",
+          type,
+          requiredField: true,
+          options: [],
+        });
+        expect(html).toContain('<label for="example">Example *</label>');
+        expect(html).not.toMatch(/\srequired(?:\s|=|>)/);
+      },
+    );
+
+    test.each([false, undefined])(
+      "does not mark optional fields when requiredField is %s",
+      async (requiredField) => {
+        const html = await ejs.renderFile(template, {
+          field: "dob",
+          id: "dob",
+          label: "Date of birth",
+          requiredField,
+        });
+        expect(html).toContain('<label for="dob">Date of birth</label>');
+      },
+    );
+  });
+
   test("clears the password by default", async () => {
     expect(await renderPassword(undefined)).not.toContain("storedhash");
   });

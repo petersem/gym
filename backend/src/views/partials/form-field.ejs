@@ -4,6 +4,7 @@
     field   - name submitted with the form, also the key in formErrors and formValues.
     id      - element ID; the error message uses `${id}-error`.
     label   - visible label text.
+    requiredField - show an asterisk for fields required by server validation.
     type    - input type, or 'textarea' or 'select'. Defaults to 'text'.
     value   - value to show when there is no submitted value.
     options - for selects, an array of { value, label }.
@@ -22,7 +23,7 @@ const currentValue = submitted ? '' : Object.hasOwn(values, field) ? values[fiel
 const isUnselected = currentValue == null || String(currentValue) === '' || String(currentValue) === '0';
 const errorId = `${id}-error`;
 %>
-<label for="<%= id %>"><%= label %></label>
+<label for="<%= id %>"><%= label %><% if (typeof requiredField !== 'undefined' && requiredField) { %> *<% } %></label>
 <div class="form-field">
     <% if (inputType === 'textarea') { %>
         <textarea id="<%= id %>" name="<%= field %>" aria-invalid="<%= Boolean(errors[field]) %>"<% if (errors[field]) { %> aria-describedby="<%= errorId %>"<% } %>><%= currentValue %></textarea>

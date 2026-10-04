@@ -24,8 +24,9 @@
                                 <form action="<%= typeof hasFormFeedback !== 'undefined' && hasFormFeedback ? formDestination : '/blogs' + (selectedBlog.id ? '/' + selectedBlog.id : '') %>" method="post"
                                     novalidate class="form-grid responsive-half">
                                     <%- include("partials/form-errors.ejs", { fields: ['title', 'content'] }) %>
-                                    <%- include("partials/form-field.ejs", { field: 'title', id: 'title', label: 'Subject', value: selectedBlog.title }) %>
-                                    <%- include("partials/form-field.ejs", { field: 'content', id: 'content', label: 'Body', type: 'textarea', value: selectedBlog.content }) %>
+                                    <p class="two-col">* Required fields</p>
+                                    <%- include("partials/form-field.ejs", { field: 'title', id: 'title', label: 'Subject', requiredField: true, value: selectedBlog.title }) %>
+                                    <%- include("partials/form-field.ejs", { field: 'content', id: 'content', label: 'Body', requiredField: true, type: 'textarea', value: selectedBlog.content }) %>
                                     <% if (selectedBlog.id) { %>
                                         <% const author=users.find((user)=> user.id === Number(selectedBlog.user_id));
                                             %>

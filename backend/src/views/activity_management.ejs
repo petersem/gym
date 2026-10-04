@@ -101,8 +101,9 @@
                     <form action="<%= typeof hasFormFeedback !== 'undefined' && hasFormFeedback ? formDestination : '/activities' + (selectedActivity.id ? '/' + selectedActivity.id : '') %>" method="post"
                         novalidate class="form-grid responsive-half">
                         <%- include("partials/form-errors.ejs", { fields: ['name', 'description'] }) %>
-                        <%- include("partials/form-field.ejs", { field: 'name', id: 'name', label: 'Name', value: selectedActivity.name }) %>
-                        <%- include("partials/form-field.ejs", { field: 'description', id: 'description', label: 'Description', type: 'textarea', value: selectedActivity.description }) %>
+                        <p class="two-col">* Required fields</p>
+                        <%- include("partials/form-field.ejs", { field: 'name', id: 'name', label: 'Name', requiredField: true, value: selectedActivity.name }) %>
+                        <%- include("partials/form-field.ejs", { field: 'description', id: 'description', label: 'Description', requiredField: true, type: 'textarea', value: selectedActivity.description }) %>
 
                         <input type="hidden" name="updatedBy" value="<%= authenticatedUser.id ?? 0 %>">
                         <button type="submit" name="action" value="<%= selectedActivity.id ? 'update' : 'create' %>">
