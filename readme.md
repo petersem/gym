@@ -58,17 +58,24 @@ the shared environment file so saved changes restart the development server.
 Example `backend/.env`:
 
 ```
+# app settings
+PORT=3000
+
+# database connection settings
 DB_HOST=127.0.0.1
 DB_PORT=3307
-PORT=3000
-DB_ROOT_PASSWORD=rootpassword
-DB_INIT_USER=root
+DB_ROOT_PASSWORD=rootymctooty
+DB_NAME=gym
+
+# database app user credentials
 DB_USER=gymuser
 DB_PASSWORD=Testing123!
-DB_NAME=gym
-ADMIN_EMAIL=admin@example.com
+
+# app admin credentials
+ADMIN_EMAIL=admin@gym.com
 ADMIN_PASSWORD=testing123
 DATA_SEED=true
+
 ```
 
 ## Example `compose.yaml` file
