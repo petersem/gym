@@ -83,13 +83,27 @@ export async function initializeDatabase(env) {
       throw new Error("Could not acquire the database initialization lock.");
     }
     const database = mysql.escapeId(env.DB_NAME);
+    const [existingDatabases] = await connection.query(
+      "SELECT SCHEMA_NAME FROM information_schema.SCHEMATA WHERE SCHEMA_NAME = ?",
+      [env.DB_NAME],
+    );
+    const databaseExists = existingDatabases.length > 0;
+    console.log(
+      databaseExists
+        ? `Database ${database} already exists.`
+        : `Creating database ${database}...`,
+    );
     await connection.query(
       `CREATE DATABASE IF NOT EXISTS ${database} CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci`,
     );
+    if (!databaseExists) console.log(`Database ${database} created.`);
+    const account = `${mysql.escape(env.DB_USER)}@'%'`;
+    console.log(`Creating MySQL app account ${account} if absent...`);
     await connection.query("CREATE USER IF NOT EXISTS ?@'%' IDENTIFIED BY ?", [
       env.DB_USER,
       env.DB_PASSWORD,
     ]);
+    console.log(`MySQL app account ${account} is available.`);
     await connection.query(
       `GRANT SELECT, INSERT, UPDATE, DELETE ON ${database}.* TO ?@'%'`,
       [env.DB_USER],

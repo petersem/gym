@@ -26,6 +26,7 @@ afterEach(() => jest.restoreAllMocks());
 function setup({
   state,
   existing = 0,
+  databaseExists = false,
   admins = [{ id: 1 }],
   acquired = 1,
 } = {}) {
@@ -34,6 +35,8 @@ function setup({
   const connection = {
     query: jest.fn(async (sql) => {
       if (sql.includes("GET_LOCK")) return [[{ acquired }]];
+      if (sql.startsWith("SELECT SCHEMA_NAME"))
+        return [databaseExists ? [{ SCHEMA_NAME: env.DB_NAME }] : []];
       if (sql.startsWith("SELECT status")) return [state ? [state] : []];
       if (sql.startsWith("SELECT table_name"))
         return [Array(existing).fill({})];
@@ -148,6 +151,52 @@ describe("MySQL readiness", () => {
 });
 
 describe("database initialization", () => {
+  test.each([false, true])(
+    "logs database existence and app account setup when databaseExists=%s",
+    async (databaseExists) => {
+      setup({ databaseExists });
+      await initializeDatabase(env);
+      expect(console.log).toHaveBeenCalledWith(
+        databaseExists
+          ? "Database `gym_test` already exists."
+          : "Creating database `gym_test`...",
+      );
+      if (databaseExists) {
+        expect(console.log).not.toHaveBeenCalledWith(
+          "Database `gym_test` created.",
+        );
+      } else {
+        expect(console.log).toHaveBeenCalledWith(
+          "Database `gym_test` created.",
+        );
+      }
+      expect(console.log).toHaveBeenCalledWith(
+        "Creating MySQL app account 'gym_test_user'@'%' if absent...",
+      );
+      expect(console.log).toHaveBeenCalledWith(
+        "MySQL app account 'gym_test_user'@'%' is available.",
+      );
+      expect(JSON.stringify(console.log.mock.calls)).not.toContain(
+        env.DB_PASSWORD,
+      );
+    },
+  );
+
+  test.each([
+    ["CREATE DATABASE", "Database `gym_test` created."],
+    ["CREATE USER", "MySQL app account 'gym_test_user'@'%' is available."],
+  ])("does not log success when %s fails", async (statement, message) => {
+    const { connection } = setup();
+    const query = connection.query.getMockImplementation();
+    connection.query.mockImplementation((sql, values) => {
+      if (sql.startsWith(statement)) throw new Error("creation failed");
+      return query(sql, values);
+    });
+    await expect(initializeDatabase(env)).rejects.toThrow("creation failed");
+    expect(console.log).not.toHaveBeenCalledWith(message);
+    expect(connection.end).toHaveBeenCalled();
+  });
+
   test.each(["true", "false", undefined])(
     "initializes a new database with DATA_SEED=%s",
     async (flag) => {

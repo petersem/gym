@@ -1,15 +1,15 @@
 {
   "name": "backend",
-  "version": "1.4.0",
+  "version": "1.5.0",
   "description": "",
   "main": "index.js",
   "scripts": {
     "build:css": "npx @tailwindcss/cli -i src/public/css/style.css -o src/dist/css/tailwind.css",
-    "dev": "npm run build:css && nodemon --watch src --watch .env --ext ejs,js,mjs,env --ignore src/dist --env-file=.env src/scripts/startServer.mjs development",
+    "dev": "npm run build:css && nodemon --no-stdin --watch src --watch .env --ext ejs,js,mjs,env --ignore src/dist --env-file=.env src/scripts/startServer.mjs development",
     "prod": "npm run build:css && node --env-file=.env src/scripts/startServer.mjs production",
     "tailwind": "npx @tailwindcss/cli -i src/public/css/style.css -o src/dist/css/tailwind.css --watch",
     "dbcreate": "node --env-file=.env src/scripts/initializeDatabase.mjs",
-    "dev-full": "npm-run-all --parallel dev tailwind",
+    "devfull": "npm-run-all --parallel dbcreate dev tailwind",
     "doc": "npm --prefix .. run doc"
   },
   "keywords": [],

@@ -51,5 +51,6 @@ describe("shared backend environment", () => {
     expect(scripts.dev).toContain("startServer.mjs development");
     expect(scripts.prod).toContain("startServer.mjs production");
     expect(scripts.dev).toContain("--watch .env");
+    expect(scripts.dev).toContain("--no-stdin");
   });
 });

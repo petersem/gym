@@ -54,6 +54,9 @@ The `dev`, `dev-full`, `prod`, and `dbcreate` backend scripts all load this file
 The server launcher sets `NODE_ENV` to `development` for `dev` and `production`
 for `prod`; it does not need separate environment files. Nodemon also watches
 the shared environment file so saved changes restart the development server.
+Nodemon uses `--no-stdin` to avoid restart stalls when sharing terminal input
+with the parallel development tasks. Automatic file-change restarts still
+work, but the interactive `rs` restart command is disabled.
 
 Example `backend/.env`:
 
@@ -150,6 +153,9 @@ The gymapp entrypoint waits for MySQL, creates `DB_NAME` and `DB_USER` if absent
 grants the app account SELECT/INSERT/UPDATE/DELETE access, creates the tables,
 and ensures an admin account exists before starting the server. Failures stop
 startup rather than serving an uninitialized database.
+
+Startup logs report whether `DB_NAME` already exists or is being created, and
+show the MySQL `DB_USER` account being ensured without logging its password.
 
 - `DB_INIT_USER` defaults to `root`; `DB_INIT_PASSWORD` falls back to
   `DB_ROOT_PASSWORD` when absent or empty. Set `DB_INIT_PASSWORD` explicitly when
