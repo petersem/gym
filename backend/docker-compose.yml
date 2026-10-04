@@ -1,3 +1,5 @@
+name: gym
+
 services:
   db:
     image: mysql:8.0
@@ -22,7 +24,9 @@ services:
       start_period: 180s
 
   app:
-    build: .
+    build:
+      context: ..
+      dockerfile: backend/Dockerfile
     container_name: gym-app
     restart: unless-stopped
     ports:

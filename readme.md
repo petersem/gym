@@ -78,19 +78,19 @@ DATA_SEED=true
 
 ```
 
-## Example `compose.yaml` file
+## Docker Compose
 
-Only this file and `backend/.env` are needed. Use the standard `mysql:8.0` image;
-gymapp contains the schema, optional sample data, and initialization script.
-Rebuild/publish gymapp before using this configuration with an older image.
+The Compose files and Dockerfile are in `backend/`. Use the standard
+`mysql:8.0` image; gymapp contains the schema, optional sample data, and
+initialization script. Rebuild/publish gymapp before using the published-image
+configuration with an older image.
 
-Compose does not automatically load an environment file in a subfolder. From
-the repository root, start the published images with
-`docker compose --env-file backend/.env -f compose.yml up -d`.
-For a local image build, use
-`docker compose --env-file backend/.env -f docker-compose.yml up -d --build`.
-Compose uses the same credentials, but overrides the app's database host and
-port to the internal MySQL service address and port 3306.
+From the `backend/` directory, start the published images with
+`docker compose --env-file .env -f compose.yml up -d`. To build the local image,
+use `docker compose --env-file .env -f docker-compose.yml up -d --build`.
+The local-build configuration uses the same credentials, but sets the app's
+database host to the internal MySQL service name and port to 3306. Its build
+context remains the repository root so Docker can access the workspace files.
 
 ```
 services:

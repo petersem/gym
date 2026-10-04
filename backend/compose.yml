@@ -1,3 +1,5 @@
+name: gym
+
 services:
   gymdb:
     image: mysql:8.0
