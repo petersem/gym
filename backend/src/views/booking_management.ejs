@@ -314,6 +314,8 @@
                                                         else if (value) params.set(key, value);
                                                         else params.delete(key);
                                                         params.delete('session_id');
+                                                        params.delete('booking_created');
+                                                        params.delete('booking_deleted');
                                                         const url = `/bookings${params.toString() ? `?${params}` : ''}`;
                                                         const targetSection = key.startsWith('booking_') ? '#bookings-next-7-days' : '';
                                                         window.location.href = `${url}${targetSection}`;
