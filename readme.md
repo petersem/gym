@@ -52,6 +52,7 @@ DATA_SEED=true
   - Create tables and foriegn keys
   - Create a database user account for the application
   - Set priviledges for database user account
+  - Create an application admin user if there is no admin
   - Seed sample data if a new database and the seed option is true
 - The application is then started and available locally on the specified port.
 
@@ -139,7 +140,7 @@ volumes:
   gymdb-data:
 ```
 
-Once you have configured these files, from the same directory, run `docker compose up -d gymapp`. This will first create and install mySQL, and then it will create a container for the gym app.
+Once you have configured these files, from the same directory, run `docker compose up -d gymapp` This will first create and install mySQL, and then it will create a container for the gym app.
 
 > If this is the first time the database is being created, this process can take a couple of minutes before things are running. Be patient!
 
