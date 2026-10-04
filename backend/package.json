@@ -1,13 +1,14 @@
 {
   "name": "backend",
-  "version": "1.1.5",
+  "version": "1.2.0",
   "description": "",
   "main": "index.js",
   "scripts": {
     "build:css": "npx @tailwindcss/cli -i src/public/css/style.css -o src/dist/css/tailwind.css",
-    "dev": "npm run build:css && nodemon --watch src --ext ejs,js,mjs --ignore src/dist --env-file=./src/.env src/server.mjs",
-    "prod": "npm run build:css && node --env-file=./src/.envprod src/server.mjs",
+    "dev": "npm run build:css && nodemon --watch src --watch .env --ext ejs,js,mjs,env --ignore src/dist --env-file=.env src/scripts/startServer.mjs development",
+    "prod": "npm run build:css && node --env-file=.env src/scripts/startServer.mjs production",
     "tailwind": "npx @tailwindcss/cli -i src/public/css/style.css -o src/dist/css/tailwind.css --watch",
+    "dbcreate": "node --env-file=.env src/scripts/initializeDatabase.mjs",
     "dev-full": "npm-run-all --parallel dev tailwind",
     "doc": "npm --prefix .. run doc"
   },

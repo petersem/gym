@@ -43,38 +43,57 @@ Backend login, registration, and all management POST forms define their
   controls remain optional.
 - This validation covers HTML form routes, not the API handlers.
 
-## Example `.env` file
+## Shared backend environment
+
+Keep local settings in `backend/.env`. Copy [backend/.env.example](backend/.env.example)
+and replace its placeholder passwords when setting up a new checkout. The real
+environment file is excluded from Git and Docker builds. Do not put secrets in
+the example file.
+
+The `dev`, `dev-full`, `prod`, and `dbcreate` backend scripts all load this file.
+The server launcher sets `NODE_ENV` to `development` for `dev` and `production`
+for `prod`; it does not need separate environment files. Nodemon also watches
+the shared environment file so saved changes restart the development server.
+
+Example `backend/.env`:
 
 ```
 DB_HOST=127.0.0.1
 DB_PORT=3307
+PORT=3000
 DB_ROOT_PASSWORD=rootpassword
+DB_INIT_USER=root
 DB_USER=gymuser
 DB_PASSWORD=Testing123!
 DB_NAME=gym
 ADMIN_EMAIL=admin@example.com
-ADMIN_SEED_PASSWORD=testing123
+ADMIN_PASSWORD=testing123
 DATA_SEED=true
 ```
 
 ## Example `compose.yaml` file
 
-Only this file and a `.env` file are needed. The `petersem/gym-db` image includes the schema, optional seed data
-and startup script.
+Only this file and `backend/.env` are needed. Use the standard `mysql:8.0` image;
+gymapp contains the schema, optional sample data, and initialization script.
+Rebuild/publish gymapp before using this configuration with an older image.
+
+Compose does not automatically load an environment file in a subfolder. From
+the repository root, start the published images with
+`docker compose --env-file backend/.env -f compose.yml up -d`.
+For a local image build, use
+`docker compose --env-file backend/.env -f docker-compose.yml up -d --build`.
+Compose uses the same credentials, but overrides the app's database host and
+port to the internal MySQL service address and port 3306.
 
 ```
 services:
   gymdb:
-    image: petersem/gym-db:latest
+    image: mysql:8.0
     container_name: gymdb
     restart: unless-stopped
     environment:
-      MYSQL_DATABASE: ${DB_NAME}
-      MYSQL_USER: ${DB_USER}
-      MYSQL_PASSWORD: ${DB_PASSWORD}
       MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
-      # Enable or disable data seeding - can only run on initial database creation
-      DATA_SEED: ${DATA_SEED}
+      MYSQL_ROOT_HOST: "%"
     ports:
       - ${DB_PORT}:3306
     volumes:
@@ -104,14 +123,11 @@ services:
       DB_USER: ${DB_USER}
       DB_PASSWORD: ${DB_PASSWORD}
       DB_NAME: ${DB_NAME}
+      DB_INIT_USER: root
+      DB_INIT_PASSWORD: ${DB_ROOT_PASSWORD}
+      DATA_SEED: ${DATA_SEED:-false}
       ADMIN_EMAIL: ${ADMIN_EMAIL}
-      ADMIN_SEED_PASSWORD: ${ADMIN_PASSWORD}
-    command:
-      [
-        "sh",
-        "-c",
-        "node backend/src/scripts/seedAdmin.mjs && exec node backend/src/server.mjs",
-      ]
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD}
     depends_on:
       gymdb:
         condition: service_healthy
@@ -119,3 +135,56 @@ services:
 volumes:
   gymdb-data:
 ```
+
+## Database initialization
+
+The gymapp entrypoint waits for MySQL, creates `DB_NAME` and `DB_USER` if absent,
+grants the app account SELECT/INSERT/UPDATE/DELETE access, creates the tables,
+and ensures an admin account exists before starting the server. Failures stop
+startup rather than serving an uninitialized database.
+
+- `DB_INIT_USER` defaults to `root`; `DB_INIT_PASSWORD` falls back to
+  `DB_ROOT_PASSWORD` when absent or empty. Set `DB_INIT_PASSWORD` explicitly when
+  using a separate initialization account with a different password. This account
+  must have database/user creation, grant, and schema modification privileges.
+  It must be different from `DB_USER`. The entrypoint removes its credentials
+  from the server process environment after initialization.
+- MySQL needs `MYSQL_ROOT_HOST: "%"` for gymapp to connect as root from another
+  container on a **new** volume. On an existing volume, environment variables do
+  not change accounts: configure an accessible privileged account yourself and
+  set `DB_INIT_USER`/`DB_INIT_PASSWORD` accordingly.
+- Keep MySQL on a private network, use strong passwords, and do not expose its
+  published port to untrusted networks. The published DB port is optional.
+- Existing app users are not reset or given a new password. `DB_PASSWORD` must
+  match the account already present; startup verifies that connection.
+- Set `ADMIN_EMAIL` and `ADMIN_PASSWORD` for the first admin account.
+  The password is not printed in initialization logs. Changing this value does
+  not reset the password of an existing admin account.
+- `DATA_SEED=true` seeds sample data only when initializing a new, empty schema.
+  The initial choice is recorded in `gym_initialization`; changing it later
+  does not seed an existing database. Existing complete schemas are adopted
+  without replacing tables or inserting sample data.
+- An advisory lock serializes initialization by concurrent gymapp instances.
+  Table creation is non-destructive and resumable; sample data, admin creation,
+  and the completion marker commit in one transaction. An untracked, partially
+  populated schema is rejected for manual repair rather than silently accepted.
+- Table creation is initial setup, not a migration system for future schema
+  changes. Back up existing databases before changing deployment configuration;
+  preserve their volumes and use MySQL 8.0 when replacing the old custom image.
+
+For local Node development, run `npm run dbcreate --workspace backend` from the
+repository root once before starting `npm run dev-full --workspace backend`.
+Initialization and the server use the same `backend/.env` settings.
+
+## Tests
+
+The full suite includes a live MySQL integration test. Use an isolated test
+database, not your application database. Set `DB_HOST`, `DB_PORT`, `DB_NAME`,
+`DB_USER`, and `DB_PASSWORD` to that database before running `npm test -- --runInBand`.
+The test runner does not automatically load `.env` files. Initialize a new test
+database with the initialization script first (including its privileged and
+initial admin credentials), then run tests with the same runtime database settings.
+An unavailable MySQL server will cause the integration test to fail.
+
+Coverage thresholds remain 100% for statements, branches, functions, and lines
+of the modules exercised by the suite.

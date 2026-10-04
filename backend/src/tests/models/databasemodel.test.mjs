@@ -9,6 +9,52 @@ afterEach(() => {
 
 // Stubs the pool query method to test database helpers without a live connection.
 describe("DatabaseModel unit tests", () => {
+  test.each([false, true])(
+    "configures the pool with explicit environment values: %s",
+    async (configured) => {
+      const values = {
+        DB_HOST: "database.example",
+        DB_USER: "test-user",
+        DB_PORT: "3309",
+        DB_PASSWORD: "test-password",
+        DB_NAME: "test_database",
+      };
+      const original = Object.fromEntries(
+        Object.keys(values).map((key) => [key, process.env[key]]),
+      );
+      try {
+        for (const [key, value] of Object.entries(values)) {
+          if (configured) process.env[key] = value;
+          else delete process.env[key];
+        }
+        await jest.isolateModulesAsync(async () => {
+          const { DatabaseModel: isolated } =
+            await import("../../models/DatabaseModel.mjs");
+          try {
+            expect(
+              isolated.connection.pool.config.connectionConfig,
+            ).toMatchObject({
+              host: configured ? values.DB_HOST : "127.0.0.1",
+              user: configured ? values.DB_USER : "gymuser",
+              port: configured ? 3309 : 3307,
+              password: configured ? values.DB_PASSWORD : "Testing123!",
+              database: configured ? values.DB_NAME : "gym",
+              nestTables: true,
+              dateStrings: true,
+            });
+          } finally {
+            await isolated.connection.end();
+          }
+        });
+      } finally {
+        for (const [key, value] of Object.entries(original)) {
+          if (value === undefined) delete process.env[key];
+          else process.env[key] = value;
+        }
+      }
+    },
+  );
+
   test("query returns the first value from the database response", async () => {
     const connection = {
       query: jest.fn().mockResolvedValue([["row"], ["field"]]),

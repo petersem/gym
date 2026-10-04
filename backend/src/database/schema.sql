@@ -3,10 +3,9 @@
 -- Table structure for table `users`
 --
 
-DROP TABLE IF EXISTS `users`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `users` (
+CREATE TABLE IF NOT EXISTS `users` (
   `id` int NOT NULL AUTO_INCREMENT,
   `first_name` varchar(45) NOT NULL,
   `last_name` varchar(45) NOT NULL,
@@ -31,10 +30,9 @@ SELECT 'Created table: users' AS message;
 -- Table structure for table `activities`
 --
 
-DROP TABLE IF EXISTS `activities`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `activities` (
+CREATE TABLE IF NOT EXISTS `activities` (
   `id` int NOT NULL AUTO_INCREMENT,
   `name` varchar(45) NOT NULL,
   `description` varchar(150) DEFAULT NULL,
@@ -53,10 +51,9 @@ SELECT 'Created table: activities' AS message;
 -- Table structure for table `blog`
 --
 
-DROP TABLE IF EXISTS `blog`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `blog` (
+CREATE TABLE IF NOT EXISTS `blog` (
   `id` int NOT NULL AUTO_INCREMENT,
   `create_date` datetime NOT NULL,
   `user_id` int NOT NULL,
@@ -75,10 +72,9 @@ SELECT 'Created table: blog' AS message;
 -- Table structure for table `locations`
 --
 
-DROP TABLE IF EXISTS `locations`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `locations` (
+CREATE TABLE IF NOT EXISTS `locations` (
   `id` int NOT NULL AUTO_INCREMENT,
   `name` varchar(100) NOT NULL,
   `phone` varchar(20) NOT NULL,
@@ -104,10 +100,9 @@ SELECT 'Created table: locations' AS message;
 -- Table structure for table `sessions`
 --
 
-DROP TABLE IF EXISTS `sessions`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `sessions` (
+CREATE TABLE IF NOT EXISTS `sessions` (
   `id` int NOT NULL AUTO_INCREMENT,
   `title` varchar(200) NOT NULL,
   `activity_id` int NOT NULL,
@@ -132,10 +127,9 @@ SELECT 'Created table: sessions' AS message;
 -- Table structure for table `bookings`
 --
 
-DROP TABLE IF EXISTS `bookings`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `bookings` (
+CREATE TABLE IF NOT EXISTS `bookings` (
   `id` int NOT NULL AUTO_INCREMENT,
   `session_id` int NOT NULL,
   `user_id` int NOT NULL,

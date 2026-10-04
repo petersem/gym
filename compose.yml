@@ -1,15 +1,11 @@
 services:
   gymdb:
-    image: petersem/gym-db:latest
+    image: mysql:8.0
     container_name: gymdb
     restart: unless-stopped
     environment:
-      MYSQL_DATABASE: ${DB_NAME}
-      MYSQL_USER: ${DB_USER}
-      MYSQL_PASSWORD: ${DB_PASSWORD}
       MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
-      # Enable or disable data seeding - can only run on initial database creation
-      DATA_SEED: ${DATA_SEED}
+      MYSQL_ROOT_HOST: "%"
     ports:
       - ${DB_PORT}:3306
     volumes:
@@ -39,14 +35,11 @@ services:
       DB_USER: ${DB_USER}
       DB_PASSWORD: ${DB_PASSWORD}
       DB_NAME: ${DB_NAME}
+      DB_INIT_USER: root
+      DB_INIT_PASSWORD: ${DB_ROOT_PASSWORD}
+      DATA_SEED: ${DATA_SEED:-false}
       ADMIN_EMAIL: ${ADMIN_EMAIL}
-      ADMIN_SEED_PASSWORD: ${ADMIN_PASSWORD}
-    command:
-      [
-        "sh",
-        "-c",
-        "node backend/src/scripts/seedAdmin.mjs && exec node backend/src/server.mjs",
-      ]
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD}
     depends_on:
       gymdb:
         condition: service_healthy

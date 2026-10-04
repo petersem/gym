@@ -376,6 +376,19 @@ describe("form validation", () => {
     ).toBe(true);
   });
 
+  test.each([
+    ["", null],
+    ["2024-02-29", "2024-02-29"],
+  ])("accepts date of birth %j in user management", async (dob, expected) => {
+    const { req, valid } = await validate("users", {
+      ...validForms.users,
+      action: "create",
+      dob,
+    });
+    expect(valid).toBe(true);
+    expect(req.body.dob).toBe(expected);
+  });
+
   test("enforces new password limits in bytes without echoing the password", async () => {
     for (const password of [
       "short",

@@ -19,5 +19,7 @@ ENV NODE_ENV=production
 WORKDIR /app
 COPY --from=build /app/node_modules ./node_modules
 COPY --from=build /app/backend ./backend
+RUN sed -i 's/\r$//' backend/entrypoint.sh
 EXPOSE 3000
+ENTRYPOINT ["sh", "backend/entrypoint.sh"]
 CMD ["node", "backend/src/server.mjs"]
