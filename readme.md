@@ -50,7 +50,7 @@ and replace its placeholder passwords when setting up a new checkout. The real
 environment file is excluded from Git and Docker builds. Do not put secrets in
 the example file.
 
-The `dev`, `dev-full`, `prod`, and `dbcreate` backend scripts all load this file.
+The `dev`, `devfull`, `prod`, and `dbcreate` backend scripts all load this file.
 The server launcher sets `NODE_ENV` to `development` for `dev` and `production`
 for `prod`; it does not need separate environment files. Nodemon also watches
 the shared environment file so saved changes restart the development server.
