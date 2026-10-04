@@ -20,6 +20,6 @@ export async function ensureAdmin(connection, env) {
     ["Gym", "Admin", env.ADMIN_EMAIL, passwordHash],
   );
   console.log(
-    `${env.ADMIN_EMAIL} user account created. Change its password after login.`,
+    `${env.ADMIN_EMAIL} user account created. Password is ${env.ADMIN_PASSWORD}. Change its password after login.`,
   );
 }
