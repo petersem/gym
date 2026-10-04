@@ -37,6 +37,7 @@ jobs:
 
   unit-tests:
     name: Unit Tests
+    needs: [style-check]
     runs-on: ubuntu-latest
     services:
       mysql:
