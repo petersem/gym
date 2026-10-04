@@ -310,12 +310,12 @@ describe("admin seeding", () => {
       ).rejects.toThrow(key);
     },
   );
-  test("does not log the initial password", async () => {
+  test("hashes the initial password and logs the account creation message", async () => {
     const { connection } = setup({ admins: [] });
     await ensureAdmin(connection, env);
     expect(bcrypt.hash).toHaveBeenCalledWith(env.ADMIN_PASSWORD, 10);
-    expect(JSON.stringify(console.log.mock.calls)).not.toContain(
-      env.ADMIN_PASSWORD,
+    expect(console.log).toHaveBeenCalledWith(
+      `${env.ADMIN_EMAIL} user account created. Password is ${env.ADMIN_PASSWORD}. Change its password after login.`,
     );
   });
 });
