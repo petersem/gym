@@ -140,9 +140,11 @@ export async function initializeDatabase(env) {
       );
     }
     if (!state || state.status === "initializing") {
+      console.log("Initializing database schema...");
       await connection.query(
         readFileSync(new URL("./schema.sql", import.meta.url), "utf8"),
       );
+      console.log("Applied database schema...");
       await connection.beginTransaction();
       try {
         if (seed) {
