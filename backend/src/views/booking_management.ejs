@@ -158,16 +158,10 @@
                                                         <% }) %>
                                                 </select>
                                                 <% if (canManageBookings) { %>
-                                                    <% const isTrainerUser=authenticatedUser &&
-                                                        authenticatedUser.role==='trainer' ; %>
                                                         <% const sortedTrainers=[...users].filter((user)=> user.role ===
                                                             'trainer').sort((a, b) =>
                                                             a.last_name.localeCompare(b.last_name)
                                                             || a.first_name.localeCompare(b.first_name)); %>
-                                                            <% const trainerOptions=isTrainerUser ?
-                                                                sortedTrainers.filter((trainer)=> Number(trainer.id) ===
-                                                                Number(authenticatedUser.id))
-                                                                : sortedTrainers; %>
                                                                 <label for="booking-trainer-filter">Booked
                                                                     trainer</label>
                                                                 <select id="booking-trainer-filter"
@@ -229,8 +223,13 @@
                                                                                                             Number(booking.user_id));
                                                                                                             %>
                                                                                                             <li>
+                                                                                                                <% const canDeleteThisBooking = canDeleteBooking(booking, bookingSession); %>
+                                                                                                                <% if (canDeleteThisBooking) { %>
                                                                                                                 <a href="/bookings/<%= booking.id %><%= canManageBookings ? '?' + bookingFilterQuery : '' %>#bookings-next-7-days"
                                                                                                                     title="<%= bookingSession ? getSessionHoverText(bookingSession) : 'Session details unavailable' %>">
+                                                                                                                <% } else { %>
+                                                                                                                <span title="<%= bookingSession ? getSessionHoverText(bookingSession) : 'Session details unavailable' %>">
+                                                                                                                <% } %>
                                                                                                                     <%= bookingSession
                                                                                                                         ?
                                                                                                                         formatSessionTime(bookingSession.time)
@@ -264,9 +263,13 @@
                                                                                                                                     )
                                                                                                                                     <% }
                                                                                                                                         %>
+                                                                                                                <% if (canDeleteThisBooking) { %>
                                                                                                                 </a>
+                                                                                                                <% } else { %>
+                                                                                                                </span>
+                                                                                                                <% } %>
                                                                                                                 <% if
-                                                                                                                    (selectedBooking.id===booking.id)
+                                                                                                                    (selectedBooking.id===booking.id && canDeleteThisBooking)
                                                                                                                     { %>
                                                                                                                     <form
                                                                                                                         action="/bookings/<%= booking.id %><%= canManageBookings ? '?' + bookingFilterQuery : '' %>"

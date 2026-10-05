@@ -72,6 +72,10 @@ const bookingPageUrl = (
   return search ? `/bookings?${search}` : "/bookings";
 };
 
+const trainerCanDeleteBooking = (trainerId, booking, session) =>
+  Number(booking.user_id) === Number(trainerId) ||
+  Number(session?.trainer_id) === Number(trainerId);
+
 /**
  * BookingsController handles the management, viewing, and exporting of gym bookings.
  */
@@ -301,13 +305,7 @@ export class BookingsController {
               : Number(bookingUserIdParam) || null
           : (req.authenticatedUser?.id ?? null);
         const bookingTrainerId = canManageBookings
-          ? bookingTrainerIdParam === undefined
-            ? req.authenticatedUser?.role === "trainer"
-              ? (req.authenticatedUser.id ?? null)
-              : null
-            : bookingTrainerIdParam === "all"
-              ? null
-              : Number(bookingTrainerIdParam) || null
+          ? Number(bookingTrainerIdParam) || null
           : null;
         const availableSessions = availableLocationId
           ? sessions.filter(
@@ -417,6 +415,9 @@ export class BookingsController {
           bookingTrainerId,
           bookingUserId,
           canManageBookings,
+          canDeleteBooking: (booking, session) =>
+            req.authenticatedUser?.role !== "trainer" ||
+            trainerCanDeleteBooking(req.authenticatedUser.id, booking, session),
           bookingDeleted: req.query.booking_deleted === "1",
           bookingCreated: req.query.booking_created === "1",
           authenticatedUser: req.authenticatedUser,
@@ -481,18 +482,19 @@ export class BookingsController {
                 ),
               )
               .then(({ existingBooking, session }) => {
-                const ownsSession =
-                  Number(session.trainer_id) ===
-                  Number(req.authenticatedUser.id);
-                const ownsBooking =
-                  Number(existingBooking.user_id) ===
-                  Number(req.authenticatedUser.id);
-                if (!ownsSession && !ownsBooking) {
-                  return res.status(403).render("status.ejs", {
+                if (
+                  !trainerCanDeleteBooking(
+                    req.authenticatedUser.id,
+                    existingBooking,
+                    session,
+                  )
+                ) {
+                  res.status(403).render("status.ejs", {
                     status: "Booking Deletion Forbidden",
                     message:
                       "You can only delete bookings for your own sessions or your own bookings",
                   });
+                  return;
                 }
                 return BookingsModel.delete(booking.id);
               })

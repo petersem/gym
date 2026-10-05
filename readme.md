@@ -12,6 +12,12 @@ Gym app for Tafe stage 2 assessment
 
 ![Architecture diagram](https://raw.githubusercontent.com/petersem/gym/main/gh-assets/diagram.png)
 
+## Session management
+
+When creating or editing a session, trainers see only their own name in the trainer dropdown. New sessions default to the signed-in trainer. Admins can select any trainer.
+
+On the bookings page, trainers can view bookings for any trainer, with all trainers shown by default. They can delete only their own bookings or bookings linked to sessions they lead. Bookings they cannot delete are displayed as non-clickable text. Admin booking permissions are unchanged.
+
 ## Running the code
 
 > There is NO NEED to run any speific database or schema creation SQL. The application takes care of this for you.
@@ -22,6 +28,7 @@ Gym app for Tafe stage 2 assessment
 - Configure the .env file.
 
 Example `backend/.env`:
+
 ```
 # app settings
 PORT=3000
@@ -58,12 +65,13 @@ DATA_SEED=true
   - Seed sample data if a new database and the seed option is true
 - The application is then started and available locally on the specified port.
 
-### Docker
+### Docker (Recomended for production)
 
 - Docker is installed and configured
 - On your docker host machine, create and populate `.env` and `compose.yaml` files. Suggested options below:
 
 Example `.env`:
+
 ```
 # app settings
 PORT=3000
@@ -90,6 +98,7 @@ DATA_SEED=true
 ```
 
 Example `compose.yaml` file
+
 ```
 services:
   gymdb:

@@ -12,6 +12,8 @@ import { UsersModel } from "../../models/UsersModel.mjs";
 import { SessionsModel } from "../../models/SessionsModel.mjs";
 import { LocationModel } from "../../models/LocationModel.mjs";
 import { ActivitiesModel } from "../../models/ActivitiesModel.mjs";
+import ejs from "ejs";
+import { fileURLToPath } from "node:url";
 
 const response = () => {
   const res = {
@@ -584,9 +586,7 @@ describe("BookingsController", () => {
       const defaultExpectations = {
         canManageBookings: true,
         bookingUserId: role === "admin" ? authenticatedUser.id : null,
-        ...(role === "trainer"
-          ? { bookingTrainerId: authenticatedUser.id }
-          : {}),
+        bookingTrainerId: null,
       };
       expect(res.render).toHaveBeenCalledWith(
         "booking_management.ejs",
@@ -603,9 +603,7 @@ describe("BookingsController", () => {
       expect(res.render.mock.calls.at(-1)[1]).toEqual(
         expect.objectContaining({
           bookingUserId: null,
-          ...(role === "trainer"
-            ? { bookingTrainerId: authenticatedUser.id }
-            : {}),
+          bookingTrainerId: null,
         }),
       );
       expect(
@@ -940,7 +938,7 @@ describe("BookingsController", () => {
     );
   });
 
-  test("allows trainers to delete bookings only for their own sessions", async () => {
+  test("allows trainers to delete their own bookings or bookings for their own sessions", async () => {
     jest
       .spyOn(BookingsModel, "getById")
       .mockResolvedValue({ id: 2, session_id: 9 });
@@ -960,12 +958,37 @@ describe("BookingsController", () => {
     expect(deleteBooking).toHaveBeenCalledWith(2);
 
     SessionsModel.getById.mockResolvedValue({ id: 9, trainer_id: 13 });
+    BookingsModel.getById.mockResolvedValue({
+      id: 2,
+      session_id: 9,
+      user_id: "12",
+    });
     await BookingsController.handleBookingManagement(
       request({ id: "2" }, {}, { action: "delete" }, trainer),
       res,
     );
-    expect(deleteBooking).toHaveBeenCalledTimes(1);
-    expect(res.status).toHaveBeenCalledWith(403);
+    expect(deleteBooking).toHaveBeenCalledTimes(2);
+
+    BookingsModel.getById.mockResolvedValue({
+      id: 2,
+      session_id: 9,
+      user_id: 14,
+    });
+    res.render.mockReturnValue(res);
+    res.redirect.mockClear();
+    res.status.mockClear();
+    await BookingsController.handleBookingManagement(
+      request(
+        { id: "2" },
+        {},
+        { action: "delete", userId: 12, sessionId: 99 },
+        trainer,
+      ),
+      res,
+    );
+    expect(deleteBooking).toHaveBeenCalledTimes(2);
+    expect(res.status.mock.calls).toEqual([[403]]);
+    expect(res.redirect).not.toHaveBeenCalled();
     expect(res.render).toHaveBeenCalledWith(
       "status.ejs",
       expect.objectContaining({
@@ -973,6 +996,87 @@ describe("BookingsController", () => {
       }),
     );
   });
+
+  test.each(["trainer", "admin"])(
+    "%s sees bookings for all trainers with deletion controls matching ownership",
+    async (role) => {
+      const today = new Date();
+      const date = [
+        today.getFullYear(),
+        String(today.getMonth() + 1).padStart(2, "0"),
+        String(today.getDate()).padStart(2, "0"),
+      ].join("-");
+      const sessions = [
+        { id: 9, trainer_id: 12, title: "Own session", date, time: "09:00:00" },
+        {
+          id: 10,
+          trainer_id: 13,
+          title: "Other session",
+          date,
+          time: "10:00:00",
+        },
+      ];
+      const bookings = [
+        { id: 1, session_id: 9, user_id: 14 },
+        { id: 2, session_id: 10, user_id: "12" },
+        { id: 3, session_id: 10, user_id: 14 },
+      ];
+      jest.spyOn(BookingsModel, "getAll").mockResolvedValue(bookings);
+      jest.spyOn(SessionsModel, "getAll").mockResolvedValue(sessions);
+      jest.spyOn(UsersModel, "getAll").mockResolvedValue([
+        { id: 12, role: "trainer", first_name: "Own", last_name: "Trainer" },
+        { id: 13, role: "trainer", first_name: "Other", last_name: "Trainer" },
+        { id: 14, role: "member", first_name: "Test", last_name: "Member" },
+      ]);
+      jest.spyOn(LocationModel, "getAll").mockResolvedValue([]);
+      jest.spyOn(ActivitiesModel, "getAll").mockResolvedValue([]);
+      for (const booking of bookings) {
+        const res = response();
+        await BookingsController.viewBookingManagement(
+          request(
+            { id: String(booking.id) },
+            role === "admin" ? { booking_user_id: "all" } : {},
+            {},
+            { id: "12", role },
+          ),
+          res,
+        );
+        const locals = res.render.mock.calls[0][1];
+        expect(locals.bookingTrainerId).toBeNull();
+        expect(locals.bookingCalendarDays[0].bookings).toEqual(bookings);
+        const html = await ejs.renderFile(
+          fileURLToPath(
+            new URL("../../views/booking_management.ejs", import.meta.url),
+          ),
+          locals,
+        );
+        expect(html).toContain("Own session");
+        expect(html).toContain("Other session");
+        const trainerSelect = html.match(
+          /<select id="booking-trainer-filter"[\s\S]*?<\/select>/,
+        )[0];
+        expect(trainerSelect).toContain("All trainers");
+        expect(trainerSelect).toContain('value="12"');
+        expect(trainerSelect).toContain('value="13"');
+        expect(/value="delete"/.test(html)).toBe(
+          role === "admin" || booking.id !== 3,
+        );
+        const bookingList = html.slice(
+          html.indexOf('<section id="bookings-next-7-days">'),
+        );
+        for (const listedBooking of bookings) {
+          expect(
+            bookingList.includes(`href="/bookings/${listedBooking.id}?`),
+          ).toBe(role === "admin" || listedBooking.id !== 3);
+        }
+        if (role === "trainer") {
+          expect(bookingList).toMatch(
+            /<span title="[^"]+">[\s\S]*?Other session[\s\S]*?Member,[\s\S]*?Test[\s\S]*?<\/span>/,
+          );
+        }
+      }
+    },
+  );
 
   test("forwards errors from booking JSON handlers", async () => {
     const error = new Error("database error");
