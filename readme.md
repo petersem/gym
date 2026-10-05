@@ -19,9 +19,9 @@ Gym app for Tafe stage 2 assessment
 ### Development
 
 - You will need to have mySQL v8 or above installed and running
-- Configure the .env file
-  Example `backend/.env`:
+- Configure the .env file.
 
+Example `backend/.env`:
 ```
 # app settings
 PORT=3000
@@ -61,10 +61,9 @@ DATA_SEED=true
 ### Docker
 
 - Docker is installed and configured
-- On your docker host machine, create and populate `.env` and a `compose.yaml` files. Suggested options below:
+- On your docker host machine, create and populate `.env` and `compose.yaml` files. Suggested options below:
 
 Example `.env`:
-
 ```
 # app settings
 PORT=3000
@@ -84,12 +83,13 @@ DB_PASSWORD=Testing123!
 # app admin credentials
 ADMIN_EMAIL=admin@gym.com
 ADMIN_PASSWORD=testing123
+
+# Option to populate with same data (only on first install)
 DATA_SEED=true
 
 ```
 
 Example `compose.yaml` file
-
 ```
 services:
   gymdb:
