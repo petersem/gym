@@ -18,6 +18,8 @@ When creating or editing a session, trainers see only their own name in the trai
 
 On the bookings page, trainers can view bookings for any trainer, with all trainers shown by default. They can delete only their own bookings or bookings linked to sessions they lead. Bookings they cannot delete are displayed as non-clickable text. Admin booking permissions are unchanged.
 
+The Booked user dropdown includes users with bookings matching the date, location, and trainer filters, regardless of the selected user. Selecting a user filters the displayed bookings without narrowing the dropdown. Select All users to clear the user filter.
+
 ## Running the code
 
 > There is NO NEED to run any speific database or schema creation SQL. The application takes care of this for you.

@@ -178,7 +178,9 @@
                                                                         <% }) %>
 
                                                                 </select>
-                                                                <% const sortedUsers=[...users].sort((a, b)=>
+                                                                <% const visibleBookingSessionIds = new Set(bookingCalendarDays.flatMap((day) => day.sessions.map((session) => Number(session.id)))); %>
+                                                                <% const visibleBookingUserIds = new Set(bookings.filter((booking) => visibleBookingSessionIds.has(Number(booking.session_id))).map((booking) => Number(booking.user_id))); %>
+                                                                <% const sortedUsers=users.filter((user) => visibleBookingUserIds.has(Number(user.id))).sort((a, b)=>
                                                                     a.last_name.localeCompare(b.last_name) ||
                                                                     a.first_name.localeCompare(b.first_name)); %>
                                                                     <label for="booking-user-filter">Booked user</label>

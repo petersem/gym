@@ -1078,6 +1078,113 @@ describe("BookingsController", () => {
     },
   );
 
+  test.each(["admin", "trainer"])(
+    "%s sees booked users matching date, location, and trainer regardless of the selected user",
+    async (role) => {
+      const dateForOffset = (offset) => {
+        const date = new Date();
+        date.setDate(date.getDate() + offset);
+        return [
+          date.getFullYear(),
+          String(date.getMonth() + 1).padStart(2, "0"),
+          String(date.getDate()).padStart(2, "0"),
+        ].join("-");
+      };
+      const sessions = [
+        { id: 1, trainer_id: 12, location_id: 1, date: dateForOffset(0) },
+        { id: 2, trainer_id: 13, location_id: 2, date: dateForOffset(6) },
+        { id: 3, trainer_id: 12, location_id: 1, date: dateForOffset(-1) },
+        { id: 4, trainer_id: 12, location_id: 1, date: dateForOffset(7) },
+      ].map((session) => ({
+        ...session,
+        title: `Session ${session.id}`,
+        time: "09:00:00",
+      }));
+      jest.spyOn(SessionsModel, "getAll").mockResolvedValue(sessions);
+      jest.spyOn(BookingsModel, "getAll").mockResolvedValue([
+        { id: 1, session_id: 1, user_id: "21" },
+        { id: 2, session_id: 1, user_id: 21 },
+        { id: 3, session_id: 2, user_id: 22 },
+        { id: 4, session_id: 3, user_id: 23 },
+        { id: 5, session_id: 4, user_id: 24 },
+      ]);
+      jest.spyOn(UsersModel, "getAll").mockResolvedValue([
+        { id: 12, role: "trainer", first_name: "Own", last_name: "Trainer" },
+        { id: 13, role: "trainer", first_name: "Other", last_name: "Trainer" },
+        ...[21, 22, 23, 24, 25].map((id) => ({
+          id: String(id),
+          role: "member",
+          first_name: "User",
+          last_name: String(id),
+        })),
+      ]);
+      jest.spyOn(LocationModel, "getAll").mockResolvedValue([]);
+      jest.spyOn(ActivitiesModel, "getAll").mockResolvedValue([]);
+
+      const cases = [
+        [{}, ["21", "22"]],
+        [{ booking_location_id: "1" }, ["21"]],
+        [{ booking_trainer_id: "13" }, ["22"]],
+        [{ booking_user_id: "22" }, ["21", "22"]],
+        [{ booking_user_id: "25" }, ["21", "22"]],
+        [{ booking_location_id: "1", booking_user_id: "22" }, ["21"]],
+        [{ booking_trainer_id: "13", booking_user_id: "21" }, ["22"]],
+        [
+          {
+            booking_location_id: "2",
+            booking_trainer_id: "13",
+            booking_user_id: "22",
+          },
+          ["22"],
+        ],
+        [{ booking_location_id: "99" }, []],
+      ];
+      for (const [filters, expectedUserIds] of cases) {
+        const res = response();
+        await BookingsController.viewBookingManagement(
+          request(
+            {},
+            { booking_user_id: "all", ...filters },
+            {},
+            { id: 12, role },
+          ),
+          res,
+        );
+        const locals = res.render.mock.calls[0][1];
+        if (filters.booking_user_id) {
+          expect(
+            locals.bookingCalendarDays
+              .flatMap((day) => day.bookings)
+              .every(
+                (booking) =>
+                  Number(booking.user_id) === Number(filters.booking_user_id),
+              ),
+          ).toBe(true);
+        }
+        const html = await ejs.renderFile(
+          fileURLToPath(
+            new URL("../../views/booking_management.ejs", import.meta.url),
+          ),
+          locals,
+        );
+        const select = html.match(
+          /<select id="booking-user-filter"[\s\S]*?<\/select>/,
+        )[0];
+        expect(
+          [...select.matchAll(/<option value="([^"]+)"/g)].map(
+            ([, value]) => value,
+          ),
+        ).toEqual(["all", ...expectedUserIds]);
+        if (
+          filters.booking_user_id === "22" &&
+          expectedUserIds.includes("22")
+        ) {
+          expect(select).toMatch(/value="22"\s+selected/);
+        }
+      }
+    },
+  );
+
   test("forwards errors from booking JSON handlers", async () => {
     const error = new Error("database error");
     const errorNext = next();
