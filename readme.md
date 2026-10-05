@@ -8,7 +8,7 @@ Gym app for Tafe stage 2 assessment
 
 ![gym app](https://raw.githubusercontent.com/petersem/gym/main/gh-assets/gymapp.png)
 
-[![Architecture diagram](https://gitdiagram.com/diagram-badge.svg)](https://gitdiagram.com/petersem/gym?utm_source=readme&utm_medium=badge)
+[![Architecture diagram](https://raw.githubusercontent.com/petersem/gym/main/gh-assets/diagram.png)
 
 ## Running the code
 
