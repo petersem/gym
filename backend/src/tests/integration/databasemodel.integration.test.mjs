@@ -17,9 +17,23 @@ describe("DatabaseModel database integration", () => {
     expect(result[0][""].value).toBe("integration-test");
   });
 
-  test("Integration test - returns an activity from MySQL", async () => {
-    const activity = await ActivitiesModel.getById(1);
+  test("Integration test - creates, reads, and removes an activity", async () => {
+    const name = `integration-test-${Date.now()}`;
+    const description = "Activity created by the integration test";
+    const result = await ActivitiesModel.create(
+      new ActivitiesModel(null, name, description, 0, 2),
+    );
 
-    expect(activity).toMatchObject({ id: 1, name: "Cardio" });
+    try {
+      const activity = await ActivitiesModel.getById(result.insertId);
+
+      expect(activity).toMatchObject({
+        id: result.insertId,
+        name,
+        description,
+      });
+    } finally {
+      await ActivitiesModel.delete(result.insertId);
+    }
   });
 });

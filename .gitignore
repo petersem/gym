@@ -7,3 +7,5 @@ backend/src/public/docs/*
 .env
 **/.env
 **/.envprod
+test_results.txt
+
