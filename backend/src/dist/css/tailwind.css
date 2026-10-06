@@ -3271,12 +3271,6 @@ section > ul:not(.menu) > li {
   grid-template-columns: 1fr 1fr;
   align-items: stretch;
 }
-.sales-section h3 {
-  margin: 1rem 0;
-}
-.sales-section p {
-  margin: 0.5rem 0;
-}
 .available-session-select, .available-session-label {
   min-height: 0;
   padding: 0;

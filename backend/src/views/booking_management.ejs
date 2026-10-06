@@ -255,14 +255,12 @@
                                                                                                                                 bookingUserId===null)
                                                                                                                                 {
                                                                                                                                 %>
-                                                                                                                                (
-                                                                                                                                <%= bookingUser
+                                                                                                                                (<%= bookingUser
                                                                                                                                     ?
                                                                                                                                     `${bookingUser.last_name},
                                                                                                                                     ${bookingUser.first_name}`
                                                                                                                                     : 'Unknown user'
-                                                                                                                                    %>
-                                                                                                                                    )
+                                                                                                                                    %>)
                                                                                                                                     <% }
                                                                                                                                         %>
                                                                                                                 <% if (canDeleteThisBooking) { %>

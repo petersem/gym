@@ -907,12 +907,12 @@ section > ul:not(.menu) > li {
   align-items: stretch;
 }
 
-.sales-section h3 {
+/* .sales-section h3 {
   margin: 1rem 0;
 }
 .sales-section p {
   margin: 0.5rem 0;
-}
+} */
 
 .available-session-select,
 .available-session-label {
