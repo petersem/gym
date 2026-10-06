@@ -15,9 +15,10 @@ const xmlBuilder = new XMLBuilder({
 
 const bookingsDtd = `<!DOCTYPE gymBookings [
 <!ELEMENT gymBookings (booking*)>
-<!ELEMENT booking (id, userId, created, session)>
+<!ELEMENT booking (id, userId, user, created, session)>
 <!ELEMENT id (#PCDATA)>
 <!ELEMENT userId (#PCDATA)>
+<!ELEMENT user (firstName, lastName)>
 <!ELEMENT created (#PCDATA)>
 <!ELEMENT session (id, title, date, time, activity, trainer, location)>
 <!ELEMENT title (#PCDATA)>
@@ -220,10 +221,17 @@ export class BookingsController {
           users.find(
             (user) => Number(user.id) === Number(session.trainer_id),
           ) ?? {};
+        const bookingUser =
+          users.find((user) => Number(user.id) === Number(booking.user_id)) ??
+          {};
 
         return {
           id: String(booking.id),
           userId: String(booking.user_id),
+          user: {
+            firstName: String(bookingUser.first_name ?? ""),
+            lastName: String(bookingUser.last_name ?? ""),
+          },
           created: String(booking.created ?? ""),
           session: {
             id: String(session.id),

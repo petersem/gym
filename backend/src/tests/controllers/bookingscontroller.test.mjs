@@ -113,11 +113,10 @@ describe("BookingsController", () => {
       .mockResolvedValue([
         { id: 3, name: "Strength", description: "Build strength & mobility." },
       ]);
-    jest
-      .spyOn(UsersModel, "getAll")
-      .mockResolvedValue([
-        { id: 12, first_name: "Taylor", last_name: "Trainer" },
-      ]);
+    jest.spyOn(UsersModel, "getAll").mockResolvedValue([
+      { id: "7", first_name: "Alex & Sam", last_name: "O'Brien" },
+      { id: 12, first_name: "Taylor", last_name: "Trainer" },
+    ]);
     const res = response();
 
     await BookingsController.exportBookingsXml(
@@ -136,7 +135,16 @@ describe("BookingsController", () => {
     );
     expect(res.send.mock.calls[0][0]).toContain("<!DOCTYPE gymBookings [");
     expect(res.send.mock.calls[0][0]).toContain(
-      "<!ELEMENT booking (id, userId, created, session)>",
+      "<!ELEMENT booking (id, userId, user, created, session)>",
+    );
+    expect(res.send.mock.calls[0][0]).toContain(
+      "<!ELEMENT user (firstName, lastName)>",
+    );
+    expect(res.send.mock.calls[0][0]).toMatch(
+      /<user>\s*<firstName>Alex &amp; Sam<\/firstName>\s*<lastName>O&apos;Brien<\/lastName>\s*<\/user>/,
+    );
+    expect(res.send.mock.calls[0][0]).toMatch(
+      /<trainer>\s*<firstName>Taylor<\/firstName>\s*<lastName>Trainer<\/lastName>\s*<\/trainer>/,
     );
     expect(res.send.mock.calls[0][0]).toContain("<gymBookings>");
     expect(res.send.mock.calls[0][0]).toContain(
@@ -392,6 +400,9 @@ describe("BookingsController", () => {
 
     const xml = res.send.mock.calls[0][0];
     expect(xml).toContain("<created>2026-10-02 09:00:00</created>");
+    expect(xml).toMatch(
+      /<user>\s*<firstName><\/firstName>\s*<lastName><\/lastName>\s*<\/user>/,
+    );
     expect(xml).toContain("<title></title>");
     expect(xml).toContain("<time></time>");
     expect(xml).toContain("<activity>");
