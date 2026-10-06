@@ -7,8 +7,8 @@ export async function ensureAdmin(connection, env) {
   );
   if (admins.length > 0) {
     console.log(
-      logWarning, 
-      `${env.ADMIN_EMAIL} account already exists. Will not be recreated`
+      logWarning,
+      `${env.ADMIN_EMAIL} account already exists. Will not be recreated`,
     );
     return;
   }
