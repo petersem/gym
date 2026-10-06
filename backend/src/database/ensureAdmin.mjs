@@ -1,11 +1,15 @@
 import bcrypt from "bcrypt";
+import { logInfo, logWarning } from "../utilities/logger.mjs";
 
 export async function ensureAdmin(connection, env) {
   const [admins] = await connection.query(
     "SELECT id FROM users WHERE role = 'admin' AND deleted = 0 LIMIT 1",
   );
   if (admins.length > 0) {
-    console.log(`${env.ADMIN_EMAIL} account already exists.`);
+    console.log(
+      logWarning, 
+      `${env.ADMIN_EMAIL} account already exists. Will not be recreated`
+    );
     return;
   }
   if (!env.ADMIN_EMAIL || !env.ADMIN_PASSWORD) {
@@ -20,6 +24,7 @@ export async function ensureAdmin(connection, env) {
     ["Gym", "Admin", env.ADMIN_EMAIL, passwordHash],
   );
   console.log(
+    logInfo,
     `${env.ADMIN_EMAIL} user account created. Password is ${env.ADMIN_PASSWORD}. Change its password after login.`,
   );
 }

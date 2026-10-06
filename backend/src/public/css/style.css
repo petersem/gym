@@ -292,6 +292,11 @@ main > section {
   border-bottom: 1px solid var(--gym-line);
 }
 
+main > .available-sessions-section {
+  padding-bottom: 9px;
+  border-bottom: 0;
+}
+
 section h2 {
   display: flex;
   align-items: center;
@@ -428,6 +433,10 @@ textarea {
 textarea {
   min-height: 130px;
   resize: vertical;
+}
+
+.blog-form #content {
+  min-height: 65px;
 }
 
 .register-submit {
@@ -800,6 +809,14 @@ section > ul:not(.menu) > li {
   padding: 2px 2px 12px;
 }
 
+.available-sessions-calendar {
+  padding-top: 10px;
+}
+
+.bookings-days-calendar {
+  padding-top: 10px;
+}
+
 .session-day {
   min-height: 150px;
   padding: 14px;
@@ -1056,6 +1073,10 @@ section > ul:not(.menu) > li {
 
   .section-heading-row {
     position: relative;
+  }
+
+  #bookings-next-7-days .section-heading-row > .btn {
+    margin-left: auto;
   }
 
   .alert-stack {

@@ -3,6 +3,7 @@ import { readFileSync } from "node:fs";
 import { setTimeout } from "node:timers/promises";
 import mysql from "mysql2/promise";
 import { ensureAdmin } from "./ensureAdmin.mjs";
+import { logInfo, logWarning } from "../utilities/logger.mjs";
 
 const tables = [
   "users",
@@ -64,7 +65,7 @@ export async function connectWithRetry(options, attempts = 30, delay = 2000) {
       return await mysql.createConnection(options);
     } catch (error) {
       if (!retryableErrors.has(error.code) || attempt === attempts) throw error;
-      console.log(`Waiting for MySQL (${attempt}/${attempts})...`);
+      console.log(logInfo, `Waiting for MySQL (${attempt}/${attempts})...`);
       await setTimeout(delay);
     }
   }
@@ -88,26 +89,31 @@ export async function initializeDatabase(env) {
       [env.DB_NAME],
     );
     const databaseExists = existingDatabases.length > 0;
-    console.log(
-      databaseExists
-        ? `Database ${database} already exists.`
-        : `Creating database ${database}...`,
-    );
+    if (databaseExists) {
+      console.log(
+        logWarning,
+        `Database ${database} already exists. It will not be recreated.`,
+      );
+    } else {
+      console.log(logInfo, `Creating database ${database}...`);
+    }
+
     await connection.query(
       `CREATE DATABASE IF NOT EXISTS ${database} CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci`,
     );
-    if (!databaseExists) console.log(`Database ${database} created.`);
+    if (!databaseExists) console.log(logInfo, `Database ${database} created.`);
     const account = `${mysql.escape(env.DB_USER)}@'%'`;
-    console.log(`Creating MySQL app account ${account} if absent...`);
+    console.log(logInfo, `Creating MySQL app account ${account} if absent...`);
     await connection.query("CREATE USER IF NOT EXISTS ?@'%' IDENTIFIED BY ?", [
       env.DB_USER,
       env.DB_PASSWORD,
     ]);
-    console.log(`MySQL app account ${account} is available.`);
+    console.log(logInfo, `MySQL app account ${account} is available.`);
     await connection.query(
       `GRANT SELECT, INSERT, UPDATE, DELETE ON ${database}.* TO ?@'%'`,
       [env.DB_USER],
     );
+    console.log(logInfo, `Granted privileges on ${database} to ${account}.`);
     await connection.query(`USE ${database}`);
     await connection.query(
       `CREATE TABLE IF NOT EXISTS gym_initialization (
@@ -140,7 +146,7 @@ export async function initializeDatabase(env) {
       );
     }
     if (!state || state.status === "initializing") {
-      console.log("Initializing database schema...");
+      console.log(logInfo, "Initializing database schema...");
       await connection.query(
         readFileSync(new URL("./schema.sql", import.meta.url), "utf8"),
       );
@@ -162,6 +168,7 @@ export async function initializeDatabase(env) {
         throw error;
       }
       console.log(
+        logInfo,
         seed
           ? "Sample data seeded. All sample users have a password of 'testing123'"
           : "Sample data omitted.",
@@ -181,7 +188,7 @@ export async function initializeDatabase(env) {
     } finally {
       await appConnection.end();
     }
-    console.log("Database initialization complete.");
+    console.log(logInfo, "Database initialization complete.");
   } finally {
     // Closing this connection also releases its advisory lock.
     await connection.end();

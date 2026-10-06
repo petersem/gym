@@ -22,7 +22,7 @@
                                 <h2>BLOG - <%= selectedBlog.id ? 'UPDATE' : 'CREATE' %>
                                 </h2>
                                 <form action="<%= typeof hasFormFeedback !== 'undefined' && hasFormFeedback ? formDestination : '/blogs' + (selectedBlog.id ? '/' + selectedBlog.id : '') %>" method="post"
-                                    novalidate class="form-grid responsive-half">
+                                    novalidate class="form-grid responsive-half blog-form">
                                     <%- include("partials/form-errors.ejs", { fields: ['title', 'content'] }) %>
                                     <p class="two-col">* Required fields</p>
                                     <%- include("partials/form-field.ejs", { field: 'title', id: 'title', label: 'Subject', requiredField: true, value: selectedBlog.title }) %>

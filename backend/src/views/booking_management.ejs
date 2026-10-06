@@ -45,7 +45,7 @@
                                             </section>
                                         <% } %>
 
-                                        <section>
+                                        <section class="available-sessions-section">
                                             <div class="section-heading-row">
                                                 <h2>Available sessions next 7 days</h2>
                                                 <div class="alert-stack">
@@ -72,7 +72,7 @@
                                                     </option>
                                                     <% }) %>
                                             </select>
-                                            <div class="session-calendar">
+                                            <div class="session-calendar available-sessions-calendar">
                                                 <% calendarDays.forEach((day)=> { %>
                                                     <article class="session-day card bg-base-100">
                                                         <h3>
@@ -144,7 +144,7 @@
                                                     <h2>Bookings next 7 days</h2>
                                                     <a class="btn"
                                                         href="/bookings/export.xml?<%= xmlExportQuery %>">Download
-                                                        XML</a>
+                                                        </a>
                                                 </div>
                                                 <label for="booking-location-filter">Booked session location</label>
                                                 <select id="booking-location-filter"
@@ -198,7 +198,7 @@
                                                                             <% }) %>
                                                                     </select>
                                                                     <% } %>
-                                                                        <div class="session-calendar">
+                                                                        <div class="session-calendar bookings-days-calendar">
                                                                             <% bookingCalendarDays.forEach((day)=> { %>
                                                                                 <article
                                                                                     class="session-day card bg-base-100">
