@@ -79,6 +79,11 @@
                                                     <option value="title" <%=selectedSortBy==='title' ? 'selected' : ''
                                                         %>>Subject</option>
                                                 </select>
+                                            </div>
+                                        </div>
+                                        <div class="list-search">
+                                            <label for="sort-dir">Sort direction</label>
+                                            <div class="list-search-control">
                                                 <select name="sort_dir" id="sort-dir" onchange="this.form.submit()">
                                                     <option value="asc" <%=selectedSortDir==='asc' ? 'selected' : '' %>
                                                         >Ascending</option>
