@@ -7,6 +7,7 @@ import {
   initializeDatabase,
 } from "../../database/initializeDatabase.mjs";
 import { ensureAdmin } from "../../database/ensureAdmin.mjs";
+import { logInfo, logWarning } from "../../utilities/logger.mjs";
 
 const env = {
   DB_HOST: "localhost",
@@ -157,23 +158,28 @@ describe("database initialization", () => {
       setup({ databaseExists });
       await initializeDatabase(env);
       expect(console.log).toHaveBeenCalledWith(
+        databaseExists ? logWarning : logInfo,
         databaseExists
-          ? "Database `gym_test` already exists."
+          ? "Database `gym_test` already exists. It will not be recreated."
           : "Creating database `gym_test`...",
       );
       if (databaseExists) {
         expect(console.log).not.toHaveBeenCalledWith(
+          logInfo,
           "Database `gym_test` created.",
         );
       } else {
         expect(console.log).toHaveBeenCalledWith(
+          logInfo,
           "Database `gym_test` created.",
         );
       }
       expect(console.log).toHaveBeenCalledWith(
+        logInfo,
         "Creating MySQL app account 'gym_test_user'@'%' if absent...",
       );
       expect(console.log).toHaveBeenCalledWith(
+        logInfo,
         "MySQL app account 'gym_test_user'@'%' is available.",
       );
       expect(JSON.stringify(console.log.mock.calls)).not.toContain(
@@ -193,7 +199,7 @@ describe("database initialization", () => {
       return query(sql, values);
     });
     await expect(initializeDatabase(env)).rejects.toThrow("creation failed");
-    expect(console.log).not.toHaveBeenCalledWith(message);
+    expect(console.log).not.toHaveBeenCalledWith(logInfo, message);
     expect(connection.end).toHaveBeenCalled();
   });
 
@@ -315,6 +321,7 @@ describe("admin seeding", () => {
     await ensureAdmin(connection, env);
     expect(bcrypt.hash).toHaveBeenCalledWith(env.ADMIN_PASSWORD, 10);
     expect(console.log).toHaveBeenCalledWith(
+      logInfo,
       `${env.ADMIN_EMAIL} user account created. Password is ${env.ADMIN_PASSWORD}. Change its password after login.`,
     );
   });
