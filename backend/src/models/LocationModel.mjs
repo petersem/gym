@@ -1,8 +1,23 @@
 import { DatabaseModel } from "./DatabaseModel.mjs";
 
+/**
+ * Represents a gym location stored in the locations table.
+ */
 export class LocationModel extends DatabaseModel {
   //// Instance
 
+  /**
+   * @param {number|null} id Location identifier.
+   * @param {string} name Location name.
+   * @param {string} phone Contact phone number.
+   * @param {string} email Contact email address.
+   * @param {string} street Street address.
+   * @param {string} suburb Suburb name.
+   * @param {string|number} postcode Postal code.
+   * @param {number|null} manager ID of the location manager.
+   * @param {number} deleted Soft-delete flag.
+   * @param {number} updatedBy ID of the user who last updated the location.
+   */
   constructor(
     id,
     name,
@@ -30,6 +45,11 @@ export class LocationModel extends DatabaseModel {
 
   //// Static
 
+  /**
+   * Convert a database row into a LocationModel instance.
+   * @param {Object} row Database row.
+   * @returns {LocationModel} Mapped location.
+   */
   static tableToModel(row) {
     return new LocationModel(
       Number(row["id"]),

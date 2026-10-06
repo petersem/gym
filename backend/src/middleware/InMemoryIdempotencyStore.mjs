@@ -37,14 +37,29 @@ export class InMemoryIdempotencyStore {
     return this.records.get(key);
   }
 
+  /**
+   * Store or replace an idempotency record.
+   * @param {string} key Record key.
+   * @param {Object} record Request record containing a createdAt date.
+   * @returns {void}
+   */
   set(key, record) {
     this.records.set(key, record);
   }
 
+  /**
+   * Remove an idempotency record by its key.
+   * @param {string} key Record key.
+   * @returns {void}
+   */
   delete(key) {
     this.records.delete(key);
   }
 
+  /**
+   * Remove records older than the configured time to live.
+   * @returns {void}
+   */
   cleanup() {
     const cutoff = Date.now() - this.ttlMs;
 
@@ -58,6 +73,10 @@ export class InMemoryIdempotencyStore {
     }
   }
 
+  /**
+   * Stop the periodic cleanup timer.
+   * @returns {void}
+   */
   stop() {
     clearInterval(this.cleanupIntervalM);
   }

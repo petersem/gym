@@ -160,6 +160,10 @@ export class AuthenticationController {
     res.render("login.ejs");
   }
 
+  /**
+   * Render the member registration form.
+   * @type {express.RequestHandler}
+   */
   static viewRegister(req, res) {
     res.render("register.ejs");
   }
@@ -202,6 +206,10 @@ export class AuthenticationController {
     }
   }
 
+  /**
+   * Create a member account with a hashed password and redirect to login.
+   * @type {express.RequestHandler}
+   */
   static async handleRegister(req, res) {
     const { firstName, lastName, email, password, phone, dob } = req.body;
 

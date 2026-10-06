@@ -67,6 +67,7 @@ DATA_SEED=true
 - Run eslint linter `npm run lint`
 - Run prettier linter `npm run prettier:check`
 - Generate JSDoc documentation _backend/src/public/docs_ `npm run jsdoc`
+- Run tests with output to _test_results.txt_ file `npm run testfilee`
 
 #### Docker (Recomended for production)
 
