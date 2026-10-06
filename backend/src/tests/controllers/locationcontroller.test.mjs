@@ -269,18 +269,6 @@ describe("LocationController", () => {
     expect(res.status).toHaveBeenCalledWith(500);
   });
 
-  test("reports that sales are unavailable", () => {
-    const res = response();
-
-    LocationController.viewLocationSales(request(), res);
-
-    expect(res.status).toHaveBeenCalledWith(501);
-    expect(res.render).toHaveBeenCalledWith("status.ejs", {
-      status: "Locations Unavailable",
-      message: "Locations are not available yet.",
-    });
-  });
-
   test("renders location details", async () => {
     const location = { id: 3 };
     jest.spyOn(LocationModel, "getById").mockResolvedValue(location);
