@@ -22,7 +22,7 @@ export class DatabaseModel {
    * Execute a SQL query using the shared connection pool.
    * @param {string} sql SQL statement with optional parameter placeholders.
    * @param {Array<*>} [values] Values bound to the SQL placeholders.
-   * @returns {Promise<Array<Object>|import("mysql2").ResultSetHeader>} Query rows or write result.
+   * @returns {Promise<Array<Object>|Object>} Query rows or write result.
    */
   static async query(sql, values) {
     const [result] = await this.connection.query(sql, values);
