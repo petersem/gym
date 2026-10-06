@@ -123,13 +123,10 @@ export class AuthenticationController {
         secret: "9c55abf5-111d-4235-b8d8-07c3463999e7",
         resave: false,
         saveUninitialized: false,
-        cookie: {
-          sameSite: "lax",
-          secure: "auto",
-        },
-        // cookie: { secure: "auto" },
+        cookie: { secure: "auto" },
       }),
     );
+
     this.middleware.use(this.#sessionAuthenticationProvider);
 
     this.routes.get("/", this.viewLogin);
