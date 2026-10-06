@@ -28,6 +28,7 @@ import {
 } from "./middleware/middlewareLoader.mjs";
 import { logInfo } from "./utilities/logger.mjs";
 import { formFeedback } from "./middleware/formFeedback.mjs";
+import { notFound } from "./middleware/notFound.mjs";
 
 let appVersion = pkg.version;
 try {
@@ -205,6 +206,7 @@ app.get("/", async (req, res) => {
 
 app.use(express.static(path.join(import.meta.dirname, "public")));
 app.use(express.static(path.join(import.meta.dirname, "dist")));
+app.use(notFound);
 app.use(errorMiddleware());
 
 app.listen(port, () => {

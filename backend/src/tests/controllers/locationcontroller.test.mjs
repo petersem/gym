@@ -51,7 +51,7 @@ describe("LocationController", () => {
     );
   });
 
-  test("loads an off-page location and falls back when it is missing", async () => {
+  test("loads an off-page location and reports when it is missing", async () => {
     const location = { id: 9, name: "North Gym", postcode: 3001 };
     jest
       .spyOn(LocationModel, "list")
@@ -70,9 +70,53 @@ describe("LocationController", () => {
 
     expect(getById).toHaveBeenCalledWith("9");
     expect(res.render.mock.calls[0][1].selectedLocation).toBe(location);
-    expect(res.render.mock.calls[1][1].selectedLocation).toMatchObject({
-      id: null,
-      postcode: "",
+    expect(res.status).toHaveBeenCalledWith(404);
+    expect(res.render.mock.calls[1]).toEqual([
+      "status.ejs",
+      {
+        status: "Location not found",
+        message: "The requested location does not exist. Please check the URL.",
+      },
+    ]);
+  });
+
+  test.each(["sales", "abc", "0", "-1", "1.5", "2147483648"])(
+    "rejects invalid location ID %s before querying the database",
+    (id) => {
+      const list = jest.spyOn(LocationModel, "list");
+      const getById = jest.spyOn(LocationModel, "getById");
+      const res = response();
+
+      LocationController.viewLocationManagement(request({}, { id }), res);
+
+      expect(list).not.toHaveBeenCalled();
+      expect(getById).not.toHaveBeenCalled();
+      expect(res.status).toHaveBeenCalledWith(404);
+      expect(res.render).toHaveBeenCalledWith(
+        "status.ejs",
+        expect.objectContaining({ status: "Location not found" }),
+      );
+    },
+  );
+
+  test("reports database errors from an off-page location lookup", async () => {
+    jest
+      .spyOn(LocationModel, "list")
+      .mockResolvedValue({ locations: [], total: 0 });
+    jest.spyOn(UsersModel, "getAll").mockResolvedValue([]);
+    const error = new Error("database unavailable");
+    jest.spyOn(LocationModel, "getById").mockRejectedValue(error);
+    const log = jest.spyOn(console, "log").mockImplementation(() => {});
+    const res = response();
+
+    LocationController.viewLocationManagement(request({}, { id: "9" }), res);
+    await flushPromises();
+
+    expect(log).toHaveBeenCalledWith(error);
+    expect(res.status).toHaveBeenCalledWith(500);
+    expect(res.render).toHaveBeenCalledWith("status.ejs", {
+      status: "Database Error",
+      message: "Locations could not be loaded.",
     });
   });
 

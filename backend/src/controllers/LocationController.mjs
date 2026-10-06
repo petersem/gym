@@ -98,8 +98,6 @@ export class LocationController {
       this.viewLocationManagement,
     );
 
-    this.routes.get("/sales", this.viewLocationSales);
-
     this.routes.get(
       "/:id",
       AuthenticationController.restrict(["admin"]),
@@ -124,11 +122,21 @@ export class LocationController {
   /**
    * Renders the location management page with a filtered, sorted and paginated
    * location list. Loads the location in the URL into the edit form, even when it
-   * is not on the current page.
+   * is not on the current page. Invalid or missing location IDs return a 404.
    * @type {express.RequestHandler}
    */
   static viewLocationManagement(req, res) {
     const selectedLocationId = req.params.id;
+    if (
+      selectedLocationId !== undefined &&
+      (!/^[1-9]\d*$/.test(selectedLocationId) ||
+        Number(selectedLocationId) > 2147483647)
+    ) {
+      return res.status(404).render("status.ejs", {
+        status: "Location not found",
+        message: "The requested location does not exist. Please check the URL.",
+      });
+    }
     const selectedSearchTerm = String(req.query.search_term ?? "").trim();
     const selectedSortBy = Object.keys(LocationModel.SORTABLE_COLUMNS).includes(
       req.query.sort_by,
@@ -153,9 +161,21 @@ export class LocationController {
             (location) => String(location.id) === selectedLocationId,
           ) ??
           (selectedLocationId
-            ? await LocationModel.getById(selectedLocationId).catch(() => null)
-            : null) ??
-          new LocationModel(null, "", "", "", "", "", "", 0, 0, 0);
+            ? await LocationModel.getById(selectedLocationId).catch((error) => {
+                if (error === "not found") {
+                  return null;
+                }
+                throw error;
+              })
+            : new LocationModel(null, "", "", "", "", "", "", 0, 0, 0));
+
+        if (!selectedLocation) {
+          return res.status(404).render("status.ejs", {
+            status: "Location not found",
+            message:
+              "The requested location does not exist. Please check the URL.",
+          });
+        }
 
         res.render("location_management.ejs", {
           locations,
@@ -217,14 +237,6 @@ export class LocationController {
           message: "Locations could not be loaded.",
         });
       });
-  }
-
-  /** @type {express.RequestHandler} */
-  static viewLocationSales(req, res) {
-    res.status(501).render("status.ejs", {
-      status: "Locations Unavailable",
-      message: "Locations are not available yet.",
-    });
   }
 
   /** @type {express.RequestHandler} */
