@@ -16,8 +16,8 @@
                 <p class="two-col">* Required fields</p>
                 <%- include("partials/form-field.ejs", { field: 'username', id: 'username', label: 'Username:', requiredField: true }) %>
                 <%- include("partials/form-field.ejs", { field: 'password', id: 'password', label: 'Password:', requiredField: true, type: 'password' }) %>
-                <a href="/" class="link-button">Back</a>
-                <input type="submit" value="Login" />
+                <a href="/" class="link-button login-back">Back</a>
+                <input type="submit" value="Login" class="login-submit" />
             </form>
             <p class="margin-auto responsive-half">
                 Need an account? <a href="/authenticate/register">Register here</a>

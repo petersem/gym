@@ -3417,6 +3417,12 @@ section > ul:not(.menu) > li {
   .register-submit {
     order: 0;
   }
+  .login-submit {
+    order: 1;
+  }
+  .login-back {
+    order: 2;
+  }
   .form-grid > div select {
     min-width: 60px;
   }
