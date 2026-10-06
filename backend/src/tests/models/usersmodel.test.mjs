@@ -3,10 +3,10 @@ import { UsersModel } from "../../models/UsersModel.mjs";
 
 const row = {
   id: "7",
-  first_name: "Ada",
-  last_name: "Lovelace",
+  first_name: "Fred",
+  last_name: "Nerk",
   role: "member",
-  email: "ada@example.com",
+  email: "fn@gym.com",
   password: "hashed-password",
   phone: "555-0100",
   dob: "1815-12-10",
@@ -69,12 +69,12 @@ describe("UsersModel unit tests", () => {
       .spyOn(UsersModel, "query")
       .mockResolvedValue([{ users: row }]);
 
-    await expect(UsersModel.getBySearch("Ada")).resolves.toEqual([user]);
+    await expect(UsersModel.getBySearch("Fred")).resolves.toEqual([user]);
     expect(query).toHaveBeenCalledWith(
       expect.stringContaining(
         "first_name LIKE ? OR last_name LIKE ? OR email LIKE ?",
       ),
-      ["%Ada%", "%Ada%", "%Ada%"],
+      ["%Fred%", "%Fred%", "%Fred%"],
     );
   });
 
@@ -108,7 +108,7 @@ describe("UsersModel unit tests", () => {
 
     await expect(
       UsersModel.list({
-        searchTerm: "Ada",
+        searchTerm: "Fred",
         role: "member",
         sortBy: "email",
         sortDir: "desc",
@@ -119,12 +119,12 @@ describe("UsersModel unit tests", () => {
     expect(query).toHaveBeenNthCalledWith(
       1,
       "SELECT COUNT(*) AS total FROM users WHERE deleted = 0 AND (first_name LIKE ? OR last_name LIKE ? OR email LIKE ?) AND role = ?",
-      ["%Ada%", "%Ada%", "%Ada%", "member"],
+      ["%Fred%", "%Fred%", "%Fred%", "member"],
     );
     expect(query).toHaveBeenNthCalledWith(
       2,
       "SELECT * FROM users WHERE deleted = 0 AND (first_name LIKE ? OR last_name LIKE ? OR email LIKE ?) AND role = ? ORDER BY email DESC LIMIT ? OFFSET ?",
-      ["%Ada%", "%Ada%", "%Ada%", "member", 2, 4],
+      ["%Fred%", "%Fred%", "%Fred%", "member", 2, 4],
     );
   });
 
@@ -161,12 +161,10 @@ describe("UsersModel unit tests", () => {
       .spyOn(UsersModel, "query")
       .mockResolvedValue([{ users: row }]);
 
-    await expect(UsersModel.getByUsername("ada@example.com")).resolves.toEqual(
-      user,
-    );
+    await expect(UsersModel.getByUsername("fn@gym.com")).resolves.toEqual(user);
     expect(query).toHaveBeenCalledWith(
       "SELECT * FROM users WHERE email = ? AND deleted = 0",
-      ["ada@example.com"],
+      ["fn@gym.com"],
     );
   });
 

@@ -29,7 +29,7 @@ afterEach(() => {
 describe("LocationController", () => {
   test("renders location management and selected location", async () => {
     const locations = [{ id: 1, name: "Central Gym", postcode: 3000 }];
-    const users = [{ id: 1, first_name: "Ada", last_name: "Lovelace" }];
+    const users = [{ id: 1, first_name: "Fred", last_name: "Nerk" }];
     jest
       .spyOn(LocationModel, "list")
       .mockResolvedValue({ locations, total: 1 });

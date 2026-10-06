@@ -6,10 +6,10 @@ import {
 import { UsersModel } from "../../models/UsersModel.mjs";
 
 const user = {
-  firstName: "Ada",
-  lastName: "Lovelace",
-  email: "ada@example.com",
-  password: "password123",
+  firstName: "Fred",
+  lastName: "Nerk",
+  email: "fn@gym.com",
+  password: "testing123",
   phone: "+61 (2) 1234-5678",
   dob: "",
 };
@@ -364,11 +364,11 @@ describe("form validation", () => {
     const password = " password ";
     const { req, valid } = await validate("register", {
       ...user,
-      firstName: " Ada ",
+      firstName: " Fred ",
       password,
     });
     expect(valid).toBe(true);
-    expect(req.body.firstName).toBe("Ada");
+    expect(req.body.firstName).toBe("Fred");
     expect(req.body.password).toBe(password);
     expect(req.body.dob).toBeNull();
     expect(
@@ -480,7 +480,7 @@ describe("form validation", () => {
   test.each(["firstName", "email", "phone", "dob"])(
     "rejects non-string %s inputs",
     async (field) => {
-      for (const value of [["Ada"], { value: "Ada" }, false, 42]) {
+      for (const value of [["Fred"], { value: "Fred" }, false, 42]) {
         expect(
           (await validate("register", { ...user, [field]: value })).valid,
         ).toBe(false);

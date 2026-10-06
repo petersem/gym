@@ -274,7 +274,7 @@ describe("SessionsController", () => {
     jest.spyOn(SessionsModel, "getAll").mockResolvedValue(sessions);
     jest.spyOn(UsersModel, "getAll").mockResolvedValue([
       { id: 3, first_name: "Zed", last_name: "Zulu" },
-      { id: 4, first_name: "Ada", last_name: "Able" },
+      { id: 4, first_name: "Nerk", last_name: "Able" },
     ]);
     jest.spyOn(ActivitiesModel, "getAll").mockResolvedValue([
       { id: 5, name: "Yoga" },
@@ -361,7 +361,7 @@ describe("SessionsController", () => {
     jest.spyOn(ActivitiesModel, "getById").mockResolvedValue({ name: "Yoga" });
     jest
       .spyOn(UsersModel, "getById")
-      .mockResolvedValue({ first_name: "Ada", last_name: "Lovelace" });
+      .mockResolvedValue({ first_name: "Fred", last_name: "Nerk" });
 
     await SessionsController.handleSessionManagement(
       request(

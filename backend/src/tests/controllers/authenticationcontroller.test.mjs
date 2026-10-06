@@ -122,9 +122,9 @@ describe("AuthenticationController", () => {
 
     await AuthenticationController.handleRegister(
       request({
-        firstName: "Ada",
-        lastName: "Lovelace",
-        email: "ada@example.com",
+        firstName: "Fred",
+        lastName: "Nerk",
+        email: "fn@gym.com",
         password: "plain-password",
         phone: "555-0100",
         dob: "1815-12-10",
@@ -167,9 +167,9 @@ describe("AuthenticationController", () => {
 
     await AuthenticationController.handleRegister(
       request({
-        firstName: "Ada",
-        lastName: "Lovelace",
-        email: "ada@example.com",
+        firstName: "Fred",
+        lastName: "Nerk",
+        email: "fn@gym.com",
         password: "plain-password",
         phone: "555-0100",
       }),

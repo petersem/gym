@@ -154,9 +154,9 @@ describe("mounted form validation", () => {
       .spyOn(UsersModel, "create")
       .mockResolvedValue({ insertId: 1 });
     const response = await post("/authenticate/register", {
-      firstName: " Ada ",
-      lastName: "Lovelace",
-      email: "ada@example.com",
+      firstName: " Fred ",
+      lastName: "Nerk",
+      email: "fn@gym.com",
       password: " password123 ",
       phone: "555-0100",
       dob: "",
@@ -166,7 +166,7 @@ describe("mounted form validation", () => {
     expect(hash).toHaveBeenCalledWith(" password123 ", 10);
     expect(create).toHaveBeenCalledWith(
       expect.objectContaining({
-        first_name: "Ada",
+        first_name: "Fred",
         role: "member",
         dob: null,
         password: "hashed-password",
@@ -198,13 +198,13 @@ describe("mounted form validation", () => {
       "/authenticate/register",
       "email",
       "email",
-      { firstName: "Ada", email: "bad", password: "secret" },
+      { firstName: "Fred", email: "bad", password: "secret" },
     ],
     [
       "/users",
       "email",
       "email",
-      { action: "create", firstName: "Ada", email: "bad", password: "secret" },
+      { action: "create", firstName: "Fred", email: "bad", password: "secret" },
     ],
     ["/locations", "name", "name", { action: "create", name: "" }],
     ["/activities", "name", "name", { action: "create", name: "" }],
@@ -249,7 +249,7 @@ describe("mounted form validation", () => {
       expect(html).not.toMatch(/\s(?:required|minlength|maxlength|pattern)=?/);
       expect(html).not.toContain('value="secret"');
       if (body.firstName) {
-        expect(html).toContain('value="Ada"');
+        expect(html).toContain('value="Fred"');
       }
       if (field === "time") {
         expect(html).toContain('value="24:00"');

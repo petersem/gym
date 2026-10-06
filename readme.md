@@ -6,25 +6,19 @@ Gym app for Tafe stage 2 assessment
 - Backend API (coming soon)
 - Frontend React app (coming soon)
 
+## Backend Gym App
+
 ![gym app](https://raw.githubusercontent.com/petersem/gym/main/gh-assets/gymapp.png)
 
-## Architecture
+### Architecture
 
 ![Architecture diagram](https://raw.githubusercontent.com/petersem/gym/main/gh-assets/diagram.png)
 
-## Session management
-
-When creating or editing a session, trainers see only their own name in the trainer dropdown. New sessions default to the signed-in trainer. Admins can select any trainer.
-
-On the bookings page, trainers can view bookings for any trainer, with all trainers shown by default. They can delete only their own bookings or bookings linked to sessions they lead. Bookings they cannot delete are displayed as non-clickable text. Admin booking permissions are unchanged.
-
-The Booked user dropdown includes users with bookings matching the date, location, and trainer filters, regardless of the selected user. Selecting a user filters the displayed bookings without narrowing the dropdown. Select All users to clear the user filter.
-
-## Running the code
+### Running the code
 
 > There is NO NEED to run any speific database or schema creation SQL. The application takes care of this for you.
 
-### Development
+#### Development Environment
 
 - You will need to have mySQL v8 or above installed and running
 - Configure the .env file.
@@ -67,7 +61,14 @@ DATA_SEED=true
   - Seed sample data if a new database and the seed option is true
 - The application is then started and available locally on the specified port.
 
-### Docker (Recomended for production)
+** Other dev options **
+
+- Run unit and integration tests with individual test results and coverage `npm run test`
+- Run eslint linter `npm run lint`
+- Run prettier linter `npm run prettier:check`
+- Generate JSDoc documentation _backend/src/public/docs_ `npm run jsdoc`
+
+#### Docker (Recomended for production)
 
 - Docker is installed and configured
 - On your docker host machine, create and populate `.env` and `compose.yaml` files. Suggested options below:

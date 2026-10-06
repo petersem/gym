@@ -14,7 +14,7 @@ const renderSelect = (value, formValues = {}) =>
     value,
     formValues,
     formErrors: {},
-    options: [{ value: 1, label: "Ada" }],
+    options: [{ value: 1, label: "Fred" }],
   });
 
 describe("form dropdown placeholders", () => {
@@ -39,7 +39,7 @@ describe("form dropdown placeholders", () => {
 
   test("preserves valid selections", async () => {
     const html = await renderSelect("1");
-    expect(html).toContain('<option value="1" selected>Ada</option>');
+    expect(html).toContain('<option value="1" selected>Fred</option>');
     expect(html).not.toContain("Select an option");
   });
 

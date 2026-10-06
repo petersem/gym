@@ -5,10 +5,10 @@ import { UsersModel } from "../../models/UsersModel.mjs";
 
 const existingUser = new UsersModel(
   7,
-  "Ada",
-  "Lovelace",
+  "Fred",
+  "Nerk",
   "member",
-  "ada@example.com",
+  "fn@gym.com",
   "$2a$10$already-hashed",
   "555-0100",
   "1815-12-10",
@@ -28,10 +28,10 @@ const flushPromises = () => new Promise((resolve) => setImmediate(resolve));
 
 const formData = (action) => ({
   action,
-  firstName: "Ada",
-  lastName: "Lovelace",
+  firstName: "Fred",
+  lastName: "Nerk",
   role: "member",
-  email: "ada@example.com",
+  email: "fn@gym.com",
   password: "$2a$10$already-hashed",
   phone: "555-0100",
   dob: "1815-12-10",
@@ -74,7 +74,7 @@ describe("UsersController unit tests", () => {
       {
         params: {},
         query: {
-          search_term: "Ada",
+          search_term: "Fred",
           role: "trainer",
           sort_by: "email",
           sort_dir: "desc",
@@ -87,7 +87,7 @@ describe("UsersController unit tests", () => {
 
     expect(list).toHaveBeenCalledWith(
       expect.objectContaining({
-        searchTerm: "Ada",
+        searchTerm: "Fred",
         role: "trainer",
         sortBy: "email",
         sortDir: "desc",
@@ -158,8 +158,8 @@ describe("UsersController unit tests", () => {
 
     expect(create).toHaveBeenCalledWith(
       expect.objectContaining({
-        first_name: "Ada",
-        email: "ada@example.com",
+        first_name: "Fred",
+        email: "fn@gym.com",
       }),
     );
     expect(res.redirect).toHaveBeenCalledWith("/users");

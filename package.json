@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "node --experimental-vm-modules ./node_modules/jest/bin/jest.js --coverage --verbose",
+    "test": "node --experimental-vm-modules ./node_modules/jest/bin/jest.js --reporters=default --coverage --verbose",
     "doc": "jsdoc -c jsdoc.conf.json",
     "lint": "eslint .",
     "prettier:check": "prettier --check ."
