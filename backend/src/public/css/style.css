@@ -256,7 +256,7 @@ main {
 
 .mobile-menu {
   display: none;
-  width: 100%;
+  position: relative;
 }
 
 .mobile-menu-toggle {
@@ -428,6 +428,10 @@ textarea {
 textarea {
   min-height: 130px;
   resize: vertical;
+}
+
+.register-submit {
+  order: 1;
 }
 
 .form-grid {
@@ -987,7 +991,16 @@ section > ul:not(.menu) > li {
     min-height: 76px;
     flex-wrap: wrap;
     gap: 8px 14px;
+    margin-bottom: 34px;
     padding: 12px 0;
+  }
+
+  .mobile-menu {
+    display: block;
+    flex: 0 0 auto;
+    border-radius: 3px;
+    background: var(--gym-nav-bg);
+    color: #ffffff;
   }
 
   .site-kicker {
@@ -1000,7 +1013,7 @@ section > ul:not(.menu) > li {
   }
 
   .site-nav.navbar {
-    margin: 10px 0 24px;
+    display: none;
   }
 
   .site-menu.menu {
@@ -1011,8 +1024,17 @@ section > ul:not(.menu) > li {
     display: none;
   }
 
-  .mobile-menu {
-    display: block;
+  .mobile-menu .site-menu {
+    position: absolute;
+    z-index: 1;
+    top: 100%;
+    left: 0;
+    width: max-content;
+    max-width: calc(100vw - 28px);
+    padding: 5px;
+    border-radius: 4px;
+    background: var(--gym-nav-bg);
+    box-shadow: 0 8px 18px rgba(23, 35, 29, 0.1);
   }
 
   .mobile-menu .site-menu {
@@ -1057,6 +1079,10 @@ section > ul:not(.menu) > li {
     grid-column: auto;
   }
 
+  .register-submit {
+    order: 0;
+  }
+
   .form-grid > div select {
     min-width: 60px;
   }
@@ -1090,6 +1116,17 @@ section > ul:not(.menu) > li {
   .session-calendar {
     grid-template-columns: minmax(0, 1fr);
     overflow: visible;
+  }
+
+  .session-day {
+    min-height: 0;
+    padding-bottom: 8px;
+  }
+
+  #posts .card-tile {
+    min-height: 0;
+    padding-top: 8px;
+    padding-bottom: 8px;
   }
 
   .checkout-layout,

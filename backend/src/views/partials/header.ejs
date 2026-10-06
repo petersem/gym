@@ -1,4 +1,16 @@
 <header class="site-header">
+    <nav class="mobile-menu" aria-label="Primary navigation">
+        <details>
+            <summary class="mobile-menu-toggle" aria-label="Navigation menu">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true" focusable="false">
+                    <path d="M3 6h18M3 12h18M3 18h18" />
+                </svg>
+            </summary>
+            <ul class="menu site-menu">
+                <%- include('nav-links.ejs') %>
+            </ul>
+        </details>
+    </nav>
     <a class="brand" href="/" aria-label="Gym dashboard">
         <span class="brand-mark" aria-hidden="true">HSG</span>
         <span class="brand-copy">

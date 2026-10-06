@@ -22,8 +22,8 @@
                 <%- include("partials/form-field.ejs", { field: 'phone', id: 'phone', label: 'Phone', requiredField: true, type: 'tel' }) %>
                 <%- include("partials/form-field.ejs", { field: 'dob', id: 'dob', label: 'Date of birth', type: 'date' }) %>
 
+                <input type="submit" value="Register" class="register-submit">
                 <a href="/authenticate" class="link-button">Back to login</a>
-                <input type="submit" value="Register">
             </form>
         </section>
         <%- include("partials/footer.ejs") %>
