@@ -161,7 +161,11 @@ export async function initializeDatabase(env) {
         await connection.rollback();
         throw error;
       }
-      console.log(seed ? "Sample data seeded." : "Sample data omitted.");
+      console.log(
+        seed
+          ? "Sample data seeded. All sample users have a password of 'testing123'"
+          : "Sample data omitted.",
+      );
     } else {
       await ensureAdmin(connection, env);
     }
