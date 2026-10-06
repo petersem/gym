@@ -32,8 +32,22 @@ describe("DatabaseModel database integration", () => {
         name,
         description,
       });
+
+      const deletion = await ActivitiesModel.delete(result.insertId);
+      expect(deletion.affectedRows).toBe(1);
+      await expect(
+        ActivitiesModel.getById(result.insertId),
+      ).resolves.toMatchObject({ deleted: 1 });
     } finally {
-      await ActivitiesModel.delete(result.insertId);
+      const cleanup = await DatabaseModel.query(
+        "DELETE FROM activities WHERE id = ?",
+        [result.insertId],
+      );
+      expect(cleanup.affectedRows).toBe(1);
     }
+
+    await expect(ActivitiesModel.getById(result.insertId)).rejects.toBe(
+      "not found",
+    );
   });
 });
