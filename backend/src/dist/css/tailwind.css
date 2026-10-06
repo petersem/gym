@@ -3316,7 +3316,7 @@ section > ul:not(.menu) > li {
 :root[data-theme="dark"] {
   color-scheme: dark;
   --gym-ink: #eaf2ec;
-  --gym-forest: #286247;
+  --gym-forest: #327a58;
   --gym-citron: #d5f078;
   --gym-coral: #f09576;
   --gym-muted: #afbeb4;
@@ -3732,7 +3732,7 @@ section > ul:not(.menu) > li {
     --color-base-200: #101713;
     --color-base-300: #33473a;
     --color-base-content: #eaf2ec;
-    --color-primary: #286247;
+    --color-primary: #327a58;
     --color-primary-content: #ffffff;
     --color-secondary: #d5f078;
     --color-secondary-content: #17231d;
