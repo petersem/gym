@@ -98,6 +98,19 @@ const post = (
   });
 
 describe("staff booking management", () => {
+  test.each(["", "?trainer_id=all", "?trainer_id=8"])("defaults trainer dropdowns to the logged-in trainer without All (%s)", async (query) => {
+    const html = await (await get(`/1${query}`, "trainer")).text();
+    for (const id of ["trainer-filter", "editor-trainer"]) {
+      const select = html.match(new RegExp(`<select id="${id}"[^>]*>([\\s\\S]*?)<\\/select>`))[1];
+      expect(select.match(/<option\b/g)).toHaveLength(1);
+      expect(select).toMatch(/value="7"\s+selected>Trainer, Test<\/option>/);
+      expect(select).not.toContain(">All</option>");
+    }
+    const table = html.match(/<table[\s\S]*?<\/table>/)[0];
+    expect(table).toContain("Own session");
+    expect(table).not.toContain(">Trainer</a>");
+    expect(table).not.toContain("Other session");
+  });
   test.each([
     ["", true, true],
     ["?trainer_id=7", false, true],
@@ -206,10 +219,10 @@ describe("staff booking management", () => {
     change("editor-date-time", "");
     expect(ids()).toEqual(["1", "3", "4", "2"]);
     expect(label("4")).toBe("Own session - 10/10/2026 9:00am - Test Trainer - West");
-    expect(label("2")).toBe("Other session - 11/10/2026 10:00am - Other Coach");
+    expect(label("2")).toBe("Other session - 11/10/2026 10:00am - Other Coach - West");
     change("editor-trainer", "8");
     expect(ids()).toEqual(["3", "2"]);
-    expect(label("3")).toBe("Own session - 10/10/2026 9:00am");
+    expect(label("3")).toBe("Own session - 10/10/2026 9:00am - Main");
     expect(select.value).toBe("");
     expect(button.disabled).toBe(true);
     expect(elements["editor-session-status"].textContent).toContain("Select a session");
@@ -217,6 +230,7 @@ describe("staff booking management", () => {
     expect(button.disabled).toBe(false);
     change("editor-location", "2");
     expect(ids()).toEqual(["2"]);
+    expect(label("2")).toBe("Other session - 11/10/2026 10:00am");
     change("editor-date-time", "2026-10-10 09:00");
     expect(ids()).toEqual([]);
     expect(select.options[0].textContent).toBe("No sessions match these filters");
@@ -384,7 +398,7 @@ describe("staff booking management", () => {
     const html = await (await get("?trainer_id=7&location_id=1")).text();
     expect(html).toContain("trainer_id=7&amp;location_id=1");
     const trainerHtml = await (await get("?trainer_id=8", "trainer")).text();
-    expect(trainerHtml).toContain("No bookings match this search.");
+    expect(trainerHtml).toContain("Own session");
     expect(trainerHtml).not.toContain("Other session");
     expect(
       trainerHtml.match(/<select id="trainer-filter"[\s\S]*?<\/select>/)[0],

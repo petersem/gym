@@ -60,7 +60,9 @@ export class BookingManagementController {
       if (!selectedBooking)
         return status(res, 404, "The booking could not be found.");
       const selectedSearchTerm = String(req.query.search_term ?? "").trim();
-      const selectedTrainerId = Number(req.query.trainer_id) || null;
+      const selectedTrainerId = req.authenticatedUser.role === "trainer"
+        ? Number(req.authenticatedUser.id)
+        : Number(req.query.trainer_id) || null;
       const selectedLocationId = Number(req.query.location_id) || null;
       const selectedSortBy = [
         "session",

@@ -71,7 +71,7 @@
                         <label for="trainer-filter">Trainer</label>
                         <div class="list-search-control">
                             <select id="trainer-filter" name="trainer_id" onchange="this.form.submit()">
-                                <option value="all" <%= !selectedTrainerId ? 'selected' : '' %>>All</option>
+                                <% if (role !== 'trainer') { %><option value="all" <%= !selectedTrainerId ? 'selected' : '' %>>All</option><% } %>
                                 <% [...trainers].sort((a, b) => a.last_name.localeCompare(b.last_name) || a.first_name.localeCompare(b.first_name)).forEach((trainer) => { %>
                                     <option value="<%= trainer.id %>" <%= selectedTrainerId === Number(trainer.id) ? 'selected' : '' %>><%= trainer.last_name %>, <%= trainer.first_name %></option>
                                 <% }) %>
@@ -125,7 +125,7 @@
                 <%- include("partials/form-errors.ejs", { fields: ['sessionId', 'userId'] }) %>
                 <p class="two-col">* Required fields</p>
                 <% if (selectedBooking.id) { %>
-                    <%- include("partials/form-field.ejs", { field: 'editorTrainer', id: 'editor-trainer', label: 'Trainer', type: 'select', value: editorSession?.trainer_id ?? '', options: [{ value: '', label: 'All' }, ...[...trainers].sort((a, b) => a.last_name.localeCompare(b.last_name) || a.first_name.localeCompare(b.first_name)).map((trainer) => ({ value: trainer.id, label: `${trainer.last_name}, ${trainer.first_name}` }))] }) %>
+                    <%- include("partials/form-field.ejs", { field: 'editorTrainer', id: 'editor-trainer', label: 'Trainer', type: 'select', value: role === 'trainer' ? authenticatedUser.id : editorSession?.trainer_id ?? '', options: [...(role === 'trainer' ? [] : [{ value: '', label: 'All' }]), ...[...trainers].sort((a, b) => a.last_name.localeCompare(b.last_name) || a.first_name.localeCompare(b.first_name)).map((trainer) => ({ value: trainer.id, label: `${trainer.last_name}, ${trainer.first_name}` }))] }) %>
                     <%- include("partials/form-field.ejs", { field: 'editorLocation', id: 'editor-location', label: 'Location', type: 'select', value: editorSession?.location_id ?? '', options: [{ value: '', label: 'All' }, ...[...locations].sort((a, b) => a.name.localeCompare(b.name)).map((location) => ({ value: location.id, label: location.name }))] }) %>
                     <%- include("partials/form-field.ejs", { field: 'editorDateTime', id: 'editor-date-time', label: 'Date/time', type: 'select', value: editorSession ? sessionDateTimeKey(editorSession) : '', options: [{ value: '', label: 'All' }, ...dateTimeOptions] }) %>
                 <% } %>
@@ -169,7 +169,7 @@
                         const labelParts = [session.title];
                         if (!dateTimeSelect.value) labelParts.push(session.formattedDateTime);
                         if (!trainerSelect.value) labelParts.push(session.trainerName);
-                        if (!trainerSelect.value && !locationSelect.value && session.duplicateLabel) {
+                        if (!locationSelect.value) {
                             labelParts.push(session.locationName);
                         }
                         option.textContent = labelParts.join(' - ');
