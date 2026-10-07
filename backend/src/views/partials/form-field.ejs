@@ -8,8 +8,10 @@
     type    - input type, or 'textarea' or 'select'. Defaults to 'text'.
     value   - value to show when there is no submitted value.
     options - for selects, an array of { value, label }.
+    sortOptions - optionally sort select options alphabetically by their labels.
     keep    - for passwords, show `value` again after a failed submission.
     placeholder - optional example shown in an empty input.
+    min - optional minimum input value.
   Password fields are blank after a failed submission unless `keep` is true.
 %>
 <%
@@ -23,6 +25,11 @@ const currentValue = submitted ? '' : Object.hasOwn(values, field) ? values[fiel
 // A value of 0 or empty means nothing has been chosen yet.
 const isUnselected = currentValue == null || String(currentValue) === '' || String(currentValue) === '0';
 const errorId = `${id}-error`;
+const selectOptions = inputType === 'select'
+    ? (typeof sortOptions !== 'undefined' && sortOptions
+        ? [...options].sort((a, b) => a.label.localeCompare(b.label))
+        : options)
+    : [];
 %>
 <label for="<%= id %>"><%= label %><% if (typeof requiredField !== 'undefined' && requiredField) { %> *<% } %></label>
 <div class="form-field">
@@ -31,15 +38,15 @@ const errorId = `${id}-error`;
     <% } else if (inputType === 'select') { %>
         <select id="<%= id %>" name="<%= field %>" aria-invalid="<%= Boolean(errors[field]) %>"<% if (errors[field]) { %> aria-describedby="<%= errorId %>"<% } %>>
             <%# Add a placeholder, or keep a value that is not in the options so it is not silently replaced. %>
-            <% if (!options.some((option) => String(option.value) === String(currentValue ?? ''))) { %>
+            <% if (!selectOptions.some((option) => String(option.value) === String(currentValue ?? ''))) { %>
                 <option value="<%= isUnselected ? '' : currentValue %>" selected><%= isUnselected ? 'Select an option' : `Invalid selection (${currentValue})` %></option>
             <% } %>
-            <% options.forEach((option) => { %>
+            <% selectOptions.forEach((option) => { %>
                 <option value="<%= option.value %>"<% if (String(option.value) === String(currentValue)) { %> selected<% } %>><%= option.label %></option>
             <% }) %>
         </select>
     <% } else { %>
-        <input id="<%= id %>" name="<%= field %>" type="<%= inputType %>" value="<%= currentValue ?? '' %>"<% if (typeof placeholder !== 'undefined') { %> placeholder="<%= placeholder %>"<% } %> aria-invalid="<%= Boolean(errors[field]) %>"<% if (errors[field]) { %> aria-describedby="<%= errorId %>"<% } %>>
+        <input id="<%= id %>" name="<%= field %>" type="<%= inputType %>" value="<%= currentValue ?? '' %>"<% if (typeof placeholder !== 'undefined') { %> placeholder="<%= placeholder %>"<% } %><% if (typeof min !== 'undefined') { %> min="<%= min %>"<% } %> aria-invalid="<%= Boolean(errors[field]) %>"<% if (errors[field]) { %> aria-describedby="<%= errorId %>"<% } %>>
     <% } %>
     <%- include("form-error.ejs", { field, errorId }) %>
 </div>

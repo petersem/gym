@@ -3,7 +3,7 @@
 
 <head>
     <%- include("partials/head.ejs") %>
-        <title>Session Management - Gym</title>
+        <title>Manage Sessions - Gym</title>
 </head>
 
 <body>
@@ -25,7 +25,17 @@
                                 <%- include("partials/nav.ejs", { role, authenticatedUser }) %>
 
                                     <section>
-                                        <h2>Sessions</h2>
+                                        <h2>Manage Sessions</h2>
+                                        <div class="session-name-search">
+                                            <label for="session-search">Search session names</label>
+                                            <div class="session-search-control">
+                                                <input id="session-search" type="search"
+                                                    value="<%= selectedSearchTerm %>"
+                                                    onkeydown="if (event.key === 'Enter') { event.preventDefault(); filterSessions(); }">
+                                                <button type="button" class="btn-accent"
+                                                    onclick="filterSessions()">Search</button>
+                                            </div>
+                                        </div>
                                         <div class="form-grid responsive-half session-filter-controls" role="group"
                                             aria-label="Filter sessions">
                                             <label for="location-filter">Filter by location</label>
@@ -44,7 +54,8 @@
                                                     <% const trainerFilterOptions=users.filter((user)=> user.role ===
                                                         'trainer'
                                                         && (!isTrainerUser || Number(user.id) ===
-                                                        Number(authenticatedUser.id))); %>
+                                                        Number(authenticatedUser.id))).sort((a, b) =>
+                                                        a.last_name.localeCompare(b.last_name) || a.first_name.localeCompare(b.first_name)); %>
                                                         <% if (!isTrainerUser) { %>
                                                             <option value="">All trainers</option>
                                                             <% } %>
@@ -55,16 +66,6 @@
                                                                     </option>
                                                                     <% }) %>
                                             </select>
-                                        </div>
-                                        <div class="session-name-search">
-                                            <label for="session-search">Search session names</label>
-                                            <div class="session-search-control">
-                                                <input id="session-search" type="search"
-                                                    value="<%= selectedSearchTerm %>"
-                                                    onkeydown="if (event.key === 'Enter') { event.preventDefault(); filterSessions(); }">
-                                                <button type="button" class="btn-accent"
-                                                    onclick="filterSessions()">Search</button>
-                                            </div>
                                         </div>
                                         <div class="session-results">
                                             <table class="session-results-table">
@@ -221,7 +222,8 @@
                                             <%- include("partials/form-field.ejs", { field: 'activityId', id: 'activity-id', label: 'Activity', requiredField: true, type: 'select', value: selectedSession.activity_id, options: activities.map((activity) => ({ value: activity.id, label: activity.name })) }) %>
                                             <%- include("partials/form-field.ejs", { field: 'locationId', id: 'location-id', label: 'Location', requiredField: true, type: 'select', value: selectedSession.location_id, options: locations.map((location) => ({ value: location.id, label: location.name })) }) %>
                                             <%- include("partials/form-field.ejs", { field: 'trainerId', id: 'trainer-id', label: 'Trainer', requiredField: true, type: 'select', value: isTrainerUser ? authenticatedUser.id : selectedSession.trainer_id, options: trainerFilterOptions.map((user) => ({ value: user.id, label: `${user.last_name}, ${user.first_name}` })) }) %>
-                                            <%- include("partials/form-field.ejs", { field: 'date', id: 'date', label: 'Date', requiredField: true, type: 'date', value: selectedSession.date }) %>
+                                            <% const now = new Date(); const minimumDate = [now.getFullYear(), String(now.getMonth() + 1).padStart(2, '0'), String(now.getDate()).padStart(2, '0')].join('-'); %>
+                                            <%- include("partials/form-field.ejs", { field: 'date', id: 'date', label: 'Date', requiredField: true, type: 'date', value: selectedSession.date, min: minimumDate }) %>
                                             <label id="time-label" for="time-hour">Time *</label>
                                             <div role="group" aria-labelledby="time-label"
                                                 aria-invalid="<%= typeof formErrors !== 'undefined' && Boolean(formErrors.time) %>"

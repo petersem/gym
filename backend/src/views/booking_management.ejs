@@ -21,6 +21,8 @@
                 ].join(String.fromCharCode(10));
                 }; %>
                 <% const sortedLocations=[...locations].sort((a, b)=> a.name.localeCompare(b.name)); %>
+                <% const bookedSessionIds = new Set(bookings.filter((booking) =>
+                    Number(booking.user_id) === Number(authenticatedUser?.id)).map((booking) => Number(booking.session_id))); %>
                 <% const sortedTrainers=[...users].filter((user)=> user.role === 'trainer').sort((a, b) =>
                     a.last_name.localeCompare(b.last_name) || a.first_name.localeCompare(b.first_name)); %>
                 <% const availableFilterQuery=new URLSearchParams({
@@ -43,7 +45,7 @@
                                                     <%- include("partials/form-errors.ejs", { fields: ['sessionId', 'userId'] }) %>
                                                     <p class="two-col">* Required fields</p>
                                                     <%- include("partials/form-field.ejs", { field: 'sessionId', id: 'booking-session-id', label: 'Session', requiredField: true, type: 'select', options: sessions.map((session) => ({ value: session.id, label: session.title })) }) %>
-                                                    <%- include("partials/form-field.ejs", { field: 'userId', id: 'booking-user-id', label: 'User', requiredField: true, type: 'select', options: (canManageBookings ? users : [authenticatedUser]).map((user) => ({ value: user.id, label: `${user.last_name}, ${user.first_name}` })) }) %>
+                                                    <%- include("partials/form-field.ejs", { field: 'userId', id: 'booking-user-id', label: 'User', requiredField: true, type: 'select', sortOptions: true, options: (canManageBookings ? users : [authenticatedUser]).map((user) => ({ value: user.id, label: `${user.last_name}, ${user.first_name}` })) }) %>
                                                     <button type="submit" name="action" value="<%= formAction %>">Retry booking</button>
                                                 </form>
                                             </section>
@@ -110,13 +112,16 @@
                                                                                     ].filter(Boolean);
                                                                                     const locationSuffix=sessionDetails.join(', '); %>
                                                                                     <% if (authenticatedUser?.role === 'member') { %>
+                                                                                        <% const isBooked = bookedSessionIds.has(Number(session.id)); %>
                                                                                         <button type="button"
                                                                                             class="available-session-select"
+                                                                                            <% if (isBooked) { %>disabled<% } %>
                                                                                             title="<%= getSessionHoverText(session) %>">
                                                                                             <%= formatSessionTime(session.time)
                                                                                                 %>
                                                                                                 <%= session.title %>
                                                                                                     <span class="session-details"><%= locationSuffix %></span>
+                                                                                                    <% if (isBooked) { %><span class="session-booked-label">BOOKED</span><% } %>
                                                                                         </button>
                                                                                         <form class="session-book-form"
                                                                                             action="/timetable<%= availableFilterQuery ? '?' + availableFilterQuery : '' %>"
@@ -132,6 +137,7 @@
                                                                                                 type="submit"
                                                                                                 name="action"
                                                                                                 value="create"
+                                                                                                <% if (isBooked) { %>disabled<% } %>
                                                                                                 hidden>Book</button>
                                                                                         </form>
                                                                                         <% } else { %>
@@ -300,13 +306,14 @@
                                             <% } %>
 
                                                 <script>
-                                                    document.querySelectorAll(".available-session-select").forEach((sessionButton) => {
+                                                    document.querySelectorAll(".available-session-select:not(:disabled)").forEach((sessionButton) => {
                                                         sessionButton.addEventListener("click", () => {
                                                             const selectedItem = sessionButton.closest(".available-session");
                                                             document.querySelectorAll(".available-session").forEach((item) => {
                                                                 const isSelected = item === selectedItem;
                                                                 item.classList.toggle("is-selected", isSelected);
-                                                                item.querySelector(".session-book-button").hidden = !isSelected;
+                                                                const bookButton = item.querySelector(".session-book-button");
+                                                                bookButton.hidden = !isSelected || bookButton.disabled;
                                                             });
                                                         });
                                                     });

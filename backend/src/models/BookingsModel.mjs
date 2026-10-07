@@ -103,11 +103,32 @@ export class BookingsModel extends DatabaseModel {
   }
 
   /**
+   * Check for another booking at the destination session's date and start time.
+   * @param {BookingsModel} booking Destination booking; its ID is excluded on edits.
+   * @returns {Promise<boolean>} Whether the user's schedule conflicts.
+   */
+  static async hasStartTimeConflict(booking) {
+    const result = await this.query(
+      `SELECT b.id FROM bookings b
+       JOIN sessions booked ON booked.id = b.session_id
+       JOIN sessions target ON target.id = ?
+       WHERE b.user_id = ? AND booked.date = target.date
+         AND booked.time = target.time AND (? IS NULL OR b.id <> ?)
+       LIMIT 1`,
+      [booking.session_id, booking.user_id, booking.id ?? null, booking.id ?? null],
+    );
+    return result.length > 0;
+  }
+
+  /**
    * Update an existing booking.
    * @param {BookingsModel} booking Booking to update.
-   * @returns {Promise<OkPacket>} Database result.
+   * @returns {Promise<OkPacket | {affectedRows: 0, overlap: true}>} Write result or conflict marker.
    */
-  static update(booking) {
+  static async update(booking) {
+    if (await this.hasStartTimeConflict(booking)) {
+      return { affectedRows: 0, overlap: true };
+    }
     return this.query(
       `
             UPDATE bookings
@@ -121,11 +142,14 @@ export class BookingsModel extends DatabaseModel {
   /**
    * Create a booking with a generated identifier.
    * @param {BookingsModel} booking Booking to create.
-   * @returns {Promise<OkPacket | {affectedRows: 0, duplicate: true}>} Insert result or duplicate marker.
+   * @returns {Promise<OkPacket | {affectedRows: 0, duplicate: true} | {affectedRows: 0, overlap: true}>} Insert result or conflict marker.
    */
   static async create(booking) {
     if (await this.existsForSessionUser(booking.session_id, booking.user_id)) {
       return { affectedRows: 0, duplicate: true };
+    }
+    if (await this.hasStartTimeConflict({ ...booking, id: null })) {
+      return { affectedRows: 0, overlap: true };
     }
 
     return this.query(

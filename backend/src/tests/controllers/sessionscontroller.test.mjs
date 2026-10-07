@@ -31,6 +31,23 @@ const request = (params = {}, query = {}, body = {}) => ({
   body,
 });
 const next = () => jest.fn();
+test.each(["create", "update"])("reports trainer scheduling conflicts for %s without redirecting", async (action) => {
+  jest.spyOn(SessionsModel, action).mockResolvedValue({ affectedRows: 0, trainerConflict: true });
+  const res = response();
+  const req = request({ id: "123" }, {}, {
+    action, title: "Test session", trainerId: "3", activityId: "1",
+    locationId: "1", date: "2099-10-10", time: "09:00:00",
+  });
+  await SessionsController.handleSessionManagement(req, res);
+  expect(res.status).toHaveBeenCalledWith(409);
+  expect(res.render).toHaveBeenCalledWith("status.ejs", expect.objectContaining({
+    message: "This trainer already has a session at this date and time.",
+  }));
+  expect(res.redirect).not.toHaveBeenCalled();
+  const apiRes = response();
+  await SessionsController[action](req, apiRes, next());
+  expect(apiRes.status).toHaveBeenCalledWith(409);
+});
 const dateForOffset = (dayOffset) => {
   const date = new Date();
   date.setHours(0, 0, 0, 0);
@@ -605,7 +622,7 @@ describe("SessionsController", () => {
     ).toContain(message);
   });
 
-  test("allows today for new sessions and past dates for updates", async () => {
+  test("allows today for new sessions but rejects past dates for updates", async () => {
     const now = new Date();
     const today = [
       now.getFullYear(),
@@ -637,7 +654,7 @@ describe("SessionsController", () => {
         ),
         response(),
       ),
-    ).toBe(true);
+    ).toBe(false);
   });
 
   test("forwards errors from session JSON handlers", async () => {

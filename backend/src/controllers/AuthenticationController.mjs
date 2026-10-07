@@ -139,8 +139,7 @@ export class AuthenticationController {
   }
 
   /**
-   * Automatically stores the respective EmployeeModel into req.authenticatedUsed
-   * if there is an active session containing an userId
+   * Load the session user and expose authentication to all rendered views.
    * @type {express.RequestHandler}
    */
   static async #sessionAuthenticationProvider(req, res, next) {
@@ -151,6 +150,8 @@ export class AuthenticationController {
         console.error("Failed to authenticate user session - " + error);
       }
     }
+    res.locals.authenticatedUser = req.authenticatedUser;
+    res.locals.role = req.authenticatedUser?.role ?? "";
     next();
   }
 
@@ -247,6 +248,9 @@ export class AuthenticationController {
     if (req.authenticatedUser) {
       if (req.session.userId) {
         req.session.destroy();
+        req.authenticatedUser = undefined;
+        res.locals.authenticatedUser = undefined;
+        res.locals.role = "";
         res.status(200).render("status.ejs", {
           status: "Logged out successfully.",
           message: "You have been logged out.",

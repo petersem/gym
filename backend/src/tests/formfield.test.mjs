@@ -27,6 +27,34 @@ test("registration shows email and phone examples without prefilling values", as
 });
 
 describe("form dropdown placeholders", () => {
+  test.each([true, false])(
+    "sorts options by displayed label only when enabled: %s",
+    async (sortOptions) => {
+      const options = [
+        { value: 2, label: "Zulu, Alex" },
+        { value: 3, label: "Alpha, Zoe" },
+        { value: 1, label: "Alpha, Ben" },
+      ];
+      const html = await ejs.renderFile(template, {
+        field: "userId",
+        id: "user-id",
+        label: "User",
+        type: "select",
+        options,
+        sortOptions,
+        value: 3,
+        formValues: { userId: "2" },
+      });
+      const labels = [...html.matchAll(/<option\b[^>]*>([^<]*)<\/option>/g)]
+        .map((match) => match[1]);
+      expect(labels).toEqual(sortOptions
+        ? ["Alpha, Ben", "Alpha, Zoe", "Zulu, Alex"]
+        : ["Zulu, Alex", "Alpha, Zoe", "Alpha, Ben"]);
+      expect(html).toContain('<option value="2" selected>Zulu, Alex</option>');
+      expect(options.map((option) => option.value)).toEqual([2, 3, 1]);
+    },
+  );
+
   test.each([0, "0", "", null, undefined])(
     "shows an empty selection placeholder for %j",
     async (value) => {

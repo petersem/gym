@@ -37,6 +37,12 @@ const renderTrainerSelect = async (role, editing, feedback) => {
       formValues: feedback ? { trainerId: "3", title: "" } : {},
     },
   );
+  expect(html.indexOf('id="session-search"')).toBeLessThan(
+    html.indexOf('id="location-filter"'),
+  );
+  expect(html.indexOf('id="session-search"')).toBeLessThan(
+    html.indexOf('id="trainer-filter"'),
+  );
   return html.match(/<select id="trainer-id"[^>]*>([\s\S]*?)<\/select>/)[1];
 };
 

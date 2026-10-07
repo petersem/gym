@@ -123,7 +123,7 @@ export class SessionsController {
 
   /**
    * Validation for the session management form. Field rules run for create
-   * and update only, and new sessions cannot be dated before today.
+   * and update only; neither action can save a date before today.
    * @type {express.RequestHandler[]}
    */
   static formValidation = management(
@@ -172,11 +172,7 @@ export class SessionsController {
         .isISO8601({ strict: true, strictSeparator: true })
         .withMessage("Date must be a real calendar date.")
         .bail()
-        // Existing sessions may already be in the past, so only new ones are checked.
-        .custom((value, { req }) => {
-          if (req.body.action !== "create") {
-            return true;
-          }
+        .custom((value) => {
           const now = new Date();
           const today = [
             now.getFullYear(),
@@ -378,7 +374,12 @@ export class SessionsController {
 
     if (req.body.action === "create") {
       return SessionsModel.create(session)
-        .then(() => res.redirect("/sessions"))
+        .then((result) => result.trainerConflict
+          ? res.status(409).render("status.ejs", {
+              status: "Session Conflict",
+              message: "This trainer already has a session at this date and time.",
+            })
+          : res.redirect("/sessions"))
         .catch((error) => {
           console.error(error);
           res.status(500).render("status.ejs", {
@@ -388,7 +389,12 @@ export class SessionsController {
         });
     } else if (req.body.action === "update") {
       return SessionsModel.update(session)
-        .then(() => res.redirect("/sessions"))
+        .then((result) => result.trainerConflict
+          ? res.status(409).render("status.ejs", {
+              status: "Session Conflict",
+              message: "This trainer already has a session at this date and time.",
+            })
+          : res.redirect("/sessions"))
         .catch((error) => {
           console.error(error);
           res.status(500).render("status.ejs", {
@@ -436,7 +442,8 @@ export class SessionsController {
   /** @type {express.RequestHandler} */
   static async create(req, res, next) {
     try {
-      res.status(201).json(await SessionsModel.create(req.body));
+      const result = await SessionsModel.create(req.body);
+      res.status(result.trainerConflict ? 409 : 201).json(result);
     } catch (error) {
       next(error);
     }
@@ -445,9 +452,8 @@ export class SessionsController {
   /** @type {express.RequestHandler} */
   static async update(req, res, next) {
     try {
-      res.json(
-        await SessionsModel.update({ ...req.body, id: Number(req.params.id) }),
-      );
+      const result = await SessionsModel.update({ ...req.body, id: Number(req.params.id) });
+      res.status(result.trainerConflict ? 409 : 200).json(result);
     } catch (error) {
       next(error);
     }

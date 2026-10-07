@@ -119,6 +119,10 @@ describe("admin blog management", () => {
     });
     expect(response.status).toBe(200);
     const html = await response.text();
+    expect(BlogModel.list).toHaveBeenCalledWith(
+      expect.objectContaining({ pageSize: 7 }),
+    );
+    expect(html).toContain("Page 1 of 3");
     expect(html).toContain('action="/manage/blogs/1"');
     expect(html).toContain('href="/manage/blogs/1?');
     expect(html).toContain('href="/manage/blogs?');

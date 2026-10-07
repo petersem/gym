@@ -3,7 +3,7 @@
 
 <head>
     <%- include("partials/head.ejs") %>
-        <title>Location Management - Gym</title>
+        <title>Manage Locations - Gym</title>
 </head>
 
 <body>
@@ -12,7 +12,7 @@
             <%- include("partials/nav.ejs", { role, authenticatedUser }) %>
 
                 <section>
-                    <h2>Locations</h2>
+                    <h2>Manage Locations</h2>
                     <div class="list-search">
                         <label for="location-search">Search locations</label>
                         <div class="list-search-control">
@@ -113,7 +113,7 @@
                         <%- include("partials/form-field.ejs", { field: 'street', id: 'street', label: 'Street', requiredField: true, value: selectedLocation.street }) %>
                         <%- include("partials/form-field.ejs", { field: 'suburb', id: 'suburb', label: 'Suburb', requiredField: true, value: selectedLocation.suburb }) %>
                         <%- include("partials/form-field.ejs", { field: 'postcode', id: 'postcode', label: 'Postcode', requiredField: true, value: selectedLocation.postcode }) %>
-                        <%- include("partials/form-field.ejs", { field: 'manager', id: 'manager', label: 'Manager', requiredField: true, type: 'select', value: selectedLocation.manager, options: users.map((user) => ({ value: user.id, label: `${user.last_name}, ${user.first_name}` })) }) %>
+                        <%- include("partials/form-field.ejs", { field: 'manager', id: 'manager', label: 'Manager', requiredField: true, type: 'select', sortOptions: true, value: selectedLocation.manager, options: users.map((user) => ({ value: user.id, label: `${user.last_name}, ${user.first_name}` })) }) %>
 
                         <p class="two-col">Updated by: <%= authenticatedUser.last_name ?? '' %>, <%=
                                     authenticatedUser.first_name ?? '' %>

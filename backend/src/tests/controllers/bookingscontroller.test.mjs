@@ -1207,6 +1207,34 @@ describe("BookingsController", () => {
     );
   });
 
+  test.each(["create", "update"])("returns a conflict rather than success for overlapping member %s", async (action) => {
+    jest.spyOn(BookingsModel, action).mockResolvedValue({ affectedRows: 0, overlap: true });
+    const res = response();
+    await BookingsController.handleBookingManagement(
+      request(action === "update" ? { id: "2" } : {}, {}, { action, sessionId: "4", userId: "7" }, { id: 7, role: "member" }),
+      res,
+    );
+    expect(res.status).toHaveBeenCalledWith(409);
+    expect(res.render).toHaveBeenCalledWith("status.ejs", expect.objectContaining({
+      message: "You already have a booking at this date and time.",
+    }));
+    expect(res.redirect).not.toHaveBeenCalled();
+    const apiRes = response();
+    await BookingsController[action](
+      request({ id: "2" }, {}, { session_id: 4, user_id: 7 }), apiRes, next(),
+    );
+    expect(apiRes.status).toHaveBeenCalledWith(409);
+    expect(apiRes.json).toHaveBeenCalledWith({ affectedRows: 0, overlap: true });
+  });
+
+  test("does not report duplicate member bookings as successful creations", async () => {
+    jest.spyOn(BookingsModel, "create").mockResolvedValue({ affectedRows: 0, duplicate: true });
+    const res = response();
+    await BookingsController.handleBookingManagement(request({}, {}, { action: "create" }), res);
+    expect(res.status).toHaveBeenCalledWith(409);
+    expect(res.redirect).not.toHaveBeenCalled();
+  });
+
   test("allows trainers to delete their own bookings or bookings for their own sessions", async () => {
     jest
       .spyOn(BookingsModel, "getById")

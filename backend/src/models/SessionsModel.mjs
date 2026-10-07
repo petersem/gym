@@ -67,11 +67,28 @@ export class SessionsModel extends DatabaseModel {
   }
 
   /**
+   * Check for another session assigned to this trainer at the same date/time.
+   * @param {SessionsModel} session Destination session.
+   * @returns {Promise<boolean>} Whether the trainer is already scheduled.
+   */
+  static async hasTrainerConflict(session) {
+    const result = await this.query(
+      `SELECT id FROM sessions WHERE trainer_id = ? AND date = ? AND time = ?
+       AND (? IS NULL OR id <> ?) LIMIT 1`,
+      [session.trainer_id, session.date, session.time, session.id ?? null, session.id ?? null],
+    );
+    return result.length > 0;
+  }
+
+  /**
    * Update an existing session.
    * @param {SessionsModel} session Session to update.
-   * @returns {Promise<OkPacket>} Database result.
+   * @returns {Promise<OkPacket | {affectedRows: 0, trainerConflict: true}>} Write result or scheduling conflict.
    */
-  static update(session) {
+  static async update(session) {
+    if (await this.hasTrainerConflict(session)) {
+      return { affectedRows: 0, trainerConflict: true };
+    }
     return this.query(
       `
             UPDATE sessions
@@ -93,9 +110,12 @@ export class SessionsModel extends DatabaseModel {
   /**
    * Create a session.
    * @param {SessionsModel} session Session to create.
-   * @returns {Promise<OkPacket>} Database result.
+   * @returns {Promise<OkPacket | {affectedRows: 0, trainerConflict: true}>} Write result or scheduling conflict.
    */
-  static create(session) {
+  static async create(session) {
+    if (await this.hasTrainerConflict({ ...session, id: null })) {
+      return { affectedRows: 0, trainerConflict: true };
+    }
     return this.query(
       `
             INSERT INTO sessions (title, activity_id, location_id, trainer_id, date, time)

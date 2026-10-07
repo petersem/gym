@@ -10,6 +10,7 @@ import {
 } from "../../models/UsersModel.mjs";
 
 const response = () => ({
+  locals: {},
   render: jest.fn(),
   redirect: jest.fn(),
   status: jest.fn().mockReturnThis(),
@@ -28,15 +29,17 @@ afterEach(() => {
 // Model spies isolate session and credential handling from database behavior.
 describe("AuthenticationController", () => {
   test("loads a user from an authenticated session", async () => {
-    const user = { id: 7 };
+    const user = { id: 7, role: "member" };
     jest.spyOn(UsersModel, "getById").mockResolvedValue(user);
     const next = jest.fn();
     const provider = AuthenticationController.middleware.stack[1].handle;
     const req = request({}, { userId: 7 });
 
-    await provider(req, {}, next);
+    const res = response();
+    await provider(req, res, next);
 
     expect(req.authenticatedUser).toBe(user);
+    expect(res.locals).toEqual({ authenticatedUser: user, role: "member" });
     expect(next).toHaveBeenCalled();
   });
 
@@ -46,7 +49,9 @@ describe("AuthenticationController", () => {
     const req = request({}, { userId: 7 }, { id: 7 });
     const lookup = jest.spyOn(UsersModel, "getById");
 
-    await provider(req, {}, next);
+    const res = response();
+    await provider(req, res, next);
+    expect(res.locals.authenticatedUser).toBe(req.authenticatedUser);
 
     expect(lookup).not.toHaveBeenCalled();
     expect(next).toHaveBeenCalled();
@@ -60,7 +65,9 @@ describe("AuthenticationController", () => {
     const next = jest.fn();
     const provider = AuthenticationController.middleware.stack[1].handle;
 
-    await provider(request({}, { userId: 7 }), {}, next);
+    const res = response();
+    await provider(request({}, { userId: 7 }), res, next);
+    expect(res.locals).toEqual({ authenticatedUser: undefined, role: "" });
 
     expect(next).toHaveBeenCalled();
   });

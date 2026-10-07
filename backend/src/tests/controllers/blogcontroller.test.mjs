@@ -97,6 +97,7 @@ describe("BlogController", () => {
 
     expect(list).toHaveBeenCalledWith(
       expect.objectContaining({
+        pageSize: 20,
         sortBy: "title",
         sortDir: "asc",
         page: 2,

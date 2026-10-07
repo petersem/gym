@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <%- include("partials/head.ejs") %>
-    <title>Blog Management - Gym</title>
+    <title>Manage Blogs - Gym</title>
 </head>
 <body>
     <%
@@ -33,7 +33,7 @@
         <%- include("partials/header.ejs") %>
         <%- include("partials/nav.ejs", { role, authenticatedUser }) %>
         <section id="posts">
-            <h2>Blogs</h2>
+            <h2>Manage Blogs</h2>
             <form action="<%= blogPath %>#posts" method="get">
                 <div class="form-grid responsive-half session-filter-controls" role="group" aria-label="Filter posts">
                     <label for="sort-by">Sort by</label>

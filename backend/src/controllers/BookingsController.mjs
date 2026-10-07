@@ -503,7 +503,17 @@ export class BookingsController {
 
     if (req.body.action === "create") {
       return BookingsModel.create(booking)
-        .then(() => res.redirect(bookingPageUrl(req, { bookingCreated: true })))
+        .then((result) => {
+          if (result.overlap || result.duplicate) {
+            return res.status(409).render("status.ejs", {
+              status: "Booking Conflict",
+              message: result.overlap
+                ? "You already have a booking at this date and time."
+                : "You have already booked this session.",
+            });
+          }
+          return res.redirect(bookingPageUrl(req, { bookingCreated: true }));
+        })
         .catch((error) => {
           console.error(error);
           res.status(500).render("status.ejs", {
@@ -514,7 +524,12 @@ export class BookingsController {
     } else if (req.body.action === "update") {
       return BookingsModel.update(booking)
         .then((result) =>
-          result.affectedRows > 0
+          result.overlap
+            ? res.status(409).render("status.ejs", {
+                status: "Booking Conflict",
+                message: "You already have a booking at this date and time.",
+              })
+            : result.affectedRows > 0
             ? res.redirect(bookingPageUrl(req))
             : res.status(404).render("status.ejs", {
                 status: "Booking Update Failed",
@@ -603,7 +618,7 @@ export class BookingsController {
   static async create(req, res, next) {
     try {
       const result = await BookingsModel.create(req.body);
-      res.status(result.duplicate ? 409 : 201).json(result);
+      res.status(result.duplicate || result.overlap ? 409 : 201).json(result);
     } catch (error) {
       next(error);
     }
@@ -612,9 +627,8 @@ export class BookingsController {
   /** @type {express.RequestHandler} */
   static async update(req, res, next) {
     try {
-      res.json(
-        await BookingsModel.update({ ...req.body, id: Number(req.params.id) }),
-      );
+      const result = await BookingsModel.update({ ...req.body, id: Number(req.params.id) });
+      res.status(result.overlap ? 409 : 200).json(result);
     } catch (error) {
       next(error);
     }

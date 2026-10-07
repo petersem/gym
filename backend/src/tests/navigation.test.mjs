@@ -15,13 +15,24 @@ const manageLinks = [
 
 describe("navigation menu", () => {
   test.each(["admin", "trainer", "member", undefined])(
+    "shows staff booking management only for staff (%s)",
+    async (role) => {
+      const html = await ejs.renderFile(navigation, {
+        authenticatedUser: role ? { role } : undefined,
+      });
+      expect(html.includes('href="/manage/bookings"')).toBe(
+        ["admin", "trainer"].includes(role),
+      );
+    },
+  );
+  test.each(["admin", "trainer", "member", undefined])(
     "renders only first-level menu items for %s",
     async (role) => {
       const html = await ejs.renderFile(navigation, {
         authenticatedUser: role ? { role } : undefined,
       });
       expect(html).not.toMatch(/<(?:details|summary|ul)\b/);
-      expect(html).not.toContain("Manage");
+      expect(html).not.toContain("<summary>Manage</summary>");
     },
   );
 
@@ -43,7 +54,9 @@ describe("navigation menu", () => {
         authenticatedUser: role ? { role } : undefined,
       });
       expect(html.includes('href="/bookings"')).toBe(role === "member");
-      expect(html.includes('href="/timetable"')).toBe(!["admin", "trainer"].includes(role));
+      expect(html.includes('href="/timetable"')).toBe(
+        !["admin", "trainer"].includes(role),
+      );
     },
   );
 

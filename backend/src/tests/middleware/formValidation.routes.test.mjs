@@ -20,6 +20,7 @@ import { ActivitiesController } from "../../controllers/ActivitiesController.mjs
 import { BlogController } from "../../controllers/BlogController.mjs";
 import { SessionsController } from "../../controllers/SessionsController.mjs";
 import { BookingsController } from "../../controllers/BookingsController.mjs";
+import { BookingManagementController } from "../../controllers/BookingManagementController.mjs";
 import { UsersModel } from "../../models/UsersModel.mjs";
 import { LocationModel } from "../../models/LocationModel.mjs";
 import { ActivitiesModel } from "../../models/ActivitiesModel.mjs";
@@ -36,6 +37,7 @@ const managementRoutes = [
   ["/sessions", SessionsController.routes, SessionsModel, true],
   ["/timetable", BookingsController.timetableRoutes, BookingsModel, false],
   ["/bookings", BookingsController.routes, BookingsModel, true],
+  ["/manage/bookings", BookingManagementController.routes, BookingsModel, true],
 ];
 let server;
 let baseUrl;
@@ -249,6 +251,15 @@ describe("mounted form validation", () => {
         .mockResolvedValue({ affectedRows: 1 });
       jest.spyOn(BlogModel, "getById").mockResolvedValue({ user_id: 1 });
       jest.spyOn(BookingsModel, "deleteBySessionId").mockResolvedValue({});
+      if (path === "/manage/bookings") {
+        jest
+          .spyOn(BookingsModel, "getAll")
+          .mockResolvedValue([{ id: 1, session_id: 1, user_id: 1 }]);
+        jest
+          .spyOn(SessionsModel, "getAll")
+          .mockResolvedValue([{ id: 1, trainer_id: 1 }]);
+        jest.spyOn(UsersModel, "getAll").mockResolvedValue([]);
+      }
       const hash = jest.spyOn(bcrypt, "hashSync");
       const response = await post(`${path}/1`, { action: "delete" });
       expect([302, 303]).toContain(response.status);
@@ -332,6 +343,12 @@ describe("mounted form validation", () => {
       "booking-session-id",
       { action: "create", sessionId: "bad", userId: "1" },
     ],
+    [
+      "/manage/bookings",
+      "sessionId",
+      "session-id",
+      { action: "create", sessionId: "bad", userId: "1" },
+    ],
   ])(
     "renders %s errors beneath fields after redirect",
     async (path, field, id, body) => {
@@ -357,7 +374,9 @@ describe("mounted form validation", () => {
       );
       expect(html).toContain('role="alert" tabindex="-1"');
       expect(html).toContain("novalidate");
-      expect(html).not.toMatch(/<(?:input|select|textarea)\b[^>]*\s(?:required|minlength|maxlength|pattern)(?:\s|=|>)/);
+      expect(html).not.toMatch(
+        /<(?:input|select|textarea)\b[^>]*\s(?:required|minlength|maxlength|pattern)(?:\s|=|>)/,
+      );
       expect(html).not.toContain('value="secret"');
       if (body.firstName) {
         expect(html).toContain('value="Fred"');

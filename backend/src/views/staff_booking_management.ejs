@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <%- include("partials/head.ejs") %>
+    <title>Manage Bookings - Gym</title>
+</head>
+<body>
+    <%
+    const basePath = '/manage/bookings';
+    const queryLink = (values = {}) => `${basePath}?${new URLSearchParams({
+        search_term: selectedSearchTerm, sort_by: selectedSortBy,
+        trainer_id: selectedTrainerId ?? 'all', location_id: selectedLocationId ?? 'all',
+        sort_dir: selectedSortDir, page: selectedPage, ...values
+    })}`;
+    const sortLink = (column) => queryLink({ sort_by: column, page: 1,
+        sort_dir: selectedSortBy === column && selectedSortDir === 'asc' ? 'desc' : 'asc' });
+    const sortAria = (column) => selectedSortBy === column
+        ? (selectedSortDir === 'asc' ? 'ascending' : 'descending') : 'none';
+    const formatSessionDateTime = (session) => {
+        const [hour, minute] = String(session.time).split(':');
+        const hourValue = Number(hour);
+        return `${String(session.date).slice(0, 10).split('-').reverse().join('/')} ${hourValue % 12 || 12}:${minute}${hourValue >= 12 ? 'pm' : 'am'}`;
+    };
+    const baseSessionLabel = (session) => `${session.title} - ${formatSessionDateTime(session)}`;
+    const sessionLabelCounts = new Map();
+    sessions.forEach((session) => {
+        const label = baseSessionLabel(session);
+        sessionLabelCounts.set(label, (sessionLabelCounts.get(label) ?? 0) + 1);
+    });
+    const trainerById = new Map(trainers.map((trainer) => [Number(trainer.id), trainer]));
+    const locationById = new Map(locations.map((location) => [Number(location.id), location]));
+    const trainerName = (session) => {
+        const trainer = trainerById.get(Number(session.trainer_id));
+        return trainer ? `${trainer.first_name} ${trainer.last_name}` : 'Unknown trainer';
+    };
+    const sessionLabel = (session) => {
+        const label = baseSessionLabel(session);
+        if (sessionLabelCounts.get(label) === 1) return label;
+        const trainer = trainerById.get(Number(session.trainer_id));
+        return `${label} - ${trainer ? `${trainer.first_name} ${trainer.last_name}` : 'Unknown trainer'}`;
+    };
+    const sortedSessions = [...sessions].sort((a, b) =>
+        String(a.date).slice(0, 10).localeCompare(String(b.date).slice(0, 10)) ||
+        String(a.time).localeCompare(String(b.time)) || Number(a.id) - Number(b.id));
+    const sessionDateTimeKey = (session) => `${String(session.date).slice(0, 10)} ${String(session.time).slice(0, 5)}`;
+    const dateTimeOptions = [...new Map(sortedSessions.map((session) =>
+        [sessionDateTimeKey(session), { value: sessionDateTimeKey(session), label: formatSessionDateTime(session) }])).values()];
+    const editorSessionId = typeof formValues !== 'undefined' && Object.hasOwn(formValues, 'sessionId')
+        ? formValues.sessionId : selectedBooking.session_id;
+    const editorSession = sortedSessions.find((session) => String(session.id) === String(editorSessionId));
+    const listColumns = [['session', 'Session'], ['user', 'Member'], ['session_date', 'Session date/time'],
+        ...(!selectedTrainerId ? [['trainer', 'Trainer']] : []),
+        ...(!selectedLocationId ? [['location', 'Location']] : [])];
+    %>
+    <main>
+        <%- include("partials/header.ejs") %>
+        <%- include("partials/nav.ejs", { role, authenticatedUser }) %>
+        <section>
+            <h2>Manage Bookings</h2>
+            <form action="<%= basePath %>" method="get">
+                <input type="hidden" name="sort_by" value="<%= selectedSortBy %>">
+                <input type="hidden" name="sort_dir" value="<%= selectedSortDir %>">
+                <div class="list-search">
+                    <label for="booking-search">Search bookings</label>
+                    <div class="list-search-control">
+                        <input id="booking-search" name="search_term" type="search" value="<%= selectedSearchTerm %>">
+                        <button type="submit" class="btn-accent">Search</button>
+                    </div>
+                </div>
+                    <div class="list-search booking-filter-row">
+                        <label for="trainer-filter">Trainer</label>
+                        <div class="list-search-control">
+                            <select id="trainer-filter" name="trainer_id" onchange="this.form.submit()">
+                                <option value="all" <%= !selectedTrainerId ? 'selected' : '' %>>All</option>
+                                <% [...trainers].sort((a, b) => a.last_name.localeCompare(b.last_name) || a.first_name.localeCompare(b.first_name)).forEach((trainer) => { %>
+                                    <option value="<%= trainer.id %>" <%= selectedTrainerId === Number(trainer.id) ? 'selected' : '' %>><%= trainer.last_name %>, <%= trainer.first_name %></option>
+                                <% }) %>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="list-search booking-filter-row">
+                        <label for="location-filter">Location</label>
+                        <div class="list-search-control">
+                            <select id="location-filter" name="location_id" onchange="this.form.submit()">
+                                <option value="all" <%= !selectedLocationId ? 'selected' : '' %>>All</option>
+                                <% [...locations].sort((a, b) => a.name.localeCompare(b.name)).forEach((location) => { %>
+                                    <option value="<%= location.id %>" <%= selectedLocationId === Number(location.id) ? 'selected' : '' %>><%= location.name %></option>
+                                <% }) %>
+                            </select>
+                        </div>
+                    </div>
+            </form>
+            <div class="list-results">
+                <table class="list-results-table">
+                    <thead><tr>
+                        <% for (const [column, label] of listColumns) { %>
+                            <th scope="col" aria-sort="<%= sortAria(column) %>"><a class="sort-link" href="<%= sortLink(column) %>"><%= label %></a></th>
+                        <% } %>
+                    </tr></thead>
+                    <tbody>
+                        <% if (!bookings.length) { %><tr><td colspan="<%= listColumns.length %>">No bookings match this search.</td></tr><% } %>
+                        <% bookings.forEach((booking) => { %>
+                            <tr>
+                                <td><a href="<%= basePath %>/<%= booking.id %>?<%= new URLSearchParams({ search_term: selectedSearchTerm, trainer_id: selectedTrainerId ?? 'all', location_id: selectedLocationId ?? 'all', sort_by: selectedSortBy, sort_dir: selectedSortDir, page: selectedPage }) %>#booking-management"><%= booking.session.title %></a></td>
+                                <td><%= booking.userName %></td>
+                                <td><%= formatSessionDateTime(booking.session) %></td>
+                                <% if (!selectedTrainerId) { %><td><%= booking.trainerName %></td><% } %>
+                                <% if (!selectedLocationId) { %><td><%= booking.locationName %></td><% } %>
+                            </tr>
+                        <% }) %>
+                    </tbody>
+                </table>
+            </div>
+            <% if (totalPages > 1) { %>
+                <nav class="pagination" aria-label="Bookings pagination">
+                    <a class="btn-outline<%= selectedPage <= 1 ? ' is-disabled' : '' %>" href="<%= selectedPage > 1 ? queryLink({ page: selectedPage - 1 }) : '#' %>" aria-disabled="<%= selectedPage <= 1 %>">Previous</a>
+                    <span>Page <%= selectedPage %> of <%= totalPages %></span>
+                    <a class="btn-outline<%= selectedPage >= totalPages ? ' is-disabled' : '' %>" href="<%= selectedPage < totalPages ? queryLink({ page: selectedPage + 1 }) : '#' %>" aria-disabled="<%= selectedPage >= totalPages %>">Next</a>
+                </nav>
+            <% } %>
+        </section>
+        <section id="booking-management">
+            <h2>Booking management - <%= selectedBooking.id ? 'Edit' : 'Create' %></h2>
+            <form action="<%= typeof hasFormFeedback !== 'undefined' && hasFormFeedback ? formDestination : basePath + (selectedBooking.id ? '/' + selectedBooking.id : '') %>" method="post" novalidate class="form-grid responsive-half">
+                <%- include("partials/form-errors.ejs", { fields: ['sessionId', 'userId'] }) %>
+                <p class="two-col">* Required fields</p>
+                <% if (selectedBooking.id) { %>
+                    <%- include("partials/form-field.ejs", { field: 'editorTrainer', id: 'editor-trainer', label: 'Trainer', type: 'select', value: editorSession?.trainer_id ?? '', options: [{ value: '', label: 'All' }, ...[...trainers].sort((a, b) => a.last_name.localeCompare(b.last_name) || a.first_name.localeCompare(b.first_name)).map((trainer) => ({ value: trainer.id, label: `${trainer.last_name}, ${trainer.first_name}` }))] }) %>
+                    <%- include("partials/form-field.ejs", { field: 'editorLocation', id: 'editor-location', label: 'Location', type: 'select', value: editorSession?.location_id ?? '', options: [{ value: '', label: 'All' }, ...[...locations].sort((a, b) => a.name.localeCompare(b.name)).map((location) => ({ value: location.id, label: location.name }))] }) %>
+                    <%- include("partials/form-field.ejs", { field: 'editorDateTime', id: 'editor-date-time', label: 'Date/time', type: 'select', value: editorSession ? sessionDateTimeKey(editorSession) : '', options: [{ value: '', label: 'All' }, ...dateTimeOptions] }) %>
+                <% } %>
+                <%- include("partials/form-field.ejs", { field: 'sessionId', id: 'session-id', label: 'Session', requiredField: true, type: 'select', value: selectedBooking.session_id, options: sortedSessions.map((session) => ({ value: session.id, label: sessionLabel(session) })) }) %>
+                <% if (selectedBooking.id) { %>
+                    <p id="editor-session-status" class="two-col" role="status" aria-live="polite"></p>
+                    <div id="editor-session-data" hidden data-sessions="<%= JSON.stringify(sortedSessions.map((session) => ({ id: String(session.id), title: session.title, formattedDateTime: formatSessionDateTime(session), trainerName: trainerName(session), trainer: String(session.trainer_id), location: String(session.location_id), dateTime: sessionDateTimeKey(session), duplicateLabel: sessionLabelCounts.get(baseSessionLabel(session)) > 1, locationName: locationById.get(Number(session.location_id))?.name ?? 'Unknown location' }))) %>"></div>
+                <% } %>
+                <%- include("partials/form-field.ejs", { field: 'userId', id: 'user-id', label: 'Member', requiredField: true, type: 'select', sortOptions: true, value: selectedBooking.user_id, options: users.map((user) => ({ value: user.id, label: `${user.last_name}, ${user.first_name}` })) }) %>
+                <button type="submit" name="action" value="<%= selectedBooking.id ? 'update' : 'create' %>"><%= selectedBooking.id ? 'Update booking' : 'Create booking' %></button>
+                <% if (selectedBooking.id) { %>
+                    <a class="btn btn-outline" href="<%= basePath %>">Discard</a>
+                    <button type="submit" name="action" value="delete">Delete booking</button>
+                <% } %>
+            </form>
+        </section>
+        <%- include("partials/footer.ejs") %>
+    </main>
+    <% if (selectedBooking.id) { %>
+        <script>
+            (() => {
+                const sessionSelect = document.getElementById('session-id');
+                const trainerSelect = document.getElementById('editor-trainer');
+                const locationSelect = document.getElementById('editor-location');
+                const dateTimeSelect = document.getElementById('editor-date-time');
+                const status = document.getElementById('editor-session-status');
+                const sessions = JSON.parse(document.getElementById('editor-session-data').dataset.sessions);
+                const options = new Map(Array.from(sessionSelect.options, (option) => [option.value, option.cloneNode(true)]));
+                const updateButton = sessionSelect.form.querySelector('button[value="update"]');
+                const filterSessions = () => {
+                    const previousValue = sessionSelect.value;
+                    const matching = sessions.filter((session) =>
+                        (!trainerSelect.value || session.trainer === trainerSelect.value) &&
+                        (!locationSelect.value || session.location === locationSelect.value) &&
+                        (!dateTimeSelect.value || session.dateTime === dateTimeSelect.value));
+                    const placeholder = document.createElement('option');
+                    placeholder.value = '';
+                    placeholder.textContent = matching.length ? 'Select an option' : 'No sessions match these filters';
+                    sessionSelect.replaceChildren(placeholder, ...matching.map((session) => {
+                        const option = options.get(session.id).cloneNode(true);
+                        const labelParts = [session.title];
+                        if (!dateTimeSelect.value) labelParts.push(session.formattedDateTime);
+                        if (!trainerSelect.value) labelParts.push(session.trainerName);
+                        if (!trainerSelect.value && !locationSelect.value && session.duplicateLabel) {
+                            labelParts.push(session.locationName);
+                        }
+                        option.textContent = labelParts.join(' - ');
+                        return option;
+                    }));
+                    sessionSelect.value = matching.some((session) => session.id === previousValue) ? previousValue : '';
+                    updateButton.disabled = !sessionSelect.value;
+                    status.textContent = !matching.length ? 'No sessions match these filters.'
+                        : !sessionSelect.value ? 'Select a session matching these filters.' : '';
+                };
+                [trainerSelect, locationSelect, dateTimeSelect].forEach((select) => select.addEventListener('change', filterSessions));
+                sessionSelect.addEventListener('change', () => {
+                    updateButton.disabled = !sessionSelect.value;
+                    status.textContent = sessionSelect.value ? '' : 'Select a session matching these filters.';
+                });
+                filterSessions();
+            })();
+        </script>
+    <% } %>
+</body>
+</html>

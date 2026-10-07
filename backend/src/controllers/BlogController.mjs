@@ -123,7 +123,7 @@ export class BlogController {
       ? req.query.sort_by
       : "created";
     const selectedSortDir = req.query.sort_dir === "asc" ? "asc" : "desc";
-    const pageSize = 20;
+    const pageSize = req.baseUrl === "/manage/blogs" ? 7 : 20;
     const selectedPage = Math.max(1, Number(req.query.page) || 1);
     const blogsPromise = BlogModel.list({
       searchTerm: selectedSearchTerm,
