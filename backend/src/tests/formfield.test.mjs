@@ -17,6 +17,15 @@ const renderSelect = (value, formValues = {}) =>
     options: [{ value: 1, label: "Fred" }],
   });
 
+test("registration shows email and phone examples without prefilling values", async () => {
+  const html = await ejs.renderFile(
+    fileURLToPath(new URL("../views/register.ejs", import.meta.url)),
+    { authenticatedUser: undefined },
+  );
+  expect(html).toMatch(/name="email"[^>]*value=""[^>]*placeholder="e.g. alex@example.com"/);
+  expect(html).toMatch(/name="phone"[^>]*value=""[^>]*placeholder="e.g. 0412 345 678"/);
+});
+
 describe("form dropdown placeholders", () => {
   test.each([0, "0", "", null, undefined])(
     "shows an empty selection placeholder for %j",

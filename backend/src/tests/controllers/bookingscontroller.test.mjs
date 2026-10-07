@@ -923,6 +923,7 @@ describe("BookingsController", () => {
   test.each([
     [{}, [1, 2, 3], null],
     [{ available_trainer_id: "all" }, [1, 2, 3], null],
+    [{ available_location_id: "1", available_trainer_id: "all" }, [1, 2], null],
     [{ available_trainer_id: "12" }, [1, 3], 12],
     [{ available_location_id: "1", available_trainer_id: "12" }, [1], 12],
     [{ available_trainer_id: "99" }, [], 99],
@@ -1000,7 +1001,29 @@ describe("BookingsController", () => {
         expect(trainerSelect).toMatch(/value="all"\s+selected\s*>All/);
       if (trainerId === 12)
         expect(trainerSelect).toMatch(/value="12"\s+selected/);
-      if (query.available_location_id) {
+      const template = fileURLToPath(
+        new URL("../../views/booking_management.ejs", import.meta.url),
+      );
+      const guestHtml = await ejs.renderFile(template, {
+        ...locals,
+        authenticatedUser: undefined,
+      });
+      expect(html).toContain("Click a session to book");
+      expect(guestHtml).not.toContain("Click a session to book");
+      for (const renderedHtml of [html, guestHtml]) {
+        if (!trainerId) {
+          expect(renderedHtml).toContain(
+            query.available_location_id ? "Alex Trainer</span>" : "Main, Alex Trainer</span>",
+          );
+        } else {
+          expect(renderedHtml).not.toContain("Main, Alex Trainer</span>");
+          expect(renderedHtml).not.toContain("Alex Trainer</span>");
+          if (expectedIds.length && !query.available_location_id) {
+            expect(renderedHtml).toContain('class="session-details">Main</span>');
+          }
+        }
+      }
+      if (query.available_location_id && trainerId === 12) {
         expect(html).toContain(
           'action="/timetable?available_location_id=1&amp;available_trainer_id=12"',
         );

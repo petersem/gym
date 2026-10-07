@@ -9,6 +9,7 @@
     value   - value to show when there is no submitted value.
     options - for selects, an array of { value, label }.
     keep    - for passwords, show `value` again after a failed submission.
+    placeholder - optional example shown in an empty input.
   Password fields are blank after a failed submission unless `keep` is true.
 %>
 <%
@@ -38,7 +39,7 @@ const errorId = `${id}-error`;
             <% }) %>
         </select>
     <% } else { %>
-        <input id="<%= id %>" name="<%= field %>" type="<%= inputType %>" value="<%= currentValue ?? '' %>" aria-invalid="<%= Boolean(errors[field]) %>"<% if (errors[field]) { %> aria-describedby="<%= errorId %>"<% } %>>
+        <input id="<%= id %>" name="<%= field %>" type="<%= inputType %>" value="<%= currentValue ?? '' %>"<% if (typeof placeholder !== 'undefined') { %> placeholder="<%= placeholder %>"<% } %> aria-invalid="<%= Boolean(errors[field]) %>"<% if (errors[field]) { %> aria-describedby="<%= errorId %>"<% } %>>
     <% } %>
     <%- include("form-error.ejs", { field, errorId }) %>
 </div>

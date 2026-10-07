@@ -43,7 +43,7 @@ describe("navigation menu", () => {
         authenticatedUser: role ? { role } : undefined,
       });
       expect(html.includes('href="/bookings"')).toBe(role === "member");
-      expect(html.includes('href="/timetable"')).toBe(role !== "admin");
+      expect(html.includes('href="/timetable"')).toBe(!["admin", "trainer"].includes(role));
     },
   );
 

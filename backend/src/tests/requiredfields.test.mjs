@@ -114,6 +114,10 @@ describe.each([false, true])(
         .map(([, attributes]) => attributes.match(/\bfor="([^"]+)"/)?.[1]);
 
       expect(markedLabels).toEqual(ids);
+      if (page === "user_management") {
+        expect(html).toContain('placeholder="e.g. alex@example.com"');
+        expect(html).toContain('placeholder="e.g. 0412 345 678"');
+      }
       expect(html).toContain('<p class="two-col">* Required fields</p>');
       expect(html).not.toMatch(
         /<(?:input|select|textarea)\b[^>]*\srequired(?:\s|=|>)/,

@@ -15,11 +15,9 @@
             return `${hour % 12 || 12}:${String(minute).padStart(2, '0')}${hour >= 12 ? 'pm' : 'am'}`; }; %>
             <% const getSessionHoverText=(session)=> {
                 const activity = activities.find((item) => Number(item.id) === Number(session.activity_id));
-                const trainer = users.find((user) => Number(user.id) === Number(session.trainer_id));
                 return [
                 activity?.name ?? 'Unknown activity',
                 activity?.description ?? 'No description available',
-                trainer ? `${trainer.first_name} ${trainer.last_name}` : 'Unknown trainer',
                 ].join(String.fromCharCode(10));
                 }; %>
                 <% const sortedLocations=[...locations].sort((a, b)=> a.name.localeCompare(b.name)); %>
@@ -53,7 +51,7 @@
 
                                         <% if (showAvailableSessions) { %>
                                         <section class="available-sessions-section">
-                                            <div class="section-heading-row">
+                                            <div class="section-heading-row<%= authenticatedUser?.role === 'member' ? ' timetable-booking-heading' : '' %>">
                                                 <h2>Available sessions next 7 days</h2>
                                                 <% if (authenticatedUser && bookingCreated) { %>
                                                     <div class="alert-stack">
@@ -63,7 +61,11 @@
                                                     </div>
                                                 <% } %>
                                             </div>
-                                            <label for="available-location-filter">Available session location</label>
+                                            <% if (authenticatedUser?.role === 'member') { %>
+                                                <p class="timetable-booking-hint">Click a session to book</p>
+                                            <% } %>
+                                            <div class="timetable-filter-controls">
+                                            <label for="available-location-filter">Location</label>
                                             <select id="available-location-filter"
                                                 onchange="filterBookings('available_location_id', this.value)">
                                                 <option value="">All locations</option>
@@ -74,7 +76,7 @@
                                                     </option>
                                                     <% }) %>
                                             </select>
-                                            <label for="available-trainer-filter">Available session trainer</label>
+                                            <label for="available-trainer-filter">Trainer</label>
                                             <select id="available-trainer-filter"
                                                 onchange="filterBookings('available_trainer_id', this.value)">
                                                 <option value="all" <%=availableTrainerId ? '' : 'selected' %>>All</option>
@@ -83,6 +85,7 @@
                                                         <%=availableTrainerId===Number(trainer.id) ? 'selected' : '' %>><%= trainer.last_name %>, <%= trainer.first_name %></option>
                                                 <% }) %>
                                             </select>
+                                            </div>
                                             <div class="session-calendar available-sessions-calendar">
                                                 <% calendarDays.forEach((day)=> { %>
                                                     <article class="session-day card bg-base-100">
@@ -99,10 +102,13 @@
                                                                                 sessionLocation=locations.find((location)=>
                                                                                 Number(location.id) ===
                                                                                 Number(session.location_id)); %>
-                                                                                <% const
-                                                                                    locationSuffix=!availableLocationId
-                                                                                    && sessionLocation ? `
-                                                                                    (${sessionLocation.name})` : '' ; %>
+                                                                                <% const sessionTrainer=users.find((user)=>
+                                                                                    Number(user.id) === Number(session.trainer_id));
+                                                                                    const sessionDetails=[
+                                                                                        !availableLocationId && sessionLocation ? sessionLocation.name : '',
+                                                                                        !availableTrainerId && sessionTrainer ? `${sessionTrainer.first_name} ${sessionTrainer.last_name}` : ''
+                                                                                    ].filter(Boolean);
+                                                                                    const locationSuffix=sessionDetails.join(', '); %>
                                                                                     <% if (authenticatedUser?.role === 'member') { %>
                                                                                         <button type="button"
                                                                                             class="available-session-select"
@@ -110,8 +116,7 @@
                                                                                             <%= formatSessionTime(session.time)
                                                                                                 %>
                                                                                                 <%= session.title %>
-                                                                                                    <%= locationSuffix
-                                                                                                        %>
+                                                                                                    <span class="session-details"><%= locationSuffix %></span>
                                                                                         </button>
                                                                                         <form class="session-book-form"
                                                                                             action="/timetable<%= availableFilterQuery ? '?' + availableFilterQuery : '' %>"
@@ -136,8 +141,7 @@
                                                                                                 <%= formatSessionTime(session.time)
                                                                                                     %>
                                                                                                     <%= session.title %>
-                                                                                                        <%= locationSuffix
-                                                                                                            %>
+                                                                                                        <span class="session-details"><%= locationSuffix %></span>
                                                                                             </span>
                                                                                             <% } %>
                                                                         </li>

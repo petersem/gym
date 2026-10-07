@@ -519,6 +519,45 @@ textarea {
   min-height: 65px;
 }
 
+.blog-tooltip {
+  position: fixed;
+  z-index: 100;
+  width: max-content;
+  max-width: min(320px, calc(100vw - 16px));
+  max-height: calc(100vh - 16px);
+  overflow: auto;
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+  padding: 8px 12px;
+  border: 1px solid var(--gym-line);
+  border-radius: 4px;
+  background: var(--gym-surface);
+  color: var(--gym-ink);
+  box-shadow: 0 8px 20px var(--gym-shadow);
+  font-size: 13px;
+  pointer-events: none;
+}
+
+.available-session .session-details {
+  display: block;
+  font-size: 75%;
+}
+
+.timetable-filter-controls {
+  display: grid;
+  grid-template-columns: max-content minmax(0, 1fr);
+  align-items: center;
+  gap: 8px 14px;
+}
+
+.timetable-booking-heading h2 {
+  margin-bottom: 10px;
+}
+
+.timetable-booking-hint {
+  margin-bottom: 10px;
+}
+
 .register-submit {
   order: 1;
 }
@@ -1032,6 +1071,7 @@ section > ul:not(.menu) > li {
 }
 
 .available-session-select {
+  display: inline-block;
   border: 0;
   background: transparent;
 }

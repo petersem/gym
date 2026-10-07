@@ -131,9 +131,9 @@ describe("mounted form validation", () => {
         .mockResolvedValue({ insertId: 1 });
       const headers = { "x-test-role": role };
       const page = await fetch(`${baseUrl}/timetable`, { headers });
-      expect(page.status).toBe(role === "admin" ? 403 : 200);
+      expect(page.status).toBe(["admin", "trainer"].includes(role) ? 403 : 200);
       const html = await page.text();
-      if (role === "admin") {
+      if (["admin", "trainer"].includes(role)) {
         expect(html).not.toContain("Yoga");
         expect(SessionsModel.getAll).not.toHaveBeenCalled();
         expect(BookingsModel.getByUserId).not.toHaveBeenCalled();
@@ -357,7 +357,7 @@ describe("mounted form validation", () => {
       );
       expect(html).toContain('role="alert" tabindex="-1"');
       expect(html).toContain("novalidate");
-      expect(html).not.toMatch(/\s(?:required|minlength|maxlength|pattern)=?/);
+      expect(html).not.toMatch(/<(?:input|select|textarea)\b[^>]*\s(?:required|minlength|maxlength|pattern)(?:\s|=|>)/);
       expect(html).not.toContain('value="secret"');
       if (body.firstName) {
         expect(html).toContain('value="Fred"');

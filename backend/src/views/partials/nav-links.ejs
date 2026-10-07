@@ -1,5 +1,5 @@
         <li><a href="/">Dashboard</a></li>
-    <% if (typeof authenticatedUser === 'undefined' || !authenticatedUser || authenticatedUser.role !== "admin") { %>
+    <% if (typeof authenticatedUser === 'undefined' || !authenticatedUser || !["admin", "trainer"].includes(authenticatedUser.role)) { %>
         <li><a href="/timetable">Timetable</a></li>
     <% } %>
     <% if (typeof authenticatedUser !== 'undefined' && authenticatedUser && authenticatedUser.role === "member") { %>

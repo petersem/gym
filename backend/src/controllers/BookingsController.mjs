@@ -92,7 +92,7 @@ export class BookingsController {
   /** Member-only booking pages, submissions and XML export. @type {express.Router} */
   static routes = express.Router();
 
-  /** Timetable browsing for non-admins; booking submissions for members only. @type {express.Router} */
+  /** Timetable browsing for members and guests; booking submissions for members only. @type {express.Router} */
   static timetableRoutes = express.Router();
 
   static bookingFields = [
@@ -144,10 +144,10 @@ export class BookingsController {
     this.routes.post("/", this.formValidation, this.handleBookingManagement);
     this.routes.post("/:id", this.formValidation, this.handleBookingManagement);
     this.timetableRoutes.use((req, res, next) => {
-      if (req.authenticatedUser?.role === "admin") {
+      if (["admin", "trainer"].includes(req.authenticatedUser?.role)) {
         return res.status(403).render("status.ejs", {
           status: "Access Forbidden",
-          message: "Admins cannot access the timetable.",
+          message: "Admins and trainers cannot access the timetable.",
         });
       }
       next();

@@ -8,6 +8,10 @@
     <%
     const blogPath = blogBasePath;
     const canManageBlog = () => authenticatedUser?.role === 'admin';
+    const preview = (text, limit) => {
+        const characters = Array.from(text);
+        return characters.length > limit ? `${characters.slice(0, limit).join('')}...` : text;
+    };
     const formatCreated = (created) => new Intl.DateTimeFormat('en-AU', {
         day: '2-digit', month: 'short', year: 'numeric',
         hour: 'numeric', minute: '2-digit', hour12: true,
@@ -68,10 +72,10 @@
                         <% blogs.forEach((blog) => { %>
                             <% const author = users.find((user) => Number(user.id) === Number(blog.user_id)); %>
                             <tr>
-                                <td><a href="<%= blogPath %>/<%= blog.id %>?<%= new URLSearchParams({ ...(selectedSearchTerm ? { search_term: selectedSearchTerm } : {}), sort_by: selectedSortBy, sort_dir: selectedSortDir, page: selectedPage }) %>#blog-management" title="Edit post"><%= blog.title %></a></td>
+                                <td data-blog-tooltip="<%= blog.title %>"><a href="<%= blogPath %>/<%= blog.id %>?<%= new URLSearchParams({ ...(selectedSearchTerm ? { search_term: selectedSearchTerm } : {}), sort_by: selectedSortBy, sort_dir: selectedSortDir, page: selectedPage }) %>#blog-management"><%= preview(blog.title, 25) %></a></td>
                                 <td><%= author ? `${author.last_name}, ${author.first_name}` : 'Unknown user' %></td>
                                 <td><%= formatCreated(blog.created) %></td>
-                                <td><%= blog.content %></td>
+                                <td data-blog-tooltip="<%= blog.content %>" tabindex="0"><%= preview(blog.content, 50) %></td>
                             </tr>
                         <% }) %>
                     </tbody>
@@ -85,6 +89,41 @@
                 </nav>
             <% } %>
         </section>
+        <div id="blog-tooltip" class="blog-tooltip" role="tooltip" hidden></div>
+        <script>
+            const blogTooltip = document.getElementById("blog-tooltip");
+            let tooltipTarget;
+            const hideBlogTooltip = () => {
+                if (tooltipTarget) tooltipTarget.removeAttribute("aria-describedby");
+                tooltipTarget = null;
+                blogTooltip.hidden = true;
+            };
+            const showBlogTooltip = (cell) => {
+                hideBlogTooltip();
+                tooltipTarget = cell.querySelector("a") || cell;
+                tooltipTarget.setAttribute("aria-describedby", "blog-tooltip");
+                blogTooltip.textContent = cell.dataset.blogTooltip;
+                blogTooltip.hidden = false;
+                const anchor = cell.getBoundingClientRect();
+                const popup = blogTooltip.getBoundingClientRect();
+                const left = Math.max(8, Math.min(anchor.left, window.innerWidth - popup.width - 8));
+                const top = anchor.bottom + popup.height + 8 <= window.innerHeight
+                    ? anchor.bottom + 4 : Math.max(8, anchor.top - popup.height - 4);
+                blogTooltip.style.left = `${left}px`;
+                blogTooltip.style.top = `${top}px`;
+            };
+            document.querySelectorAll("[data-blog-tooltip]").forEach((cell) => {
+                cell.addEventListener("mouseenter", () => showBlogTooltip(cell));
+                cell.addEventListener("mouseleave", hideBlogTooltip);
+                cell.addEventListener("focusin", () => showBlogTooltip(cell));
+                cell.addEventListener("focusout", hideBlogTooltip);
+            });
+            document.addEventListener("keydown", (event) => {
+                if (event.key === "Escape") hideBlogTooltip();
+            });
+            window.addEventListener("resize", hideBlogTooltip);
+            document.addEventListener("scroll", hideBlogTooltip, true);
+        </script>
         <%- include("partials/blog-form.ejs", { blogPath, canManageBlog }) %>
         <%- include("partials/footer.ejs") %>
     </main>
