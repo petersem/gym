@@ -640,6 +640,11 @@ textarea {
   font-weight: 700;
 }
 
+#posts > form > .list-search {
+  margin-bottom: 9px;
+  row-gap: 7px;
+}
+
 .list-results {
   overflow-x: auto;
 }
@@ -1233,6 +1238,10 @@ section > ul:not(.menu) > li {
   .list-search {
     grid-template-columns: minmax(0, 1fr);
     gap: 8px;
+  }
+
+  #posts > form > .list-search {
+    row-gap: 4px;
   }
 
   .list-results-table {

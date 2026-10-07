@@ -78,6 +78,24 @@ const localsFor = (editing) => {
   };
 };
 
+test.each(["/blogs", "/manage/blogs"])(
+  "omits the creation timestamp from the blog editor at %s",
+  async (blogPath) => {
+    const html = await ejs.renderFile(
+      fileURLToPath(new URL("../views/partials/blog-form.ejs", import.meta.url)),
+      {
+        ...localsFor(true),
+        blogPath,
+        canManageBlog: () => true,
+      },
+    );
+    expect(html).not.toContain("Created:");
+    expect(html).not.toContain("2026-10-04");
+    expect(html).toContain("Author");
+    expect(html).toContain("Update post");
+  },
+);
+
 describe.each([false, true])(
   "required field labels (editing: %s)",
   (editing) => {

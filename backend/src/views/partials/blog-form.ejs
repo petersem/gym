@@ -11,7 +11,6 @@
             <label>Author</label>
             <p><%= author ? `${author.last_name}, ${author.first_name}` : 'Unknown user' %></p>
             <input type="hidden" name="userId" value="<%= selectedBlog.user_id %>">
-            <p class="two-col">Created: <%= selectedBlog.created %></p>
         <% } %>
         <input type="hidden" name="deleted" value="0">
         <button type="submit" name="action" value="<%= selectedBlog.id ? 'update' : 'create' %>"><%= selectedBlog.id ? 'Update post' : 'Create post' %></button>
