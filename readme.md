@@ -18,6 +18,18 @@ Gym app for Tafe stage 2 assessment
 
 > There is NO NEED to run any speific database or schema creation SQL. The application takes care of this for you.
 
+### Sample data
+If you choose to seed sample data on your first install, the passowrd for all sample users is `testing123`.
+
+Besides your app admin account, here are a few users to get you started:
+*Trainers*
+- dv@gym.com
+- de@gym.com
+
+*Members*
+ep@gym.com
+ww@gym.com
+
 #### Development Environment
 
 - You will need to have mySQL v8 or above installed and running
