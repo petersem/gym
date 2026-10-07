@@ -3131,6 +3131,9 @@ form.form-grid {
   background: var(--gym-surface);
   box-shadow: 0 12px 28px var(--gym-shadow);
 }
+form.form-grid.public-blog-form {
+  padding-block: 12px;
+}
 .form-grid label, .search-form label {
   color: var(--gym-muted);
   font-size: 13px;
@@ -3179,6 +3182,9 @@ section > ul:not(.menu) {
 section > ul:not(.menu) > li {
   padding: 12px 0;
   border-bottom: 1px solid var(--gym-line);
+}
+#posts > ul > li {
+  border-bottom: none;
 }
 .dashboard-links {
   display: flex;
@@ -3317,6 +3323,10 @@ section > ul:not(.menu) > li {
 }
 .card-tile p {
   flex: 1;
+}
+#posts .card-tile {
+  min-height: 0;
+  padding-block: 10px;
 }
 .card-tile .btn {
   align-self: flex-start;
@@ -3502,6 +3512,9 @@ section > ul:not(.menu) > li {
   form.form-grid {
     padding: 18px;
   }
+  form.form-grid.public-blog-form {
+    padding-block: 9px;
+  }
   .form-grid .two-col {
     grid-column: auto;
   }
@@ -3546,9 +3559,7 @@ section > ul:not(.menu) > li {
     padding-bottom: 8px;
   }
   #posts .card-tile {
-    min-height: 0;
-    padding-top: 8px;
-    padding-bottom: 8px;
+    padding-block: 4px;
   }
   .checkout-layout, .half-half-layout {
     grid-template-columns: minmax(0, 1fr);

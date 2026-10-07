@@ -1,7 +1,7 @@
 <section id="blog-management">
     <h2>Blog management - <%= selectedBlog.id ? 'Edit' : 'Create' %></h2>
     <form action="<%= typeof hasFormFeedback !== 'undefined' && hasFormFeedback ? formDestination : blogPath + (selectedBlog.id ? '/' + selectedBlog.id : '') %>"
-        method="post" novalidate class="form-grid responsive-half blog-form">
+        method="post" novalidate class="form-grid responsive-half blog-form<%= blogPath === '/blogs' ? ' public-blog-form' : '' %>">
         <%- include("form-errors.ejs", { fields: ['title', 'content'] }) %>
         <p class="two-col">* Required fields</p>
         <%- include("form-field.ejs", { field: 'title', id: 'title', label: 'Subject', requiredField: true, value: selectedBlog.title }) %>
