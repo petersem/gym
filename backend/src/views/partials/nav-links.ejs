@@ -1,23 +1,18 @@
         <li><a href="/">Dashboard</a></li>
+    <% if (typeof authenticatedUser === 'undefined' || !authenticatedUser || authenticatedUser.role !== "admin") { %>
         <li><a href="/timetable">Timetable</a></li>
+    <% } %>
     <% if (typeof authenticatedUser !== 'undefined' && authenticatedUser && authenticatedUser.role === "member") { %>
         <li><a href="/bookings">Bookings</a></li>
     <% } %>
     <% if (typeof authenticatedUser !== 'undefined' && authenticatedUser && (authenticatedUser.role === "admin" || authenticatedUser.role === "trainer")) { %>
-        <li>
-            <details>
-                <summary>Manage</summary>
-                <ul>
-                    <li><a href="/sessions">Sessions</a></li>
-                    <% if (authenticatedUser.role === "admin") { %>
-                        <li><a href="/activities">Activities</a></li>
-                        <li><a href="/locations">Locations</a></li>
-                        <li><a href="/users">Users</a></li>
-                        <li><a href="/manage/blogs">Blogs</a></li>
-                    <% } %>
-                </ul>
-            </details>
-        </li>
+        <li><a href="/sessions">Sessions</a></li>
+        <% if (authenticatedUser.role === "admin") { %>
+            <li><a href="/activities">Activities</a></li>
+            <li><a href="/locations">Locations</a></li>
+            <li><a href="/users">Users</a></li>
+            <li><a href="/manage/blogs">Blogs</a></li>
+        <% } %>
     <% } %>
     <% if (typeof authenticatedUser === 'undefined' || !authenticatedUser || authenticatedUser.role !== "admin") { %>
         <li><a href="/blogs">Blogs</a></li>

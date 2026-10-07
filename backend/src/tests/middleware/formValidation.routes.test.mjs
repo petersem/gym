@@ -131,10 +131,16 @@ describe("mounted form validation", () => {
         .mockResolvedValue({ insertId: 1 });
       const headers = { "x-test-role": role };
       const page = await fetch(`${baseUrl}/timetable`, { headers });
-      expect(page.status).toBe(200);
+      expect(page.status).toBe(role === "admin" ? 403 : 200);
       const html = await page.text();
-      expect(html).toContain("Yoga");
-      expect(html).toContain('id="available-trainer-filter"');
+      if (role === "admin") {
+        expect(html).not.toContain("Yoga");
+        expect(SessionsModel.getAll).not.toHaveBeenCalled();
+        expect(BookingsModel.getByUserId).not.toHaveBeenCalled();
+      } else {
+        expect(html).toContain("Yoga");
+        expect(html).toContain('id="available-trainer-filter"');
+      }
       expect(html.includes('class="session-book-form"')).toBe(
         role === "member",
       );

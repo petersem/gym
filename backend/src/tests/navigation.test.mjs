@@ -15,6 +15,17 @@ const manageLinks = [
 
 describe("navigation menu", () => {
   test.each(["admin", "trainer", "member", undefined])(
+    "renders only first-level menu items for %s",
+    async (role) => {
+      const html = await ejs.renderFile(navigation, {
+        authenticatedUser: role ? { role } : undefined,
+      });
+      expect(html).not.toMatch(/<(?:details|summary|ul)\b/);
+      expect(html).not.toContain("Manage");
+    },
+  );
+
+  test.each(["admin", "trainer", "member", undefined])(
     "hides the public Blogs link only for admins (%s)",
     async (role) => {
       const html = await ejs.renderFile(navigation, {
@@ -32,27 +43,25 @@ describe("navigation menu", () => {
         authenticatedUser: role ? { role } : undefined,
       });
       expect(html.includes('href="/bookings"')).toBe(role === "member");
-      expect(html).toContain('href="/timetable"');
+      expect(html.includes('href="/timetable"')).toBe(role !== "admin");
     },
   );
 
-  test("shows all management links to admins", async () => {
+  test("shows all management links at the first level to admins", async () => {
     const html = await ejs.renderFile(navigation, {
       authenticatedUser: { role: "admin" },
     });
 
-    expect(html).toMatch(/<summary>Manage<\/summary>/);
     for (const [href, label] of manageLinks) {
       expect(html).toContain(`<a href="${href}">${label}</a>`);
     }
   });
 
-  test("shows trainers only the sessions link under Manage", async () => {
+  test("shows trainers only the sessions management link", async () => {
     const html = await ejs.renderFile(navigation, {
       authenticatedUser: { role: "trainer" },
     });
 
-    expect(html).toMatch(/<summary>Manage<\/summary>/);
     expect(html).toContain('<a href="/sessions">Sessions</a>');
     for (const [href] of manageLinks.slice(1)) {
       expect(html).not.toContain(`href="${href}"`);
@@ -60,7 +69,7 @@ describe("navigation menu", () => {
   });
 
   test.each(["member", undefined])(
-    "hides Manage and management links for %s",
+    "hides management links for %s",
     async (role) => {
       const html = await ejs.renderFile(navigation, {
         authenticatedUser: role ? { role } : undefined,
