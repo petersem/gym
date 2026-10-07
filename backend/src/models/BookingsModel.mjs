@@ -115,7 +115,12 @@ export class BookingsModel extends DatabaseModel {
        WHERE b.user_id = ? AND booked.date = target.date
          AND booked.time = target.time AND (? IS NULL OR b.id <> ?)
        LIMIT 1`,
-      [booking.session_id, booking.user_id, booking.id ?? null, booking.id ?? null],
+      [
+        booking.session_id,
+        booking.user_id,
+        booking.id ?? null,
+        booking.id ?? null,
+      ],
     );
     return result.length > 0;
   }

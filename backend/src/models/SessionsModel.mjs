@@ -75,7 +75,13 @@ export class SessionsModel extends DatabaseModel {
     const result = await this.query(
       `SELECT id FROM sessions WHERE trainer_id = ? AND date = ? AND time = ?
        AND (? IS NULL OR id <> ?) LIMIT 1`,
-      [session.trainer_id, session.date, session.time, session.id ?? null, session.id ?? null],
+      [
+        session.trainer_id,
+        session.date,
+        session.time,
+        session.id ?? null,
+        session.id ?? null,
+      ],
     );
     return result.length > 0;
   }

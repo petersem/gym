@@ -314,7 +314,9 @@ main {
   .site-menu.desktop-menu li > details::details-content,
   .mobile-menu > details::details-content {
     opacity: 0;
-    transition: opacity 200ms ease, content-visibility 200ms allow-discrete;
+    transition:
+      opacity 200ms ease,
+      content-visibility 200ms allow-discrete;
   }
 
   .site-menu.desktop-menu li > details[open]::details-content,
@@ -1106,6 +1108,15 @@ section > ul:not(.menu) > li {
   color: var(--gym-coral);
 }
 
+.available-session-select[data-booking-conflict] {
+  color: #777777;
+  cursor: not-allowed;
+}
+
+:root[data-theme="dark"] .available-session-select[data-booking-conflict] {
+  color: #aaaaaa;
+}
+
 .available-session.is-selected .available-session-select {
   color: var(--gym-ink);
   font-weight: 400;
@@ -1253,7 +1264,6 @@ section > ul:not(.menu) > li {
   #bookings-next-7-days .section-heading-row > .btn {
     margin-left: auto;
   }
-
 
   .form-grid,
   form.form-grid {

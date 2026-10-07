@@ -38,19 +38,39 @@ const validForms = {
   },
   bookings: { sessionId: "1", userId: "2" },
 };
-test.each(["create", "update"])("rejects past dates and accepts today for session %s", async (action) => {
-  const now = new Date();
-  const yesterday = new Date(now);
-  yesterday.setDate(now.getDate() - 1);
-  const dateValue = (date) => [
-    date.getFullYear(), String(date.getMonth() + 1).padStart(2, "0"), String(date.getDate()).padStart(2, "0"),
-  ].join("-");
-  const params = action === "update" ? { id: "1" } : {};
-  const past = await validate("sessions", { ...validForms.sessions, action, date: dateValue(yesterday) }, params);
-  expect(past.valid).toBe(false);
-  expect(past.req.session.formFeedback[past.req.originalUrl].errors.date).toBe("Date cannot be earlier than today.");
-  expect((await validate("sessions", { ...validForms.sessions, action, date: dateValue(now) }, params)).valid).toBe(true);
-});
+test.each(["create", "update"])(
+  "rejects past dates and accepts today for session %s",
+  async (action) => {
+    const now = new Date();
+    const yesterday = new Date(now);
+    yesterday.setDate(now.getDate() - 1);
+    const dateValue = (date) =>
+      [
+        date.getFullYear(),
+        String(date.getMonth() + 1).padStart(2, "0"),
+        String(date.getDate()).padStart(2, "0"),
+      ].join("-");
+    const params = action === "update" ? { id: "1" } : {};
+    const past = await validate(
+      "sessions",
+      { ...validForms.sessions, action, date: dateValue(yesterday) },
+      params,
+    );
+    expect(past.valid).toBe(false);
+    expect(
+      past.req.session.formFeedback[past.req.originalUrl].errors.date,
+    ).toBe("Date cannot be earlier than today.");
+    expect(
+      (
+        await validate(
+          "sessions",
+          { ...validForms.sessions, action, date: dateValue(now) },
+          params,
+        )
+      ).valid,
+    ).toBe(true);
+  },
+);
 
 const managementForms = Object.keys(validForms).filter(
   (form) => !["login", "register"].includes(form),

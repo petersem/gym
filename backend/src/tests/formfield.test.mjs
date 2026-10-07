@@ -22,8 +22,12 @@ test("registration shows email and phone examples without prefilling values", as
     fileURLToPath(new URL("../views/register.ejs", import.meta.url)),
     { authenticatedUser: undefined },
   );
-  expect(html).toMatch(/name="email"[^>]*value=""[^>]*placeholder="e.g. alex@example.com"/);
-  expect(html).toMatch(/name="phone"[^>]*value=""[^>]*placeholder="e.g. 0412 345 678"/);
+  expect(html).toMatch(
+    /name="email"[^>]*value=""[^>]*placeholder="e.g. alex@example.com"/,
+  );
+  expect(html).toMatch(
+    /name="phone"[^>]*value=""[^>]*placeholder="e.g. 0412 345 678"/,
+  );
 });
 
 describe("form dropdown placeholders", () => {
@@ -45,11 +49,14 @@ describe("form dropdown placeholders", () => {
         value: 3,
         formValues: { userId: "2" },
       });
-      const labels = [...html.matchAll(/<option\b[^>]*>([^<]*)<\/option>/g)]
-        .map((match) => match[1]);
-      expect(labels).toEqual(sortOptions
-        ? ["Alpha, Ben", "Alpha, Zoe", "Zulu, Alex"]
-        : ["Zulu, Alex", "Alpha, Zoe", "Alpha, Ben"]);
+      const labels = [
+        ...html.matchAll(/<option\b[^>]*>([^<]*)<\/option>/g),
+      ].map((match) => match[1]);
+      expect(labels).toEqual(
+        sortOptions
+          ? ["Alpha, Ben", "Alpha, Zoe", "Zulu, Alex"]
+          : ["Zulu, Alex", "Alpha, Zoe", "Alpha, Ben"],
+      );
       expect(html).toContain('<option value="2" selected>Zulu, Alex</option>');
       expect(options.map((option) => option.value)).toEqual([2, 3, 1]);
     },

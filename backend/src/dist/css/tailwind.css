@@ -2680,24 +2680,6 @@
       rotate: 45deg;
       translate: 0 1px;
     }
-    .link {
-      cursor: pointer;
-      text-decoration-line: underline;
-    }
-    .link:focus {
-      --tw-outline-style: none;
-      outline-style: none;
-    }
-    @media (forced-colors: active) {
-      .link:focus {
-        outline: 2px solid transparent;
-        outline-offset: 2px;
-      }
-    }
-    .link:focus-visible {
-      outline: 2px solid currentColor;
-      outline-offset: 2px;
-    }
   }
   .resize {
     resize: both;
@@ -2722,9 +2704,6 @@
       --alert-border-color: var(--color-error);
       --alert-color: var(--color-error);
     }
-  }
-  .uppercase {
-    text-transform: uppercase;
   }
   .filter {
     filter: var(--tw-blur,) var(--tw-brightness,) var(--tw-contrast,) var(--tw-grayscale,) var(--tw-hue-rotate,) var(--tw-invert,) var(--tw-saturate,) var(--tw-sepia,) var(--tw-drop-shadow,);
@@ -3613,6 +3592,13 @@ section > ul:not(.menu) > li {
   border: 0;
   background: transparent;
   color: var(--gym-coral);
+}
+.available-session-select[data-booking-conflict] {
+  color: #777777;
+  cursor: not-allowed;
+}
+:root[data-theme="dark"] .available-session-select[data-booking-conflict] {
+  color: #aaaaaa;
 }
 .available-session.is-selected .available-session-select {
   color: var(--gym-ink);

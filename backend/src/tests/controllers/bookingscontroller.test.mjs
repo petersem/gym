@@ -429,6 +429,88 @@ describe("BookingsController", () => {
     expect(calendarDays[1].sessions).toEqual([session]);
   });
 
+  test("disables same-start timetable sessions even when the booked session is filtered out", async () => {
+    const date = new Date().toLocaleDateString("en-CA");
+    const sessions = [
+      {
+        id: 1,
+        title: "Booked",
+        date,
+        time: "09:00:00",
+        trainer_id: 12,
+        location_id: 1,
+      },
+      {
+        id: 2,
+        title: "Conflict",
+        date,
+        time: "09:00:00",
+        trainer_id: 13,
+        location_id: 2,
+      },
+      {
+        id: 3,
+        title: "Later",
+        date,
+        time: "10:00:00",
+        trainer_id: 13,
+        location_id: 2,
+      },
+      {
+        id: 4,
+        title: "Other date",
+        date: "2099-01-01",
+        time: "09:00:00",
+        trainer_id: 13,
+        location_id: 2,
+      },
+    ];
+    jest.spyOn(BookingsModel, "getByUserId").mockResolvedValue([
+      { id: 1, user_id: "7", session_id: "1" },
+      { id: 2, user_id: 8, session_id: 3 },
+    ]);
+    jest.spyOn(SessionsModel, "getAll").mockResolvedValue(sessions);
+    jest.spyOn(UsersModel, "getAll").mockResolvedValue([]);
+    jest.spyOn(LocationModel, "getAll").mockResolvedValue([]);
+    jest.spyOn(ActivitiesModel, "getAll").mockResolvedValue([]);
+    const res = response();
+    await BookingsController.viewTimetable(
+      request(
+        {},
+        { available_location_id: "2", available_trainer_id: "13" },
+        {},
+        { id: 7, role: "member" },
+      ),
+      res,
+    );
+    const locals = res.render.mock.calls[0][1];
+    expect([...locals.conflictingSessionIds]).toEqual([2]);
+    expect(
+      locals.calendarDays[0].sessions.map((session) => session.id),
+    ).toEqual([2, 3]);
+    const html = await ejs.renderFile(
+      fileURLToPath(
+        new URL("../../views/booking_management.ejs", import.meta.url),
+      ),
+      locals,
+    );
+    const items = [
+      ...html.matchAll(/<li class="available-session">([\s\S]*?)<\/li>/g),
+    ].map((match) => match[1]);
+    expect(items[0]).toContain('data-booking-conflict="true"');
+    expect(items[0]).toMatch(/class="available-session-select"\s+disabled/);
+    expect(items[0]).toMatch(/value="create"\s+disabled/);
+    expect(items[0]).not.toContain("BOOKED");
+    expect(items[1]).not.toMatch(/\sdisabled(?:\s|>)/);
+    const guestHtml = await ejs.renderFile(
+      fileURLToPath(
+        new URL("../../views/booking_management.ejs", import.meta.url),
+      ),
+      { ...locals, authenticatedUser: undefined },
+    );
+    expect(guestHtml).not.toContain('data-booking-conflict="true"');
+  });
+
   test.each([
     [{}, [1, 2, 3], null],
     [{ available_location_id: "1", available_trainer_id: "12" }, [1], 12],

@@ -357,6 +357,30 @@ export class BookingsController {
         const bookingTrainerId = canManageBookings
           ? Number(bookingTrainerIdParam) || null
           : null;
+        const bookedSessionIds = new Set(
+          bookings
+            .filter(
+              (booking) =>
+                Number(booking.user_id) === Number(req.authenticatedUser?.id),
+            )
+            .map((booking) => Number(booking.session_id)),
+        );
+        const sessionStartKey = (session) =>
+          `${String(session.date).slice(0, 10)}T${session.time}`;
+        const bookedStartTimes = new Set(
+          sessions
+            .filter((session) => bookedSessionIds.has(Number(session.id)))
+            .map(sessionStartKey),
+        );
+        const conflictingSessionIds = new Set(
+          sessions
+            .filter(
+              (session) =>
+                !bookedSessionIds.has(Number(session.id)) &&
+                bookedStartTimes.has(sessionStartKey(session)),
+            )
+            .map((session) => Number(session.id)),
+        );
         const availableSessions = sessions.filter(
           (session) =>
             (!availableLocationId ||
@@ -455,6 +479,7 @@ export class BookingsController {
           }));
         res.render("booking_management.ejs", {
           bookings,
+          conflictingSessionIds,
           users,
           sessions: availableSessions,
           locations,
@@ -530,11 +555,11 @@ export class BookingsController {
                 message: "You already have a booking at this date and time.",
               })
             : result.affectedRows > 0
-            ? res.redirect(bookingPageUrl(req))
-            : res.status(404).render("status.ejs", {
-                status: "Booking Update Failed",
-                message: "The booking could not be found.",
-              }),
+              ? res.redirect(bookingPageUrl(req))
+              : res.status(404).render("status.ejs", {
+                  status: "Booking Update Failed",
+                  message: "The booking could not be found.",
+                }),
         )
         .catch((error) => {
           console.error(error);
@@ -627,7 +652,10 @@ export class BookingsController {
   /** @type {express.RequestHandler} */
   static async update(req, res, next) {
     try {
-      const result = await BookingsModel.update({ ...req.body, id: Number(req.params.id) });
+      const result = await BookingsModel.update({
+        ...req.body,
+        id: Number(req.params.id),
+      });
       res.status(result.overlap ? 409 : 200).json(result);
     } catch (error) {
       next(error);

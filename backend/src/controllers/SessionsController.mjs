@@ -374,12 +374,15 @@ export class SessionsController {
 
     if (req.body.action === "create") {
       return SessionsModel.create(session)
-        .then((result) => result.trainerConflict
-          ? res.status(409).render("status.ejs", {
-              status: "Session Conflict",
-              message: "This trainer already has a session at this date and time.",
-            })
-          : res.redirect("/sessions"))
+        .then((result) =>
+          result.trainerConflict
+            ? res.status(409).render("status.ejs", {
+                status: "Session Conflict",
+                message:
+                  "This trainer already has a session at this date and time.",
+              })
+            : res.redirect("/sessions"),
+        )
         .catch((error) => {
           console.error(error);
           res.status(500).render("status.ejs", {
@@ -389,12 +392,15 @@ export class SessionsController {
         });
     } else if (req.body.action === "update") {
       return SessionsModel.update(session)
-        .then((result) => result.trainerConflict
-          ? res.status(409).render("status.ejs", {
-              status: "Session Conflict",
-              message: "This trainer already has a session at this date and time.",
-            })
-          : res.redirect("/sessions"))
+        .then((result) =>
+          result.trainerConflict
+            ? res.status(409).render("status.ejs", {
+                status: "Session Conflict",
+                message:
+                  "This trainer already has a session at this date and time.",
+              })
+            : res.redirect("/sessions"),
+        )
         .catch((error) => {
           console.error(error);
           res.status(500).render("status.ejs", {
@@ -452,7 +458,10 @@ export class SessionsController {
   /** @type {express.RequestHandler} */
   static async update(req, res, next) {
     try {
-      const result = await SessionsModel.update({ ...req.body, id: Number(req.params.id) });
+      const result = await SessionsModel.update({
+        ...req.body,
+        id: Number(req.params.id),
+      });
       res.status(result.trainerConflict ? 409 : 200).json(result);
     } catch (error) {
       next(error);

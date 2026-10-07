@@ -60,9 +60,10 @@ export class BookingManagementController {
       if (!selectedBooking)
         return status(res, 404, "The booking could not be found.");
       const selectedSearchTerm = String(req.query.search_term ?? "").trim();
-      const selectedTrainerId = req.authenticatedUser.role === "trainer"
-        ? Number(req.authenticatedUser.id)
-        : Number(req.query.trainer_id) || null;
+      const selectedTrainerId =
+        req.authenticatedUser.role === "trainer"
+          ? Number(req.authenticatedUser.id)
+          : Number(req.query.trainer_id) || null;
       const selectedLocationId = Number(req.query.location_id) || null;
       const selectedSortBy = [
         "session",
@@ -85,9 +86,15 @@ export class BookingManagementController {
           ...booking,
           session: sessionById.get(Number(booking.session_id)),
           userName: userName(booking.user_id),
-          trainerName: userName(sessionById.get(Number(booking.session_id)).trainer_id),
-          locationName: locations.find((location) =>
-            Number(location.id) === Number(sessionById.get(Number(booking.session_id)).location_id))?.name ?? "Unknown location",
+          trainerName: userName(
+            sessionById.get(Number(booking.session_id)).trainer_id,
+          ),
+          locationName:
+            locations.find(
+              (location) =>
+                Number(location.id) ===
+                Number(sessionById.get(Number(booking.session_id)).location_id),
+            )?.name ?? "Unknown location",
         }))
         .filter(
           (booking) =>
@@ -111,7 +118,7 @@ export class BookingManagementController {
                 ? booking.trainerName
                 : selectedSortBy === "location"
                   ? booking.locationName
-              : String(booking.created);
+                  : String(booking.created);
       rows.sort(
         (left, right) =>
           (String(sortValue(left)).localeCompare(String(sortValue(right))) ||

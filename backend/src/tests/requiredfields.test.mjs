@@ -42,6 +42,7 @@ const localsFor = (editing) => {
     blogs: [],
     sessions: [],
     bookings: [],
+    conflictingSessionIds: new Set(),
     calendarDays: [],
     bookingCalendarDays: [],
     selectedActivity: selected,
@@ -85,24 +86,32 @@ test("timetable marks only the current member's booked sessions and disables boo
     { id: 1, user_id: "1", session_id: "10" },
     { id: 2, user_id: 2, session_id: 11 },
   ];
-  locals.calendarDays = [{
-    label: "Today",
-    sessions: [
-      { id: 10, title: "Already booked", time: "09:00:00" },
-      { id: 11, title: "Available session", time: "10:00:00" },
-    ],
-  }];
-  const template = fileURLToPath(new URL("../views/booking_management.ejs", import.meta.url));
+  locals.calendarDays = [
+    {
+      label: "Today",
+      sessions: [
+        { id: 10, title: "Already booked", time: "09:00:00" },
+        { id: 11, title: "Available session", time: "10:00:00" },
+      ],
+    },
+  ];
+  const template = fileURLToPath(
+    new URL("../views/booking_management.ejs", import.meta.url),
+  );
   const html = await ejs.renderFile(template, locals);
-  const items = [...html.matchAll(/<li class="available-session">([\s\S]*?)<\/li>/g)]
-    .map((match) => match[1]);
+  const items = [
+    ...html.matchAll(/<li class="available-session">([\s\S]*?)<\/li>/g),
+  ].map((match) => match[1]);
   expect(items).toHaveLength(2);
   expect(items[0]).toContain('class="session-booked-label">BOOKED</span>');
   expect(items[0]).toMatch(/class="available-session-select"\s+disabled/);
   expect(items[0]).toMatch(/value="create"\s+disabled/);
   expect(items[1]).not.toContain("BOOKED");
   expect(items[1]).not.toMatch(/\sdisabled(?:\s|>)/);
-  const guestHtml = await ejs.renderFile(template, { ...locals, authenticatedUser: undefined });
+  const guestHtml = await ejs.renderFile(template, {
+    ...locals,
+    authenticatedUser: undefined,
+  });
   expect(guestHtml).not.toContain('class="session-booked-label"');
   expect(guestHtml).not.toContain('class="available-session-select"');
 });
@@ -110,7 +119,10 @@ test("timetable marks only the current member's booked sessions and disables boo
 test.each([
   ["location_management", ["manager"]],
   ["session_management", ["trainer-filter", "trainer-id"]],
-  ["booking_management", ["booking-user-id", "available-trainer-filter", "booking-trainer-filter"]],
+  [
+    "booking_management",
+    ["booking-user-id", "available-trainer-filter", "booking-trainer-filter"],
+  ],
 ])("%s sorts every user dropdown by displayed name", async (page, ids) => {
   const locals = localsFor(true);
   locals.users = [
@@ -124,8 +136,12 @@ test.each([
     locals,
   );
   for (const id of ids) {
-    const select = html.match(new RegExp(`<select id="${id}"[^>]*>([\\s\\S]*?)<\\/select>`))[1];
-    const values = [...select.matchAll(/<option value="([123])"/g)].map((match) => match[1]);
+    const select = html.match(
+      new RegExp(`<select id="${id}"[^>]*>([\\s\\S]*?)<\\/select>`),
+    )[1];
+    const values = [...select.matchAll(/<option value="([123])"/g)].map(
+      (match) => match[1],
+    );
     expect(values).toEqual(["1", "3", "2"]);
   }
 });
@@ -134,7 +150,9 @@ test.each(["/blogs", "/manage/blogs"])(
   "omits the creation timestamp from the blog editor at %s",
   async (blogPath) => {
     const html = await ejs.renderFile(
-      fileURLToPath(new URL("../views/partials/blog-form.ejs", import.meta.url)),
+      fileURLToPath(
+        new URL("../views/partials/blog-form.ejs", import.meta.url),
+      ),
       {
         ...localsFor(true),
         blogPath,

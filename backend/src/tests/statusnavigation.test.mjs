@@ -12,15 +12,23 @@ beforeAll(async () => {
   app.set("views", fileURLToPath(new URL("../views", import.meta.url)));
   app.use((req, _res, next) => {
     const role = req.headers["x-test-role"];
-    req.authenticatedUser = role ? {
-      id: 1, role, first_name: "Test", last_name: "User",
-    } : undefined;
+    req.authenticatedUser = role
+      ? {
+          id: 1,
+          role,
+          first_name: "Test",
+          last_name: "User",
+        }
+      : undefined;
     next();
   });
   app.use(AuthenticationController.middleware);
-  app.get("/status", (_req, res) => res.status(409).render("status.ejs", {
-    status: "Booking Conflict", message: "A booking conflict occurred.",
-  }));
+  app.get("/status", (_req, res) =>
+    res.status(409).render("status.ejs", {
+      status: "Booking Conflict",
+      message: "A booking conflict occurred.",
+    }),
+  );
   app.get("/restricted", AuthenticationController.restrict(["admin"]));
   app.get("/logout", (req, res) => {
     req.session.userId = 1;
@@ -33,7 +41,9 @@ beforeAll(async () => {
 });
 
 afterAll(async () => {
-  await new Promise((resolve, reject) => server.close((error) => error ? reject(error) : resolve()));
+  await new Promise((resolve, reject) =>
+    server.close((error) => (error ? reject(error) : resolve())),
+  );
 });
 
 test.each(["admin", "trainer", "member", undefined])(
@@ -44,7 +54,9 @@ test.each(["admin", "trainer", "member", undefined])(
     });
     expect(response.status).toBe(409);
     const html = await response.text();
-    expect(html.includes('href="/manage/bookings"')).toBe(["admin", "trainer"].includes(role));
+    expect(html.includes('href="/manage/bookings"')).toBe(
+      ["admin", "trainer"].includes(role),
+    );
     expect(html.includes('href="/users"')).toBe(role === "admin");
     expect(html.includes('href="/bookings"')).toBe(role === "member");
     expect(html.includes('href="/authenticate/logout"')).toBe(Boolean(role));
@@ -54,7 +66,9 @@ test.each(["admin", "trainer", "member", undefined])(
 );
 
 test("access-denied status pages retain member navigation", async () => {
-  const response = await fetch(`${baseUrl}/restricted`, { headers: { "x-test-role": "member" } });
+  const response = await fetch(`${baseUrl}/restricted`, {
+    headers: { "x-test-role": "member" },
+  });
   expect(response.status).toBe(403);
   const html = await response.text();
   expect(html).toContain('href="/bookings"');
@@ -62,7 +76,9 @@ test("access-denied status pages retain member navigation", async () => {
 });
 
 test("logout status pages show guest navigation rather than stale staff links", async () => {
-  const response = await fetch(`${baseUrl}/logout`, { headers: { "x-test-role": "admin" } });
+  const response = await fetch(`${baseUrl}/logout`, {
+    headers: { "x-test-role": "admin" },
+  });
   expect(response.status).toBe(200);
   const html = await response.text();
   expect(html).toContain('href="/authenticate/register"');

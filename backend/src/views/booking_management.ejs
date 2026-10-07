@@ -113,9 +113,11 @@
                                                                                     const locationSuffix=sessionDetails.join(', '); %>
                                                                                     <% if (authenticatedUser?.role === 'member') { %>
                                                                                         <% const isBooked = bookedSessionIds.has(Number(session.id)); %>
+                                                                                        <% const hasConflict = conflictingSessionIds.has(Number(session.id)); %>
                                                                                         <button type="button"
                                                                                             class="available-session-select"
-                                                                                            <% if (isBooked) { %>disabled<% } %>
+                                                                                            <% if (isBooked || hasConflict) { %>disabled<% } %>
+                                                                                            <% if (hasConflict) { %>data-booking-conflict="true" aria-label="<%= session.title %>: unavailable because you have a booking at this date and time"<% } %>
                                                                                             title="<%= getSessionHoverText(session) %>">
                                                                                             <%= formatSessionTime(session.time)
                                                                                                 %>
@@ -137,7 +139,7 @@
                                                                                                 type="submit"
                                                                                                 name="action"
                                                                                                 value="create"
-                                                                                                <% if (isBooked) { %>disabled<% } %>
+                                                                                                <% if (isBooked || hasConflict) { %>disabled<% } %>
                                                                                                 hidden>Book</button>
                                                                                         </form>
                                                                                         <% } else { %>
