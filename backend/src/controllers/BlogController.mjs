@@ -12,7 +12,7 @@ const canManageBlog = (user, blog) =>
 
 /** HTTP handlers for blog posts. */
 export class BlogController {
-  /** @type {express.Router} */
+  /** Public blog routes, unavailable to admins who use management instead. @type {express.Router} */
   static routes = express.Router();
 
   /** @type {express.Router} */
@@ -94,6 +94,15 @@ export class BlogController {
       this.managementFormValidation,
       this.handleBlogManagement,
     );
+    this.routes.use((req, res, next) => {
+      if (req.authenticatedUser?.role === "admin") {
+        return res.status(403).render("status.ejs", {
+          status: "Access Forbidden",
+          message: "Admins must use Manage Blogs to view and manage posts.",
+        });
+      }
+      next();
+    });
     this.routes.get("/", this.viewBlogManagement);
     this.routes.get("/:id", this.viewBlogManagement);
     this.routes.post("/", this.formValidation, this.handleBlogManagement);

@@ -19,7 +19,9 @@
             </details>
         </li>
     <% } %>
+    <% if (typeof authenticatedUser === 'undefined' || !authenticatedUser || authenticatedUser.role !== "admin") { %>
         <li><a href="/blogs">Blogs</a></li>
+    <% } %>
     <% if (typeof authenticatedUser !== 'undefined' && authenticatedUser) { %>
         <li><a href="/authenticate/logout">Log out</a></li>
     <% } else { %>

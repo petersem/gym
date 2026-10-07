@@ -14,6 +14,17 @@ const manageLinks = [
 ];
 
 describe("navigation menu", () => {
+  test.each(["admin", "trainer", "member", undefined])(
+    "hides the public Blogs link only for admins (%s)",
+    async (role) => {
+      const html = await ejs.renderFile(navigation, {
+        authenticatedUser: role ? { role } : undefined,
+      });
+      expect(html.includes('href="/blogs"')).toBe(role !== "admin");
+      expect(html.includes('href="/manage/blogs"')).toBe(role === "admin");
+    },
+  );
+
   test.each(["member", "admin", "trainer", undefined])(
     "shows Bookings only to members when role is %s",
     async (role) => {

@@ -58,7 +58,9 @@ beforeAll(async () => {
   app.use((req, _res, next) => {
     const role =
       req.headers["x-test-role"] ??
-      (req.path.startsWith("/bookings") || req.path.startsWith("/timetable")
+      (req.path.startsWith("/bookings") ||
+      req.path.startsWith("/timetable") ||
+      req.path.startsWith("/blogs")
         ? "member"
         : "admin");
     req.authenticatedUser = role === "guest" ? undefined : { id: 1, role };

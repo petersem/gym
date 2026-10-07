@@ -28,6 +28,7 @@ beforeAll(async () => {
     next();
   });
   app.use("/manage/blogs", BlogController.managementRoutes);
+  app.use("/blogs", BlogController.routes);
   await new Promise((resolve) => {
     server = app.listen(0, "127.0.0.1", resolve);
   });
@@ -41,6 +42,47 @@ afterAll(async () => {
 });
 
 describe("admin blog management", () => {
+  test("blocks admin public blog reads and all write actions before model access", async () => {
+    const spies = [
+      jest.spyOn(BlogModel, "list"),
+      jest.spyOn(BlogModel, "getById"),
+      jest.spyOn(UsersModel, "getAll"),
+      ...["create", "update", "delete"].map((method) =>
+        jest.spyOn(BlogModel, method),
+      ),
+    ];
+    for (const path of ["/blogs", "/blogs/1"]) {
+      const read = await fetch(`${baseUrl}${path}`, {
+        headers: { "x-test-role": "admin" },
+      });
+      expect(read.status).toBe(403);
+      expect(await read.text()).toContain("Admins must use Manage Blogs");
+      for (const action of ["create", "update", "delete"]) {
+        const write = await fetch(`${baseUrl}${path}`, {
+          method: "POST",
+          headers: { "x-test-role": "admin" },
+          body: new URLSearchParams({ action, title: "Post", content: "Body" }),
+          redirect: "manual",
+        });
+        expect(write.status).toBe(403);
+      }
+    }
+    for (const spy of spies) expect(spy).not.toHaveBeenCalled();
+  });
+
+  test.each(["member", "trainer", undefined])(
+    "preserves public blog viewing for %s",
+    async (role) => {
+      jest.spyOn(BlogModel, "list").mockResolvedValue({ blogs: [], total: 0 });
+      jest.spyOn(UsersModel, "getAll").mockResolvedValue([]);
+      const response = await fetch(`${baseUrl}/blogs`, {
+        headers: role ? { "x-test-role": role } : {},
+      });
+      expect(response.status).toBe(200);
+      expect(await response.text()).toContain('id="posts"');
+    },
+  );
+
   test.each(["trainer", "member", undefined])(
     "rejects reads and writes for %s before accessing models",
     async (role) => {
