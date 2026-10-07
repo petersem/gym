@@ -2,6 +2,7 @@
   Site footer included at the end of every page.
   Locals:
     version - optional app version shown after the copyright.
+    authenticatedUser - optional signed-in user; admins see the JSDoc link.
 %>
 <footer class="site-footer">
     <span>Gym Management Portal © 2026
@@ -9,6 +10,8 @@
          v<%= version %>
     <% } %>
     </span>
-    <a href="/docs/index.html" target="_blank">JSDoc Reference</a>
+    <% if (typeof authenticatedUser !== 'undefined' && authenticatedUser?.role === 'admin') { %>
+        <a href="/docs/index.html" target="_blank">JSDoc Reference</a>
+    <% } %>
     <a href="/privacy-policy.html">Privacy Policy</a>
 </footer>
