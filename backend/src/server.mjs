@@ -81,6 +81,7 @@ console.log(logInfo, `Cors enabled, and allowing: ${corsOptions.origin}`);
 app.use("/users", UsersController.routes);
 app.use("/locations", LocationController.routes);
 app.use("/blogs", BlogController.routes);
+app.use("/timetable", BookingsController.timetableRoutes);
 app.use("/bookings", BookingsController.routes);
 app.use("/sessions", SessionsController.routes);
 app.use("/activities", ActivitiesController.routes);

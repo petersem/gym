@@ -28,12 +28,13 @@ import { SessionsModel } from "../../models/SessionsModel.mjs";
 import { BookingsModel } from "../../models/BookingsModel.mjs";
 
 const managementRoutes = [
-  ["/users", UsersController, UsersModel],
-  ["/locations", LocationController, LocationModel],
-  ["/activities", ActivitiesController, ActivitiesModel],
-  ["/blogs", BlogController, BlogModel],
-  ["/sessions", SessionsController, SessionsModel],
-  ["/bookings", BookingsController, BookingsModel],
+  ["/users", UsersController.routes, UsersModel, true],
+  ["/locations", LocationController.routes, LocationModel, true],
+  ["/activities", ActivitiesController.routes, ActivitiesModel, true],
+  ["/blogs", BlogController.routes, BlogModel, true],
+  ["/sessions", SessionsController.routes, SessionsModel, true],
+  ["/timetable", BookingsController.timetableRoutes, BookingsModel, false],
+  ["/bookings", BookingsController.routes, BookingsModel, true],
 ];
 let server;
 let baseUrl;
@@ -60,7 +61,7 @@ beforeAll(async () => {
   app.use(formFeedback);
   app.use("/authenticate", AuthenticationController.routes);
   for (const [path, controller] of managementRoutes) {
-    app.use(path, controller.routes);
+    app.use(path, controller);
   }
   await new Promise((resolve) => {
     server = app.listen(0, "127.0.0.1", resolve);
@@ -104,9 +105,26 @@ const mockPages = () => {
 
 describe("mounted form validation", () => {
   test.each([
+    ["/timetable", "Available sessions next 7 days", "Bookings next 7 days"],
+    ["/bookings", "Bookings next 7 days", "Available sessions next 7 days"],
+  ])(
+    "serves the separate page at %s",
+    async (path, visibleSection, hiddenSection) => {
+      mockPages();
+      const response = await fetch(`${baseUrl}${path}`);
+      expect(response.status).toBe(200);
+      const html = await response.text();
+      expect(html).toContain(visibleSection);
+      expect(html).not.toContain(hiddenSection);
+    },
+  );
+
+  test.each([
     "/authenticate",
     "/authenticate/register",
-    ...managementRoutes.flatMap(([path]) => [path, `${path}/1`]),
+    ...managementRoutes.flatMap(([path, , , hasIdRoute]) =>
+      hasIdRoute ? [path, `${path}/1`] : [path],
+    ),
   ])("rejects invalid %s submissions before side effects", async (path) => {
     const writes = managementRoutes.flatMap(([, , model]) =>
       ["create", "update", "delete"].map((method) => jest.spyOn(model, method)),
@@ -130,7 +148,7 @@ describe("mounted form validation", () => {
     }
   });
 
-  test.each(managementRoutes)(
+  test.each(managementRoutes.filter(([, , , hasIdRoute]) => hasIdRoute))(
     "supports ID-only deletion through %s",
     async (path, _controller, model) => {
       const deletion = jest
@@ -216,7 +234,7 @@ describe("mounted form validation", () => {
       { action: "create", title: "Yoga", time: "24:00" },
     ],
     [
-      "/bookings",
+      "/timetable",
       "sessionId",
       "booking-session-id",
       { action: "create", sessionId: "bad", userId: "1" },

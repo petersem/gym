@@ -11,7 +11,6 @@ const filters = [
   "available_location_id",
   "booking_location_id",
   "booking_trainer_id",
-  "booking_user_id",
 ];
 
 describe("booking dropdown navigation", () => {
@@ -48,9 +47,12 @@ describe("booking dropdown navigation", () => {
         context.filterBookings(key, value);
 
         const url = new URL(window.location.href, "http://localhost");
-        expect(url.pathname).toBe("/bookings");
+        expect(url.pathname).toBe(
+          key.startsWith("booking_") ? "/bookings" : "/timetable",
+        );
         expect(url.searchParams.has("booking_created")).toBe(false);
         expect(url.searchParams.has("booking_deleted")).toBe(false);
+        expect(url.searchParams.has("booking_user_id")).toBe(false);
         expect(url.searchParams.has("session_id")).toBe(false);
         expect(url.searchParams.get(key)).toBe(value || null);
         for (const otherKey of filters.filter((filter) => filter !== key)) {

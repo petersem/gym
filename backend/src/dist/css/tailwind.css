@@ -2515,6 +2515,24 @@
       rotate: 45deg;
       translate: 0 1px;
     }
+    .link {
+      cursor: pointer;
+      text-decoration-line: underline;
+    }
+    .link:focus {
+      --tw-outline-style: none;
+      outline-style: none;
+    }
+    @media (forced-colors: active) {
+      .link:focus {
+        outline: 2px solid transparent;
+        outline-offset: 2px;
+      }
+    }
+    .link:focus-visible {
+      outline: 2px solid currentColor;
+      outline-offset: 2px;
+    }
   }
   .bg-base-100 {
     background-color: var(--color-base-100);
@@ -2738,16 +2756,70 @@ main {
   gap: 2px;
   padding: 0;
 }
-.site-menu li > a {
+.site-menu > li {
+  position: relative;
+}
+.site-menu li > a, .site-menu li > details > summary {
+  display: flex;
+  align-items: center;
   min-height: 40px;
+  padding: 7px 10px;
   border-radius: 3px;
   color: rgba(255, 255, 255, 0.78);
   font-size: 14px;
   font-weight: 600;
 }
-.site-menu li > a:hover, .site-menu li > a:focus-visible {
+.site-menu li > details > summary {
+  list-style: none;
+  cursor: pointer;
+}
+.site-menu li > details > summary::-webkit-details-marker {
+  display: none;
+}
+.site-menu li > a:hover, .site-menu li > a:focus-visible, .site-menu li > details > summary:hover, .site-menu li > details > summary:focus-visible {
   background: rgba(255, 255, 255, 0.12);
   color: #ffffff;
+}
+.site-menu li > details > ul {
+  position: absolute;
+  z-index: 2;
+  top: 100%;
+  left: 0;
+  min-width: max-content;
+  padding: 5px;
+  border-radius: 4px;
+  background: var(--gym-nav-bg);
+  box-shadow: 0 8px 18px rgba(23, 35, 29, 0.1);
+}
+.site-menu.desktop-menu li > details > ul {
+  margin-top: 0;
+}
+.site-menu.desktop-menu li > details {
+  overflow: visible;
+}
+.site-menu.desktop-menu li > details::details-content {
+  block-size: auto;
+}
+.site-menu.desktop-menu li > details > ul, .mobile-menu > details > ul {
+  animation: none;
+  opacity: 1;
+  scale: 1;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .site-menu.desktop-menu li > details::details-content, .mobile-menu > details::details-content {
+    opacity: 0;
+    transition: opacity 200ms ease, content-visibility 200ms allow-discrete;
+  }
+  .site-menu.desktop-menu li > details[open]::details-content, .mobile-menu > details[open]::details-content {
+    opacity: 1;
+  }
+  .site-menu.desktop-menu li > details > ul, .mobile-menu > details > ul {
+    transform: translateY(-6px);
+    transition: transform 200ms ease;
+  }
+  .site-menu.desktop-menu li > details[open] > ul, .mobile-menu > details[open] > ul {
+    transform: translateY(0);
+  }
 }
 .mobile-menu {
   display: none;
@@ -3148,6 +3220,7 @@ section > ul:not(.menu) > li {
   text-transform: uppercase;
 }
 .section-heading-row {
+  position: relative;
   display: flex;
   flex-wrap: wrap;
   align-items: center;
@@ -3155,9 +3228,14 @@ section > ul:not(.menu) > li {
   gap: 12px 16px;
 }
 .alert-stack {
+  position: absolute;
+  top: 0;
+  right: 0;
+  z-index: 5;
   display: flex;
   flex-wrap: wrap;
   gap: 10px;
+  pointer-events: none;
 }
 .fade-out-alert {
   box-shadow: 0 12px 28px var(--gym-shadow);
@@ -3398,21 +3476,24 @@ section > ul:not(.menu) > li {
     padding: 7px 10px;
     font-size: 13px;
   }
+  .site-menu li > details > summary {
+    min-height: 44px;
+    padding: 7px 10px;
+    font-size: 13px;
+  }
+  .mobile-menu .site-menu li > details > ul {
+    position: static;
+    min-width: 0;
+    padding: 0 0 0 10px;
+    background: transparent;
+    box-shadow: none;
+  }
   main > section {
     margin-bottom: 28px;
     padding-bottom: 24px;
   }
-  .section-heading-row {
-    position: relative;
-  }
   #bookings-next-7-days .section-heading-row > .btn {
     margin-left: auto;
-  }
-  .alert-stack {
-    position: absolute;
-    top: 0;
-    right: 0;
-    z-index: 5;
   }
   .form-grid, form.form-grid {
     grid-template-columns: minmax(0, 1fr);

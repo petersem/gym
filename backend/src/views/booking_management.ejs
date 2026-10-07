@@ -3,7 +3,7 @@
 
 <head>
     <%- include("partials/head.ejs") %>
-        <title>Booking Management - Gym</title>
+        <title><%= pageTitle %> - Gym</title>
 </head>
 
 <body>
@@ -23,8 +23,8 @@
                 ].join(String.fromCharCode(10));
                 }; %>
                 <% const sortedLocations=[...locations].sort((a, b)=> a.name.localeCompare(b.name)); %>
-                    <% const bookingFilterQuery=new URLSearchParams({ booking_user_id: String(bookingUserId ?? 'all' ),
-                        booking_trainer_id: String(bookingTrainerId ?? 'all' ) }).toString(); %>
+                    <% const bookingFilterQuery=new URLSearchParams({ booking_trainer_id: String(bookingTrainerId ?? 'all' ),
+                        booking_location_id: String(bookingLocationId ?? '') }).toString(); %>
                         <% const xmlExportQuery=new URLSearchParams({ booking_user_id: String(bookingUserId ?? '' ),
                             booking_trainer_id: String(bookingTrainerId ?? '' ), booking_location_id:
                             String(bookingLocationId ?? '' ) }).toString(); %>
@@ -45,21 +45,17 @@
                                             </section>
                                         <% } %>
 
+                                        <% if (showAvailableSessions) { %>
                                         <section class="available-sessions-section">
                                             <div class="section-heading-row">
                                                 <h2>Available sessions next 7 days</h2>
-                                                <div class="alert-stack">
-                                                    <% if (authenticatedUser && bookingCreated) { %>
+                                                <% if (authenticatedUser && bookingCreated) { %>
+                                                    <div class="alert-stack">
                                                         <div class="alert alert-brand fade-out-alert" role="status">
-                                                            Booking
-                                                            added.</div>
-                                                        <% } %>
-                                                            <% if (authenticatedUser && bookingDeleted) { %>
-                                                                <div class="alert alert-error fade-out-alert"
-                                                                    role="status">
-                                                                    Booking deleted.</div>
-                                                                <% } %>
-                                                </div>
+                                                            Booking added.
+                                                        </div>
+                                                    </div>
+                                                <% } %>
                                             </div>
                                             <label for="available-location-filter">Available session location</label>
                                             <select id="available-location-filter"
@@ -103,7 +99,7 @@
                                                                                                         %>
                                                                                         </button>
                                                                                         <form class="session-book-form"
-                                                                                            action="/bookings"
+                                                                                            action="/timetable"
                                                                                             method="post" novalidate>
                                                                                             <input type="hidden"
                                                                                                 name="sessionId"
@@ -137,11 +133,20 @@
                                                     <% }) %>
                                             </div>
                                         </section>
+                                        <% } %>
 
-                                        <% if (authenticatedUser) { %>
+                                        <% if (showBookings && authenticatedUser) { %>
                                             <section id="bookings-next-7-days">
                                                 <div class="section-heading-row">
                                                     <h2>Bookings next 7 days</h2>
+                                                    <div class="alert-stack">
+                                                        <% if (bookingCreated) { %>
+                                                            <div class="alert alert-brand fade-out-alert" role="status">Booking added.</div>
+                                                        <% } %>
+                                                        <% if (bookingDeleted) { %>
+                                                            <div class="alert alert-error fade-out-alert" role="status">Booking deleted.</div>
+                                                        <% } %>
+                                                    </div>
                                                     <a class="btn"
                                                         href="/bookings/export.xml?<%= xmlExportQuery %>">Download
                                                         </a>
@@ -178,25 +183,6 @@
                                                                         <% }) %>
 
                                                                 </select>
-                                                                <% const visibleBookingSessionIds = new Set(bookingCalendarDays.flatMap((day) => day.sessions.map((session) => Number(session.id)))); %>
-                                                                <% const visibleBookingUserIds = new Set(bookings.filter((booking) => visibleBookingSessionIds.has(Number(booking.session_id))).map((booking) => Number(booking.user_id))); %>
-                                                                <% const sortedUsers=users.filter((user) => visibleBookingUserIds.has(Number(user.id))).sort((a, b)=>
-                                                                    a.last_name.localeCompare(b.last_name) ||
-                                                                    a.first_name.localeCompare(b.first_name)); %>
-                                                                    <label for="booking-user-filter">Booked user</label>
-                                                                    <select id="booking-user-filter"
-                                                                        onchange="filterBookings('booking_user_id', this.value)">
-                                                                        <option value="all" <%=bookingUserId ? ''
-                                                                            : 'selected' %>>All users</option>
-                                                                        <% sortedUsers.forEach((user)=> { %>
-                                                                            <option value="<%= user.id %>"
-                                                                                <%=Number(bookingUserId)===Number(user.id)
-                                                                                ? 'selected' : '' %>>
-                                                                                <%= user.last_name %>, <%=
-                                                                                        user.first_name %>
-                                                                            </option>
-                                                                            <% }) %>
-                                                                    </select>
                                                                     <% } %>
                                                                         <div class="session-calendar bookings-days-calendar">
                                                                             <% bookingCalendarDays.forEach((day)=> { %>
@@ -291,6 +277,12 @@
                                                                         </div>
                                             </section>
                                             <% } %>
+                                            <% if (showBookings && !authenticatedUser) { %>
+                                                <section id="bookings-next-7-days">
+                                                    <h2>Bookings</h2>
+                                                    <p>Please log in to view your bookings.</p>
+                                                </section>
+                                            <% } %>
 
                                                 <script>
                                                     document.querySelectorAll(".available-session-select").forEach((sessionButton) => {
@@ -317,10 +309,12 @@
                                                         else if (value) params.set(key, value);
                                                         else params.delete(key);
                                                         params.delete('session_id');
+                                                        params.delete('booking_user_id');
                                                         params.delete('booking_created');
                                                         params.delete('booking_deleted');
-                                                        const url = `/bookings${params.toString() ? `?${params}` : ''}`;
-                                                        const targetSection = key.startsWith('booking_') ? '#bookings-next-7-days' : '';
+                                                        const bookingFilter = key.startsWith('booking_');
+                                                        const url = `${bookingFilter ? '/bookings' : '/timetable'}${params.toString() ? `?${params}` : ''}`;
+                                                        const targetSection = bookingFilter ? '#bookings-next-7-days' : '';
                                                         window.location.href = `${url}${targetSection}`;
                                                     }
 

@@ -37,7 +37,7 @@ const bookingsDtd = `<!DOCTYPE gymBookings [
 ]>`;
 
 /**
- * Builds the bookings management URL while preserving the active filters.
+ * Builds the bookings page URL while preserving the active filters.
  * @param {express.Request} req Current request.
  * @param {Object} [options] Result flags.
  * @returns {string} Bookings page URL.
@@ -47,20 +47,24 @@ const bookingPageUrl = (
   { bookingDeleted = false, bookingCreated = false } = {},
 ) => {
   const query = new URLSearchParams();
-  if (req.query.booking_user_id === "all") {
-    query.set("booking_user_id", "all");
-  } else {
-    const bookingUserId = Number(req.query.booking_user_id);
-    if (Number.isInteger(bookingUserId) && bookingUserId > 0) {
-      query.set("booking_user_id", String(bookingUserId));
+  const isTimetable = req.baseUrl === "/timetable";
+  if (isTimetable) {
+    const availableLocationId = Number(req.query.available_location_id);
+    if (Number.isInteger(availableLocationId) && availableLocationId > 0) {
+      query.set("available_location_id", String(availableLocationId));
     }
-  }
-  if (req.query.booking_trainer_id === "all") {
-    query.set("booking_trainer_id", "all");
   } else {
-    const bookingTrainerId = Number(req.query.booking_trainer_id);
-    if (Number.isInteger(bookingTrainerId) && bookingTrainerId > 0) {
-      query.set("booking_trainer_id", String(bookingTrainerId));
+    if (req.query.booking_trainer_id === "all") {
+      query.set("booking_trainer_id", "all");
+    } else {
+      const bookingTrainerId = Number(req.query.booking_trainer_id);
+      if (Number.isInteger(bookingTrainerId) && bookingTrainerId > 0) {
+        query.set("booking_trainer_id", String(bookingTrainerId));
+      }
+    }
+    const bookingLocationId = Number(req.query.booking_location_id);
+    if (Number.isInteger(bookingLocationId) && bookingLocationId > 0) {
+      query.set("booking_location_id", String(bookingLocationId));
     }
   }
   if (bookingDeleted) {
@@ -70,7 +74,8 @@ const bookingPageUrl = (
     query.set("booking_created", "1");
   }
   const search = query.toString();
-  return search ? `/bookings?${search}` : "/bookings";
+  const path = isTimetable ? "/timetable" : "/bookings";
+  return search ? `${path}?${search}` : path;
 };
 
 const trainerCanDeleteBooking = (trainerId, booking, session) =>
@@ -84,32 +89,43 @@ export class BookingsController {
   /** @type {express.Router} */
   static routes = express.Router();
 
+  /** @type {express.Router} */
+  static timetableRoutes = express.Router();
+
+  static bookingFields = [
+    body("sessionId")
+      .custom((value) => typeof value === "string" || Number.isSafeInteger(value))
+      .withMessage("Session must be a valid number.")
+      .bail()
+      .isInt({ min: 1, max: 2147483647, allow_leading_zeroes: false })
+      .withMessage("Session must be an integer between 1 and 2147483647."),
+    body("userId")
+      .custom((value) => typeof value === "string" || Number.isSafeInteger(value))
+      .withMessage("User must be a valid number.")
+      .bail()
+      .isInt({ min: 1, max: 2147483647, allow_leading_zeroes: false })
+      .withMessage("User must be an integer between 1 and 2147483647."),
+  ];
+
   /**
-   * Validation for the booking management form. Field rules run for create and
-   * update only.
+   * Validation for booking forms submitted to /bookings.
    * @type {express.RequestHandler[]}
    */
   static formValidation = management(
     "/bookings",
     ["sessionId", "userId"],
-    [
-      body("sessionId")
-        .custom(
-          (value) => typeof value === "string" || Number.isSafeInteger(value),
-        )
-        .withMessage("Session must be a valid number.")
-        .bail()
-        .isInt({ min: 1, max: 2147483647, allow_leading_zeroes: false })
-        .withMessage("Session must be an integer between 1 and 2147483647."),
-      body("userId")
-        .custom(
-          (value) => typeof value === "string" || Number.isSafeInteger(value),
-        )
-        .withMessage("User must be a valid number.")
-        .bail()
-        .isInt({ min: 1, max: 2147483647, allow_leading_zeroes: false })
-        .withMessage("User must be an integer between 1 and 2147483647."),
-    ],
+    this.bookingFields,
+    { sessionId: "session_id", userId: "user_id" },
+  );
+
+  /**
+   * Validation for booking forms submitted from the timetable.
+   * @type {express.RequestHandler[]}
+   */
+  static timetableFormValidation = management(
+    "/timetable",
+    ["sessionId", "userId"],
+    this.bookingFields,
     { sessionId: "session_id", userId: "user_id" },
   );
 
@@ -119,6 +135,12 @@ export class BookingsController {
     this.routes.get("/:id", this.viewBookingManagement);
     this.routes.post("/", this.formValidation, this.handleBookingManagement);
     this.routes.post("/:id", this.formValidation, this.handleBookingManagement);
+    this.timetableRoutes.get("/", this.viewTimetable);
+    this.timetableRoutes.post(
+      "/",
+      this.timetableFormValidation,
+      this.handleBookingManagement,
+    );
   }
 
   /** @type {express.RequestHandler} */
@@ -278,14 +300,21 @@ export class BookingsController {
    * @type {express.RequestHandler}
    */
   static viewBookingManagement(req, res) {
+    return BookingsController.renderManagementPage(req, res, "bookings");
+  }
+
+  /** @type {express.RequestHandler} */
+  static viewTimetable(req, res) {
+    return BookingsController.renderManagementPage(req, res, "timetable");
+  }
+
+  static renderManagementPage(req, res, page) {
     const canManageBookings = ["admin", "trainer"].includes(
       req.authenticatedUser?.role,
     );
-    const bookingsPromise = canManageBookings
-      ? BookingsModel.getAll()
-      : req.authenticatedUser?.id
-        ? BookingsModel.getByUserId(req.authenticatedUser.id)
-        : Promise.resolve([]);
+    const bookingsPromise = req.authenticatedUser?.id
+      ? BookingsModel.getByUserId(req.authenticatedUser.id)
+      : Promise.resolve([]);
     return Promise.all([
       bookingsPromise,
       UsersModel.getAll(),
@@ -300,18 +329,8 @@ export class BookingsController {
         const availableLocationId =
           Number(req.query.available_location_id) || null;
         const bookingLocationId = Number(req.query.booking_location_id) || null;
-        const bookingUserIdParam = req.query.booking_user_id;
         const bookingTrainerIdParam = req.query.booking_trainer_id;
-        const bookingUserId = canManageBookings
-          ? bookingUserIdParam === undefined
-            ? req.authenticatedUser?.role === "trainer" ||
-              bookingTrainerIdParam !== undefined
-              ? null
-              : (req.authenticatedUser?.id ?? null)
-            : bookingUserIdParam === "all"
-              ? null
-              : Number(bookingUserIdParam) || null
-          : (req.authenticatedUser?.id ?? null);
+        const bookingUserId = req.authenticatedUser?.id ?? null;
         const bookingTrainerId = canManageBookings
           ? Number(bookingTrainerIdParam) || null
           : null;
@@ -428,6 +447,9 @@ export class BookingsController {
             trainerCanDeleteBooking(req.authenticatedUser.id, booking, session),
           bookingDeleted: req.query.booking_deleted === "1",
           bookingCreated: req.query.booking_created === "1",
+          showAvailableSessions: page === "timetable",
+          showBookings: page === "bookings",
+          pageTitle: page === "timetable" ? "Timetable" : "Bookings",
           authenticatedUser: req.authenticatedUser,
           role: "admin",
         });

@@ -29,11 +29,18 @@ const response = () => {
   return res;
 };
 
-const request = (params = {}, query = {}, body = {}, authenticatedUser) => ({
+const request = (
+  params = {},
+  query = {},
+  body = {},
+  authenticatedUser,
+  baseUrl,
+) => ({
   params,
   query,
   body,
   authenticatedUser,
+  baseUrl,
 });
 const next = () => jest.fn();
 
@@ -551,7 +558,7 @@ describe("BookingsController", () => {
   });
 
   test.each(["admin", "trainer"])(
-    "%s can view all bookings and filter by user",
+    "%s only sees their own bookings",
     async (role) => {
       const bookings = [
         { id: 1, session_id: 4, user_id: 7 },
@@ -564,10 +571,10 @@ describe("BookingsController", () => {
         String(now.getMonth() + 1).padStart(2, "0"),
         String(now.getDate()).padStart(2, "0"),
       ].join("-");
-      const getAll = jest
-        .spyOn(BookingsModel, "getAll")
-        .mockResolvedValue(bookings);
-      const getByUserId = jest.spyOn(BookingsModel, "getByUserId");
+      const getAll = jest.spyOn(BookingsModel, "getAll");
+      const getByUserId = jest
+        .spyOn(BookingsModel, "getByUserId")
+        .mockResolvedValue([bookings[0]]);
       jest.spyOn(UsersModel, "getAll").mockResolvedValue([
         { id: 1, first_name: "Taylor", last_name: "Trainer", role: "trainer" },
         { id: 7, first_name: "Alex", last_name: "Member" },
@@ -585,18 +592,18 @@ describe("BookingsController", () => {
       jest.spyOn(LocationModel, "getAll").mockResolvedValue([]);
       jest.spyOn(ActivitiesModel, "getAll").mockResolvedValue([]);
       const res = response();
-      const authenticatedUser = { id: 1, role };
+      const authenticatedUser = { id: 7, role };
 
       await BookingsController.viewBookingManagement(
         request({}, {}, {}, authenticatedUser),
         res,
       );
-      expect(getAll).toHaveBeenCalled();
-      expect(getByUserId).not.toHaveBeenCalled();
+      expect(getAll).not.toHaveBeenCalled();
+      expect(getByUserId).toHaveBeenCalledWith(7);
 
       const defaultExpectations = {
         canManageBookings: true,
-        bookingUserId: role === "admin" ? authenticatedUser.id : null,
+        bookingUserId: authenticatedUser.id,
         bookingTrainerId: null,
       };
       expect(res.render).toHaveBeenCalledWith(
@@ -605,30 +612,16 @@ describe("BookingsController", () => {
       );
       expect(
         res.render.mock.calls.at(-1)[1].bookingCalendarDays[0].bookings,
-      ).toEqual(role === "trainer" ? bookings : []);
-
-      await BookingsController.viewBookingManagement(
-        request({}, { booking_user_id: "all" }, {}, authenticatedUser),
-        res,
-      );
-      expect(res.render.mock.calls.at(-1)[1]).toEqual(
-        expect.objectContaining({
-          bookingUserId: null,
-          bookingTrainerId: null,
-        }),
-      );
-      expect(
-        res.render.mock.calls.at(-1)[1].bookingCalendarDays[0].bookings,
-      ).toEqual(bookings);
+      ).toEqual([bookings[0]]);
 
       await BookingsController.viewBookingManagement(
         request({}, { booking_user_id: "8" }, {}, authenticatedUser),
         res,
       );
       const selectedUserData = res.render.mock.calls.at(-1)[1];
-      expect(selectedUserData.bookingUserId).toBe(8);
+      expect(selectedUserData.bookingUserId).toBe(7);
       expect(selectedUserData.bookingCalendarDays[0].bookings).toEqual([
-        bookings[1],
+        bookings[0],
       ]);
 
       await BookingsController.viewBookingManagement(
@@ -636,8 +629,10 @@ describe("BookingsController", () => {
         res,
       );
       const allTrainerData = res.render.mock.calls.at(-1)[1];
-      expect(allTrainerData.bookingUserId).toBeNull();
-      expect(allTrainerData.bookingCalendarDays[0].bookings).toEqual(bookings);
+      expect(allTrainerData.bookingUserId).toBe(7);
+      expect(allTrainerData.bookingCalendarDays[0].bookings).toEqual([
+        bookings[0],
+      ]);
 
       if (role === "trainer") {
         const trainerUsers = [
@@ -674,6 +669,13 @@ describe("BookingsController", () => {
         expect(selectedTrainerData.bookingTrainerId).toBe(13);
         expect(selectedTrainerData.bookingCalendarDays[0].sessions).toEqual([
           {
+            id: 4,
+            location_id: 9,
+            trainer_id: 12,
+            date: sessionDate,
+            time: "10:00:00",
+          },
+          {
             id: 5,
             location_id: 9,
             trainer_id: 13,
@@ -684,10 +686,10 @@ describe("BookingsController", () => {
       }
 
       await BookingsController.viewBookingManagement(
-        request({ id: "2" }, { booking_user_id: "8" }, {}, authenticatedUser),
+        request({ id: "2" }, {}, {}, authenticatedUser),
         res,
       );
-      expect(res.render.mock.calls.at(-1)[1].selectedBooking.id).toBe(2);
+      expect(res.render.mock.calls.at(-1)[1].selectedBooking.id).toBeNull();
     },
   );
 
@@ -755,6 +757,8 @@ describe("BookingsController", () => {
     );
     expect(res.render.mock.calls.at(-1)[1].bookingTrainerId).toBeNull();
 
+    getByUserId.mockClear();
+    getAll.mockClear();
     await BookingsController.viewBookingManagement(request(), res);
     await BookingsController.viewBookingManagement(
       request({}, {}, {}, { role: "member" }),
@@ -768,7 +772,7 @@ describe("BookingsController", () => {
       res,
     );
     expect(res.render.mock.calls.at(-1)[1].bookingTrainerId).toBeNull();
-    expect(getAll).toHaveBeenCalledTimes(5);
+    expect(getAll).not.toHaveBeenCalled();
 
     await BookingsController.handleBookingManagement(
       request(
@@ -776,13 +780,14 @@ describe("BookingsController", () => {
         {
           booking_user_id: "8",
           booking_trainer_id: "5",
+          booking_location_id: "3",
         },
         { action: "create" },
       ),
       res,
     );
     expect(res.redirect).toHaveBeenCalledWith(
-      "/bookings?booking_user_id=8&booking_trainer_id=5&booking_created=1",
+      "/bookings?booking_trainer_id=5&booking_location_id=3&booking_created=1",
     );
     await BookingsController.handleBookingManagement(
       request({}, { booking_trainer_id: "all" }, { action: "create" }),
@@ -816,7 +821,7 @@ describe("BookingsController", () => {
       res,
     );
     expect(res.redirect).toHaveBeenLastCalledWith(
-      "/bookings?booking_user_id=all&booking_deleted=1",
+      "/bookings?booking_deleted=1",
     );
   });
 
@@ -847,6 +852,53 @@ describe("BookingsController", () => {
     const { calendarDays } = res.render.mock.calls[0][1];
     expect(calendarDays[1].dateValue).toBe(sessionDate);
     expect(calendarDays[1].sessions).toEqual([session]);
+  });
+
+  test("renders the timetable and bookings on separate routes", async () => {
+    const date = new Date().toISOString().slice(0, 10);
+    jest.spyOn(BookingsModel, "getByUserId").mockResolvedValue([]);
+    jest.spyOn(UsersModel, "getAll").mockResolvedValue([]);
+    jest
+      .spyOn(SessionsModel, "getAll")
+      .mockResolvedValue([{ id: 1, date, time: "10:00:00" }]);
+    jest.spyOn(LocationModel, "getAll").mockResolvedValue([]);
+    jest.spyOn(ActivitiesModel, "getAll").mockResolvedValue([]);
+    const res = response();
+    const authenticatedUser = { id: 7, role: "member" };
+    const template = fileURLToPath(
+      new URL("../../views/booking_management.ejs", import.meta.url),
+    );
+
+    await BookingsController.viewTimetable(
+      request({}, {}, {}, authenticatedUser),
+      res,
+    );
+    const timetableLocals = res.render.mock.calls.at(-1)[1];
+    const timetableHtml = await ejs.renderFile(template, timetableLocals);
+    expect(timetableLocals.pageTitle).toBe("Timetable");
+    expect(timetableHtml).toContain("Available sessions next 7 days");
+    expect(timetableHtml).not.toContain("Bookings next 7 days");
+
+    await BookingsController.viewTimetable(
+      request({}, { booking_created: "1" }, {}, authenticatedUser),
+      res,
+    );
+    const createdTimetableLocals = res.render.mock.calls.at(-1)[1];
+    const createdTimetableHtml = await ejs.renderFile(
+      template,
+      createdTimetableLocals,
+    );
+    expect(createdTimetableHtml).toContain("Booking added.");
+
+    await BookingsController.viewBookingManagement(
+      request({}, {}, {}, authenticatedUser),
+      res,
+    );
+    const bookingsLocals = res.render.mock.calls.at(-1)[1];
+    const bookingsHtml = await ejs.renderFile(template, bookingsLocals);
+    expect(bookingsLocals.pageTitle).toBe("Bookings");
+    expect(bookingsHtml).not.toContain("Available sessions next 7 days");
+    expect(bookingsHtml).toContain("Bookings next 7 days");
   });
 
   test("handles booking CRUD requests", async () => {
@@ -899,6 +951,19 @@ describe("BookingsController", () => {
       res,
     );
     await BookingsController.handleBookingManagement(
+      request(
+        {},
+        { available_location_id: "9" },
+        { action: "create" },
+        { id: 7, role: "member" },
+        "/timetable",
+      ),
+      res,
+    );
+    expect(res.redirect).toHaveBeenLastCalledWith(
+      "/timetable?available_location_id=9&booking_created=1",
+    );
+    await BookingsController.handleBookingManagement(
       request({ id: "2" }, {}, { action: "update" }),
       res,
     );
@@ -912,9 +977,7 @@ describe("BookingsController", () => {
       request({ id: "2" }, { booking_user_id: "8" }, { action: "delete" }),
       res,
     );
-    expect(res.redirect).toHaveBeenCalledWith(
-      "/bookings?booking_user_id=8&booking_deleted=1",
-    );
+    expect(res.redirect).toHaveBeenCalledWith("/bookings?booking_deleted=1");
 
     BookingsModel.update.mockResolvedValue({ affectedRows: 0 });
     await BookingsController.handleBookingManagement(
@@ -1009,7 +1072,7 @@ describe("BookingsController", () => {
   });
 
   test.each(["trainer", "admin"])(
-    "%s sees bookings for all trainers with deletion controls matching ownership",
+    "%s sees only their own bookings with deletion controls matching ownership",
     async (role) => {
       const today = new Date();
       const date = [
@@ -1032,7 +1095,9 @@ describe("BookingsController", () => {
         { id: 2, session_id: 10, user_id: "12" },
         { id: 3, session_id: 10, user_id: 14 },
       ];
-      jest.spyOn(BookingsModel, "getAll").mockResolvedValue(bookings);
+      jest
+        .spyOn(BookingsModel, "getByUserId")
+        .mockResolvedValue(bookings.filter((booking) => Number(booking.user_id) === 12));
       jest.spyOn(SessionsModel, "getAll").mockResolvedValue(sessions);
       jest.spyOn(UsersModel, "getAll").mockResolvedValue([
         { id: 12, role: "trainer", first_name: "Own", last_name: "Trainer" },
@@ -1041,56 +1106,38 @@ describe("BookingsController", () => {
       ]);
       jest.spyOn(LocationModel, "getAll").mockResolvedValue([]);
       jest.spyOn(ActivitiesModel, "getAll").mockResolvedValue([]);
-      for (const booking of bookings) {
-        const res = response();
-        await BookingsController.viewBookingManagement(
-          request(
-            { id: String(booking.id) },
-            role === "admin" ? { booking_user_id: "all" } : {},
-            {},
-            { id: "12", role },
-          ),
-          res,
-        );
-        const locals = res.render.mock.calls[0][1];
-        expect(locals.bookingTrainerId).toBeNull();
-        expect(locals.bookingCalendarDays[0].bookings).toEqual(bookings);
-        const html = await ejs.renderFile(
-          fileURLToPath(
-            new URL("../../views/booking_management.ejs", import.meta.url),
-          ),
-          locals,
-        );
-        expect(html).toContain("Own session");
-        expect(html).toContain("Other session");
-        const trainerSelect = html.match(
-          /<select id="booking-trainer-filter"[\s\S]*?<\/select>/,
-        )[0];
-        expect(trainerSelect).toContain("All trainers");
-        expect(trainerSelect).toContain('value="12"');
-        expect(trainerSelect).toContain('value="13"');
-        expect(/value="delete"/.test(html)).toBe(
-          role === "admin" || booking.id !== 3,
-        );
-        const bookingList = html.slice(
-          html.indexOf('<section id="bookings-next-7-days">'),
-        );
-        for (const listedBooking of bookings) {
-          expect(
-            bookingList.includes(`href="/bookings/${listedBooking.id}?`),
-          ).toBe(role === "admin" || listedBooking.id !== 3);
-        }
-        if (role === "trainer") {
-          expect(bookingList).toMatch(
-            /<span title="[^"]+">[\s\S]*?Other session[\s\S]*?Member,[\s\S]*?Test[\s\S]*?<\/span>/,
-          );
-        }
-      }
+      const res = response();
+      await BookingsController.viewBookingManagement(
+        request({ id: "2" }, { booking_user_id: "all" }, {}, { id: "12", role }),
+        res,
+      );
+      const locals = res.render.mock.calls[0][1];
+      expect(locals.bookingUserId).toBe("12");
+      expect(locals.bookingCalendarDays[0].bookings).toEqual([bookings[1]]);
+      const html = await ejs.renderFile(
+        fileURLToPath(
+          new URL("../../views/booking_management.ejs", import.meta.url),
+        ),
+        locals,
+      );
+      expect(html).toContain("Other session");
+      expect(html).not.toContain("Own session</");
+      expect(html).not.toContain('id="booking-user-filter"');
+      const trainerSelect = html.match(
+        /<select id="booking-trainer-filter"[\s\S]*?<\/select>/,
+      )[0];
+      expect(trainerSelect).toContain("All trainers");
+      expect(trainerSelect).toContain('value="12"');
+      expect(trainerSelect).toContain('value="13"');
+      expect(html).toMatch(/href="\/bookings\/2\?/);
+      expect(/value="delete"/.test(html)).toBe(true);
+      expect(html).not.toMatch(/href="\/bookings\/1\?/);
+      expect(html).not.toMatch(/href="\/bookings\/3\?/);
     },
   );
 
   test.each(["admin", "trainer"])(
-    "%s sees booked users matching date, location, and trainer regardless of the selected user",
+    "%s booking filters only show their own bookings",
     async (role) => {
       const dateForOffset = (offset) => {
         const date = new Date();
@@ -1112,13 +1159,16 @@ describe("BookingsController", () => {
         time: "09:00:00",
       }));
       jest.spyOn(SessionsModel, "getAll").mockResolvedValue(sessions);
-      jest.spyOn(BookingsModel, "getAll").mockResolvedValue([
+      const ownBookings = [
         { id: 1, session_id: 1, user_id: "21" },
-        { id: 2, session_id: 1, user_id: 21 },
-        { id: 3, session_id: 2, user_id: 22 },
-        { id: 4, session_id: 3, user_id: 23 },
-        { id: 5, session_id: 4, user_id: 24 },
-      ]);
+        { id: 3, session_id: 2, user_id: 21 },
+        { id: 4, session_id: 3, user_id: 21 },
+        { id: 5, session_id: 4, user_id: 21 },
+      ];
+      jest
+        .spyOn(BookingsModel, "getByUserId")
+        .mockResolvedValue(ownBookings);
+      jest.spyOn(BookingsModel, "getAll");
       jest.spyOn(UsersModel, "getAll").mockResolvedValue([
         { id: 12, role: "trainer", first_name: "Own", last_name: "Trainer" },
         { id: 13, role: "trainer", first_name: "Other", last_name: "Trainer" },
@@ -1133,65 +1183,54 @@ describe("BookingsController", () => {
       jest.spyOn(ActivitiesModel, "getAll").mockResolvedValue([]);
 
       const cases = [
-        [{}, ["21", "22"]],
-        [{ booking_location_id: "1" }, ["21"]],
-        [{ booking_trainer_id: "13" }, ["22"]],
-        [{ booking_user_id: "22" }, ["21", "22"]],
-        [{ booking_user_id: "25" }, ["21", "22"]],
-        [{ booking_location_id: "1", booking_user_id: "22" }, ["21"]],
-        [{ booking_trainer_id: "13", booking_user_id: "21" }, ["22"]],
+        [{}, [1, 3]],
+        [{ booking_location_id: "1" }, [1]],
+        [{ booking_trainer_id: "13" }, role === "trainer" ? [1, 3] : [3]],
+        [{ booking_user_id: "22" }, [1, 3]],
+        [{ booking_user_id: "25" }, [1, 3]],
+        [{ booking_location_id: "1", booking_user_id: "22" }, [1]],
+        [
+          { booking_trainer_id: "13", booking_user_id: "21" },
+          role === "trainer" ? [1, 3] : [3],
+        ],
         [
           {
             booking_location_id: "2",
             booking_trainer_id: "13",
             booking_user_id: "22",
           },
-          ["22"],
+          [3],
         ],
         [{ booking_location_id: "99" }, []],
       ];
-      for (const [filters, expectedUserIds] of cases) {
+      for (const [filters, expectedBookingIds] of cases) {
         const res = response();
         await BookingsController.viewBookingManagement(
           request(
             {},
             { booking_user_id: "all", ...filters },
             {},
-            { id: 12, role },
+            { id: 21, role },
           ),
           res,
         );
         const locals = res.render.mock.calls[0][1];
-        if (filters.booking_user_id) {
-          expect(
-            locals.bookingCalendarDays
-              .flatMap((day) => day.bookings)
-              .every(
-                (booking) =>
-                  Number(booking.user_id) === Number(filters.booking_user_id),
-              ),
-          ).toBe(true);
-        }
+        const shownBookings = locals.bookingCalendarDays.flatMap(
+          (day) => day.bookings,
+        );
+        expect(shownBookings.map((booking) => booking.id)).toEqual(
+          expectedBookingIds,
+        );
+        expect(
+          shownBookings.every((booking) => Number(booking.user_id) === 21),
+        ).toBe(true);
         const html = await ejs.renderFile(
           fileURLToPath(
             new URL("../../views/booking_management.ejs", import.meta.url),
           ),
           locals,
         );
-        const select = html.match(
-          /<select id="booking-user-filter"[\s\S]*?<\/select>/,
-        )[0];
-        expect(
-          [...select.matchAll(/<option value="([^"]+)"/g)].map(
-            ([, value]) => value,
-          ),
-        ).toEqual(["all", ...expectedUserIds]);
-        if (
-          filters.booking_user_id === "22" &&
-          expectedUserIds.includes("22")
-        ) {
-          expect(select).toMatch(/value="22"\s+selected/);
-        }
+        expect(html).not.toContain('id="booking-user-filter"');
       }
     },
   );
