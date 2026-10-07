@@ -60,6 +60,7 @@ const localsFor = (editing) => {
     selectedLocationId: null,
     selectedTrainerId: null,
     availableLocationId: null,
+    availableTrainerId: null,
     bookingLocationId: null,
     bookingTrainerId: null,
     bookingUserId: null,
@@ -81,9 +82,12 @@ describe.each([false, true])(
   "required field labels (editing: %s)",
   (editing) => {
     test.each(pages)("%s marks only its required fields", async (page, ids) => {
+      const locals = localsFor(editing);
+      if (page === "booking_management")
+        locals.authenticatedUser.role = "member";
       const html = await ejs.renderFile(
         fileURLToPath(new URL(`../views/${page}.ejs`, import.meta.url)),
-        localsFor(editing),
+        locals,
       );
       const markedLabels = [
         ...html.matchAll(/<label\b([^>]*)>([^<]*)<\/label>/g),

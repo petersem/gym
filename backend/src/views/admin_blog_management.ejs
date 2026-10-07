@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <%- include("partials/head.ejs") %>
+    <title>Blog Management - Gym</title>
+</head>
+<body>
+    <%
+    const blogPath = blogBasePath;
+    const canManageBlog = () => authenticatedUser?.role === 'admin';
+    const formatCreated = (created) => new Intl.DateTimeFormat('en-AU', {
+        day: '2-digit', month: 'short', year: 'numeric',
+        hour: 'numeric', minute: '2-digit', hour12: true,
+    }).format(new Date(created)).replace(/\s+(am|pm)$/i, '$1');
+    const blogLink = (values = {}) => {
+        const params = new URLSearchParams({
+            ...(selectedSearchTerm ? { search_term: selectedSearchTerm } : {}),
+            sort_by: selectedSortBy, sort_dir: selectedSortDir, page: selectedPage,
+            ...values,
+        });
+        return `${blogPath}?${params}#posts`;
+    };
+    const sortLink = (column) => blogLink({
+        sort_by: column, sort_dir: selectedSortBy === column && selectedSortDir === 'asc' ? 'desc' : 'asc', page: 1,
+    });
+    const sortAria = (column) => selectedSortBy === column ? (selectedSortDir === 'asc' ? 'ascending' : 'descending') : 'none';
+    %>
+    <main>
+        <%- include("partials/header.ejs") %>
+        <%- include("partials/nav.ejs", { role, authenticatedUser }) %>
+        <section id="posts">
+            <h2>Blogs</h2>
+            <form action="<%= blogPath %>#posts" method="get">
+                <div class="form-grid responsive-half session-filter-controls" role="group" aria-label="Filter posts">
+                    <label for="sort-by">Sort by</label>
+                    <select name="sort_by" id="sort-by" onchange="this.form.submit()">
+                        <option value="created" <%= selectedSortBy === 'created' ? 'selected' : '' %>>Created</option>
+                        <option value="title" <%= selectedSortBy === 'title' ? 'selected' : '' %>>Subject</option>
+                    </select>
+                    <label for="sort-dir">Sort direction</label>
+                    <select name="sort_dir" id="sort-dir" onchange="this.form.submit()">
+                        <option value="asc" <%= selectedSortDir === 'asc' ? 'selected' : '' %>>Ascending</option>
+                        <option value="desc" <%= selectedSortDir === 'desc' ? 'selected' : '' %>>Descending</option>
+                    </select>
+                </div>
+                <div class="session-name-search">
+                    <label for="search-term">Search posts</label>
+                    <div class="session-search-control">
+                        <input type="search" name="search_term" id="search-term" value="<%= selectedSearchTerm %>">
+                        <button type="submit" class="btn-accent">Search</button>
+                    </div>
+                </div>
+            </form>
+            <div class="session-results">
+                <table class="session-results-table">
+                    <thead>
+                        <tr>
+                            <th scope="col" aria-sort="<%= sortAria('title') %>"><a class="session-sort-button" href="<%= sortLink('title') %>">Subject</a></th>
+                            <th scope="col">Author</th>
+                            <th scope="col" aria-sort="<%= sortAria('created') %>"><a class="session-sort-button" href="<%= sortLink('created') %>">Created</a></th>
+                            <th scope="col">Body</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <% if (blogs.length === 0) { %>
+                            <tr><td colspan="4">No posts match the selected filters.</td></tr>
+                        <% } %>
+                        <% blogs.forEach((blog) => { %>
+                            <% const author = users.find((user) => Number(user.id) === Number(blog.user_id)); %>
+                            <tr>
+                                <td><a href="<%= blogPath %>/<%= blog.id %>?<%= new URLSearchParams({ ...(selectedSearchTerm ? { search_term: selectedSearchTerm } : {}), sort_by: selectedSortBy, sort_dir: selectedSortDir, page: selectedPage }) %>#blog-management" title="Edit post"><%= blog.title %></a></td>
+                                <td><%= author ? `${author.last_name}, ${author.first_name}` : 'Unknown user' %></td>
+                                <td><%= formatCreated(blog.created) %></td>
+                                <td><%= blog.content %></td>
+                            </tr>
+                        <% }) %>
+                    </tbody>
+                </table>
+            </div>
+            <% if (totalPages > 1) { %>
+                <nav class="pagination" aria-label="Posts pagination">
+                    <a class="btn-outline<%= selectedPage <= 1 ? ' is-disabled' : '' %>" href="<%= selectedPage > 1 ? blogLink({ page: selectedPage - 1 }) : '#' %>" aria-disabled="<%= selectedPage <= 1 %>">Previous</a>
+                    <span>Page <%= selectedPage %> of <%= totalPages %></span>
+                    <a class="btn-outline<%= selectedPage >= totalPages ? ' is-disabled' : '' %>" href="<%= selectedPage < totalPages ? blogLink({ page: selectedPage + 1 }) : '#' %>" aria-disabled="<%= selectedPage >= totalPages %>">Next</a>
+                </nav>
+            <% } %>
+        </section>
+        <%- include("partials/blog-form.ejs", { blogPath, canManageBlog }) %>
+        <%- include("partials/footer.ejs") %>
+    </main>
+</body>
+</html>

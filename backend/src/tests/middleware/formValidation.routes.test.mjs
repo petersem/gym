@@ -32,6 +32,7 @@ const managementRoutes = [
   ["/locations", LocationController.routes, LocationModel, true],
   ["/activities", ActivitiesController.routes, ActivitiesModel, true],
   ["/blogs", BlogController.routes, BlogModel, true],
+  ["/manage/blogs", BlogController.managementRoutes, BlogModel, true],
   ["/sessions", SessionsController.routes, SessionsModel, true],
   ["/timetable", BookingsController.timetableRoutes, BookingsModel, false],
   ["/bookings", BookingsController.routes, BookingsModel, true],
@@ -55,7 +56,12 @@ beforeAll(async () => {
     }),
   );
   app.use((req, _res, next) => {
-    req.authenticatedUser = { id: 1, role: "admin" };
+    const role =
+      req.headers["x-test-role"] ??
+      (req.path.startsWith("/bookings") || req.path.startsWith("/timetable")
+        ? "member"
+        : "admin");
+    req.authenticatedUser = role === "guest" ? undefined : { id: 1, role };
     next();
   });
   app.use(formFeedback);
@@ -101,9 +107,88 @@ const mockPages = () => {
     jest.spyOn(model, "getAll").mockResolvedValue([]);
   }
   jest.spyOn(BookingsModel, "getBySessionId").mockResolvedValue([]);
+  jest.spyOn(BookingsModel, "getByUserId").mockResolvedValue([]);
 };
 
 describe("mounted form validation", () => {
+  test.each(["admin", "trainer", "guest", "member"])(
+    "allows only members to book from the timetable (%s)",
+    async (role) => {
+      mockPages();
+      const date = new Date();
+      const sessionDate = [
+        date.getFullYear(),
+        String(date.getMonth() + 1).padStart(2, "0"),
+        String(date.getDate()).padStart(2, "0"),
+      ].join("-");
+      SessionsModel.getAll.mockResolvedValue([
+        { id: 1, title: "Yoga", date: sessionDate, time: "09:00:00" },
+      ]);
+      const create = jest
+        .spyOn(BookingsModel, "create")
+        .mockResolvedValue({ insertId: 1 });
+      const headers = { "x-test-role": role };
+      const page = await fetch(`${baseUrl}/timetable`, { headers });
+      expect(page.status).toBe(200);
+      const html = await page.text();
+      expect(html).toContain("Yoga");
+      expect(html).toContain('id="available-trainer-filter"');
+      expect(html.includes('class="session-book-form"')).toBe(
+        role === "member",
+      );
+      expect(html.includes('class="available-session-select"')).toBe(
+        role === "member",
+      );
+      const result = await fetch(`${baseUrl}/timetable`, {
+        method: "POST",
+        headers,
+        body: new URLSearchParams({
+          action: "create",
+          sessionId: "1",
+          userId: "1",
+        }),
+        redirect: "manual",
+      });
+      expect(result.status).toBe(
+        role === "member" ? 302 : role === "guest" ? 401 : 403,
+      );
+      if (role === "member") {
+        expect(create).toHaveBeenCalledTimes(1);
+        expect(result.headers.get("location")).toBe(
+          "/timetable?booking_created=1",
+        );
+      } else {
+        expect(create).not.toHaveBeenCalled();
+      }
+    },
+  );
+
+  test.each(["admin", "trainer", "guest"])(
+    "denies all bookings routes to %s before model access",
+    async (role) => {
+      const reads = jest.spyOn(BookingsModel, "getByUserId");
+      const exports = jest.spyOn(BookingsModel, "getAll");
+      const writes = ["create", "update", "delete"].map((method) =>
+        jest.spyOn(BookingsModel, method),
+      );
+      for (const [method, paths] of [
+        ["GET", ["/bookings", "/bookings/1", "/bookings/export.xml"]],
+        ["POST", ["/bookings", "/bookings/1"]],
+      ]) {
+        for (const path of paths) {
+          const response = await fetch(`${baseUrl}${path}`, {
+            method,
+            headers: { "x-test-role": role },
+          });
+          expect(response.status).toBe(role === "guest" ? 401 : 403);
+        }
+      }
+      for (const spy of [reads, exports, ...writes]) {
+        expect(spy).not.toHaveBeenCalled();
+      }
+    },
+  );
+
   test.each([
     ["/timetable", "Available sessions next 7 days", "Bookings next 7 days"],
     ["/bookings", "Bookings next 7 days", "Available sessions next 7 days"],

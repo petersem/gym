@@ -1,0 +1,25 @@
+<section id="blog-management">
+    <h2>Blog management - <%= selectedBlog.id ? 'Edit' : 'Create' %></h2>
+    <form action="<%= typeof hasFormFeedback !== 'undefined' && hasFormFeedback ? formDestination : blogPath + (selectedBlog.id ? '/' + selectedBlog.id : '') %>"
+        method="post" novalidate class="form-grid responsive-half blog-form">
+        <%- include("form-errors.ejs", { fields: ['title', 'content'] }) %>
+        <p class="two-col">* Required fields</p>
+        <%- include("form-field.ejs", { field: 'title', id: 'title', label: 'Subject', requiredField: true, value: selectedBlog.title }) %>
+        <%- include("form-field.ejs", { field: 'content', id: 'content', label: 'Body', requiredField: true, type: 'textarea', value: selectedBlog.content }) %>
+        <% if (selectedBlog.id) { %>
+            <% const author = users.find((user) => Number(user.id) === Number(selectedBlog.user_id)); %>
+            <label>Author</label>
+            <p><%= author ? `${author.last_name}, ${author.first_name}` : 'Unknown user' %></p>
+            <input type="hidden" name="userId" value="<%= selectedBlog.user_id %>">
+            <p class="two-col">Created: <%= selectedBlog.created %></p>
+        <% } %>
+        <input type="hidden" name="deleted" value="0">
+        <button type="submit" name="action" value="<%= selectedBlog.id ? 'update' : 'create' %>"><%= selectedBlog.id ? 'Update post' : 'Create post' %></button>
+        <% if (selectedBlog.id) { %>
+            <a class="btn btn-outline" href="<%= blogPath %>">Discard</a>
+            <% if (canManageBlog(selectedBlog)) { %>
+                <button type="submit" name="action" value="delete">Delete post</button>
+            <% } %>
+        <% } %>
+    </form>
+</section>

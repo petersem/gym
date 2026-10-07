@@ -7,6 +7,7 @@
 </head>
 
 <body>
+    <% const blogPath = typeof blogBasePath !== 'undefined' ? blogBasePath : '/blogs'; %>
     <% const formatCreated=(created)=> new Intl.DateTimeFormat('en-AU', {
         day: '2-digit', month: 'short', year: 'numeric',
         hour: 'numeric', minute: '2-digit', hour12: true,
@@ -18,50 +19,12 @@
                     <%- include("partials/nav.ejs", { role, authenticatedUser }) %>
 
                         <% if (authenticatedUser) { %>
-                            <section>
-                                <h2>BLOG - <%= selectedBlog.id ? 'UPDATE' : 'CREATE' %>
-                                </h2>
-                                <form action="<%= typeof hasFormFeedback !== 'undefined' && hasFormFeedback ? formDestination : '/blogs' + (selectedBlog.id ? '/' + selectedBlog.id : '') %>" method="post"
-                                    novalidate class="form-grid responsive-half blog-form">
-                                    <%- include("partials/form-errors.ejs", { fields: ['title', 'content'] }) %>
-                                    <p class="two-col">* Required fields</p>
-                                    <%- include("partials/form-field.ejs", { field: 'title', id: 'title', label: 'Subject', requiredField: true, value: selectedBlog.title }) %>
-                                    <%- include("partials/form-field.ejs", { field: 'content', id: 'content', label: 'Body', requiredField: true, type: 'textarea', value: selectedBlog.content }) %>
-                                    <% if (selectedBlog.id) { %>
-                                        <% const author=users.find((user)=> user.id === Number(selectedBlog.user_id));
-                                            %>
-                                            <label>Author</label>
-                                            <p>
-                                                <%= author ? `${author.last_name}, ${author.first_name}`
-                                                    : 'Unknown user' %>
-                                            </p>
-                                            <input type="hidden" name="userId" value="<%= selectedBlog.user_id %>">
-                                            <% } %>
-                                                <% if (selectedBlog.id) { %>
-                                                    <p class="two-col">Created: <%= selectedBlog.created %>
-                                                    </p>
-                                                    <% } %>
-                                                        <input type="hidden" name="deleted" value="0">
-                                                        <button type="submit" name="action"
-                                                            value="<%= selectedBlog.id ? 'update' : 'create' %>">
-                                                            <%= selectedBlog.id ? 'Update post' : 'Create post' %>
-                                                        </button>
-                                                        <% if (selectedBlog.id) { %>
-                                                            <a class="btn btn-outline" href="/blogs">Discard</a>
-                                                            <% } %>
-                                                                <% if (selectedBlog.id && canManageBlog(selectedBlog)) {
-                                                                    %>
-                                                                    <button type="submit" name="action"
-                                                                        value="delete">Delete
-                                                                        post</button>
-                                                                    <% } %>
-                                </form>
-                            </section>
+                            <%- include("partials/blog-form.ejs", { blogPath, canManageBlog }) %>
                             <% } %>
 
                                 <section id="posts">
                                     <h2>Posts</h2>
-                                    <form action="/blogs#posts" method="get">
+                                    <form action="<%= blogPath %>#posts" method="get">
                                         <div class="list-search">
                                             <label for="search-term">Search posts</label>
                                             <div class="list-search-control">
@@ -100,7 +63,7 @@
                                                     <article class="card-tile">
                                                         <h3>
                                                             <% if (canManageBlog(blog)) { %>
-                                                                <a href="/blogs/<%= blog.id %>?<%= new URLSearchParams({ ...(selectedSearchTerm ? { search_term: selectedSearchTerm } : {}), sort_by: selectedSortBy, sort_dir: selectedSortDir, page: selectedPage }) %>" title="Edit post">
+                                                                <a href="<%= blogPath %>/<%= blog.id %>?<%= new URLSearchParams({ ...(selectedSearchTerm ? { search_term: selectedSearchTerm } : {}), sort_by: selectedSortBy, sort_dir: selectedSortDir, page: selectedPage }) %>" title="Edit post">
                                                                     <%= blog.title %>  
                                                                 </a>
                                                                 <% } else { %>
@@ -119,7 +82,7 @@
                                                             <%= blog.content %>
                                                         </p>
                                                         <% if (canManageBlog(blog)) { %>
-                                                            <form action="/blogs/<%= blog.id %>" method="post" novalidate>
+                                                            <form action="<%= blogPath %>/<%= blog.id %>" method="post" novalidate>
                                                                 <button type="submit" name="action"
                                                                     value="delete">Delete post</button>
                                                             </form>
@@ -135,7 +98,7 @@
                                             params.set('sort_by', selectedSortBy);
                                             params.set('sort_dir', selectedSortDir);
                                             params.set('page', page);
-                                            return `/blogs?${params.toString()}#posts`;
+                                            return `${blogPath}?${params.toString()}#posts`;
                                             }; %>
                                             <nav class="pagination" aria-label="Posts pagination">
                                                 <a class="btn-outline<%= selectedPage <= 1 ? ' is-disabled' : '' %>"

@@ -3,6 +3,7 @@ import { BlogModel } from "../models/BlogModel.mjs";
 import { UsersModel } from "../models/UsersModel.mjs";
 import { body } from "express-validator";
 import { management } from "../utilities/formValidation.mjs";
+import { AuthenticationController } from "./AuthenticationController.mjs";
 
 const canManageBlog = (user, blog) =>
   Boolean(
@@ -14,61 +15,85 @@ export class BlogController {
   /** @type {express.Router} */
   static routes = express.Router();
 
+  /** @type {express.Router} */
+  static managementRoutes = express.Router();
+
   /**
    * Validation for the blog post form. Field rules run for create and update
    * only; limits match the blog table columns.
-   * @type {express.RequestHandler[]}
+   * @param {string} path Base URL for validation feedback.
+   * @returns {express.RequestHandler[]} Form validation middleware.
    */
-  static formValidation = management(
-    "/blogs",
-    ["title", "content", "userId"],
-    [
-      body("title")
-        .isString()
-        .withMessage("Title must be text.")
-        .bail()
-        .trim()
-        .isLength({ min: 1, max: 100 })
-        .withMessage("Title must contain 1-100 characters."),
-      body("content")
-        .isString()
-        .withMessage("Content must be text.")
-        .bail()
-        .trim()
-        .isLength({ min: 1, max: 250 })
-        .withMessage("Content must contain 1-250 characters."),
-      body("userId")
-        .optional()
-        .custom(
-          (value) => typeof value === "string" || Number.isSafeInteger(value),
-        )
-        .withMessage("Author must be a valid number.")
-        .bail()
-        .isInt({ min: 1, max: 2147483647, allow_leading_zeroes: false })
-        .withMessage("Author must be an integer between 1 and 2147483647."),
-      body("deleted")
-        .optional()
-        .custom(
-          (value) => typeof value === "string" || Number.isSafeInteger(value),
-        )
-        .withMessage("Deleted must be a valid number.")
-        .bail()
-        .isInt({ min: 0, max: 1, allow_leading_zeroes: false })
-        .withMessage("Deleted must be an integer between 0 and 1."),
-      body("updatedBy")
-        .optional()
-        .custom(
-          (value) => typeof value === "string" || Number.isSafeInteger(value),
-        )
-        .withMessage("Updated by must be a valid number.")
-        .bail()
-        .isInt({ min: 0, max: 2147483647, allow_leading_zeroes: false })
-        .withMessage("Updated by must be an integer between 0 and 2147483647."),
-    ],
-    { userId: "user_id", updatedBy: "updated_by" },
-  );
+  static validationFor(path) {
+    return management(
+      path,
+      ["title", "content", "userId"],
+      [
+        body("title")
+          .isString()
+          .withMessage("Title must be text.")
+          .bail()
+          .trim()
+          .isLength({ min: 1, max: 100 })
+          .withMessage("Title must contain 1-100 characters."),
+        body("content")
+          .isString()
+          .withMessage("Content must be text.")
+          .bail()
+          .trim()
+          .isLength({ min: 1, max: 250 })
+          .withMessage("Content must contain 1-250 characters."),
+        body("userId")
+          .optional()
+          .custom(
+            (value) => typeof value === "string" || Number.isSafeInteger(value),
+          )
+          .withMessage("Author must be a valid number.")
+          .bail()
+          .isInt({ min: 1, max: 2147483647, allow_leading_zeroes: false })
+          .withMessage("Author must be an integer between 1 and 2147483647."),
+        body("deleted")
+          .optional()
+          .custom(
+            (value) => typeof value === "string" || Number.isSafeInteger(value),
+          )
+          .withMessage("Deleted must be a valid number.")
+          .bail()
+          .isInt({ min: 0, max: 1, allow_leading_zeroes: false })
+          .withMessage("Deleted must be an integer between 0 and 1."),
+        body("updatedBy")
+          .optional()
+          .custom(
+            (value) => typeof value === "string" || Number.isSafeInteger(value),
+          )
+          .withMessage("Updated by must be a valid number.")
+          .bail()
+          .isInt({ min: 0, max: 2147483647, allow_leading_zeroes: false })
+          .withMessage(
+            "Updated by must be an integer between 0 and 2147483647.",
+          ),
+      ],
+      { userId: "user_id", updatedBy: "updated_by" },
+    );
+  }
+
+  static formValidation = this.validationFor("/blogs");
+  static managementFormValidation = this.validationFor("/manage/blogs");
 
   static {
+    this.managementRoutes.use(AuthenticationController.restrict(["admin"]));
+    this.managementRoutes.get("/", this.viewBlogManagement);
+    this.managementRoutes.get("/:id", this.viewBlogManagement);
+    this.managementRoutes.post(
+      "/",
+      this.managementFormValidation,
+      this.handleBlogManagement,
+    );
+    this.managementRoutes.post(
+      "/:id",
+      this.managementFormValidation,
+      this.handleBlogManagement,
+    );
     this.routes.get("/", this.viewBlogManagement);
     this.routes.get("/:id", this.viewBlogManagement);
     this.routes.post("/", this.formValidation, this.handleBlogManagement);
@@ -106,18 +131,25 @@ export class BlogController {
             ? await BlogModel.getById(req.params.id).catch(() => null)
             : null) ??
           new BlogModel(null, "", "", 0, "", 0, 0);
-        res.render("blog_management.ejs", {
-          blogs,
-          users,
-          selectedBlog,
-          selectedSearchTerm,
-          selectedSortBy,
-          selectedSortDir,
-          selectedPage,
-          totalPages: Math.max(1, Math.ceil(total / pageSize)),
-          authenticatedUser: req.authenticatedUser,
-          role: "admin",
-        });
+        res.render(
+          req.baseUrl === "/manage/blogs"
+            ? "admin_blog_management.ejs"
+            : "blog_management.ejs",
+          {
+            blogs,
+            users,
+            selectedBlog,
+            selectedSearchTerm,
+            selectedSortBy,
+            selectedSortDir,
+            selectedPage,
+            totalPages: Math.max(1, Math.ceil(total / pageSize)),
+            blogBasePath:
+              req.baseUrl === "/manage/blogs" ? "/manage/blogs" : "/blogs",
+            authenticatedUser: req.authenticatedUser,
+            role: "admin",
+          },
+        );
       })
       .catch((error) => {
         console.error(error);
@@ -133,6 +165,8 @@ export class BlogController {
    * @type {express.RequestHandler}
    */
   static handleBlogManagement(req, res) {
+    const blogBasePath =
+      req.baseUrl === "/manage/blogs" ? "/manage/blogs" : "/blogs";
     const authenticatedUserId = Number(req.authenticatedUser?.id);
     if (
       req.body.action === "create" &&
@@ -158,7 +192,7 @@ export class BlogController {
 
     if (req.body.action === "create") {
       return BlogModel.create(blog)
-        .then(() => res.redirect("/blogs"))
+        .then(() => res.redirect(blogBasePath))
         .catch((error) => {
           console.error(error);
           res.status(500).render("status.ejs", {
@@ -186,7 +220,7 @@ export class BlogController {
           }
           return BlogModel.update(blog).then((result) =>
             result.affectedRows > 0
-              ? res.redirect("/blogs")
+              ? res.redirect(blogBasePath)
               : res.status(404).render("status.ejs", {
                   status: "Blog Update Failed",
                   message: "The blog post could not be found.",
@@ -223,7 +257,7 @@ export class BlogController {
           }
           return BlogModel.delete(blog.id).then((result) =>
             result.affectedRows > 0
-              ? res.redirect("/blogs")
+              ? res.redirect(blogBasePath)
               : res.status(404).render("status.ejs", {
                   status: "Blog Deletion Failed",
                   message: "The blog post could not be found.",

@@ -9,6 +9,7 @@ const template = readFileSync(
 const script = template.match(/<script>([\s\S]*?)<\/script>/)[1];
 const filters = [
   "available_location_id",
+  "available_trainer_id",
   "booking_location_id",
   "booking_trainer_id",
 ];
@@ -28,6 +29,7 @@ describe("booking dropdown navigation", () => {
       (value) => {
         const params = new URLSearchParams({
           available_location_id: "1",
+          available_trainer_id: "6",
           booking_location_id: "2",
           booking_trainer_id: "3",
           booking_user_id: "4",

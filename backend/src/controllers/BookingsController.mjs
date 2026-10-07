@@ -7,6 +7,7 @@ import { ActivitiesModel } from "../models/ActivitiesModel.mjs";
 import XMLBuilder from "fast-xml-builder";
 import { body } from "express-validator";
 import { management } from "../utilities/formValidation.mjs";
+import { AuthenticationController } from "./AuthenticationController.mjs";
 
 const xmlBuilder = new XMLBuilder({
   ignoreAttributes: false,
@@ -49,9 +50,11 @@ const bookingPageUrl = (
   const query = new URLSearchParams();
   const isTimetable = req.baseUrl === "/timetable";
   if (isTimetable) {
-    const availableLocationId = Number(req.query.available_location_id);
-    if (Number.isInteger(availableLocationId) && availableLocationId > 0) {
-      query.set("available_location_id", String(availableLocationId));
+    for (const key of ["available_location_id", "available_trainer_id"]) {
+      const id = Number(req.query[key]);
+      if (Number.isInteger(id) && id > 0) {
+        query.set(key, String(id));
+      }
     }
   } else {
     if (req.query.booking_trainer_id === "all") {
@@ -86,7 +89,7 @@ const trainerCanDeleteBooking = (trainerId, booking, session) =>
  * BookingsController handles the management, viewing, and exporting of gym bookings.
  */
 export class BookingsController {
-  /** @type {express.Router} */
+  /** Member-only booking pages, submissions and XML export. @type {express.Router} */
   static routes = express.Router();
 
   /** @type {express.Router} */
@@ -94,13 +97,17 @@ export class BookingsController {
 
   static bookingFields = [
     body("sessionId")
-      .custom((value) => typeof value === "string" || Number.isSafeInteger(value))
+      .custom(
+        (value) => typeof value === "string" || Number.isSafeInteger(value),
+      )
       .withMessage("Session must be a valid number.")
       .bail()
       .isInt({ min: 1, max: 2147483647, allow_leading_zeroes: false })
       .withMessage("Session must be an integer between 1 and 2147483647."),
     body("userId")
-      .custom((value) => typeof value === "string" || Number.isSafeInteger(value))
+      .custom(
+        (value) => typeof value === "string" || Number.isSafeInteger(value),
+      )
       .withMessage("User must be a valid number.")
       .bail()
       .isInt({ min: 1, max: 2147483647, allow_leading_zeroes: false })
@@ -130,6 +137,7 @@ export class BookingsController {
   );
 
   static {
+    this.routes.use(AuthenticationController.restrict(["member"]));
     this.routes.get("/", this.viewBookingManagement);
     this.routes.get("/export.xml", this.exportBookingsXml);
     this.routes.get("/:id", this.viewBookingManagement);
@@ -138,6 +146,7 @@ export class BookingsController {
     this.timetableRoutes.get("/", this.viewTimetable);
     this.timetableRoutes.post(
       "/",
+      AuthenticationController.restrict(["member"]),
       this.timetableFormValidation,
       this.handleBookingManagement,
     );
@@ -303,7 +312,10 @@ export class BookingsController {
     return BookingsController.renderManagementPage(req, res, "bookings");
   }
 
-  /** @type {express.RequestHandler} */
+  /**
+   * Renders available sessions filtered by location and trainer.
+   * @type {express.RequestHandler}
+   */
   static viewTimetable(req, res) {
     return BookingsController.renderManagementPage(req, res, "timetable");
   }
@@ -328,17 +340,21 @@ export class BookingsController {
           new BookingsModel(null, req.query.session_id ?? "", 0, "");
         const availableLocationId =
           Number(req.query.available_location_id) || null;
+        const availableTrainerId =
+          Number(req.query.available_trainer_id) || null;
         const bookingLocationId = Number(req.query.booking_location_id) || null;
         const bookingTrainerIdParam = req.query.booking_trainer_id;
         const bookingUserId = req.authenticatedUser?.id ?? null;
         const bookingTrainerId = canManageBookings
           ? Number(bookingTrainerIdParam) || null
           : null;
-        const availableSessions = availableLocationId
-          ? sessions.filter(
-              (session) => Number(session.location_id) === availableLocationId,
-            )
-          : sessions;
+        const availableSessions = sessions.filter(
+          (session) =>
+            (!availableLocationId ||
+              Number(session.location_id) === availableLocationId) &&
+            (!availableTrainerId ||
+              Number(session.trainer_id) === availableTrainerId),
+        );
         const bookingSessions = sessions.filter((session) => {
           const matchesLocation =
             !bookingLocationId ||
@@ -438,6 +454,7 @@ export class BookingsController {
           bookingCalendarDays,
           selectedBooking,
           availableLocationId,
+          availableTrainerId,
           bookingLocationId,
           bookingTrainerId,
           bookingUserId,

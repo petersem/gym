@@ -854,6 +854,178 @@ describe("BookingsController", () => {
     expect(calendarDays[1].sessions).toEqual([session]);
   });
 
+  test.each(["viewTimetable", "viewBookingManagement"])(
+    "%s orders same-day sessions and personal bookings by time",
+    async (handler) => {
+      const today = new Date();
+      const date = [
+        today.getFullYear(),
+        String(today.getMonth() + 1).padStart(2, "0"),
+        String(today.getDate()).padStart(2, "0"),
+      ].join("-");
+      const sessions = [
+        { id: 22, date, time: "14:00:00", location_id: 1 },
+        { id: 11, date, time: "09:00:00", location_id: 1 },
+      ];
+      const bookings = [
+        { id: 2, session_id: "22", user_id: 7 },
+        { id: 1, session_id: "11", user_id: 7 },
+        { id: 3, session_id: "99", user_id: 7 },
+      ];
+      const getByUserId = jest
+        .spyOn(BookingsModel, "getByUserId")
+        .mockResolvedValue(bookings);
+      jest.spyOn(UsersModel, "getAll").mockResolvedValue([]);
+      jest.spyOn(SessionsModel, "getAll").mockResolvedValue(sessions);
+      jest.spyOn(LocationModel, "getAll").mockResolvedValue([]);
+      jest.spyOn(ActivitiesModel, "getAll").mockResolvedValue([]);
+      const res = response();
+
+      await BookingsController[handler](
+        request({}, {}, {}, { id: 7, role: "member" }),
+        res,
+      );
+
+      expect(getByUserId).toHaveBeenCalledWith(7);
+      const { calendarDays, bookingCalendarDays } = res.render.mock.calls[0][1];
+      for (const days of [calendarDays, bookingCalendarDays]) {
+        expect(days[0].dateValue).toBe(date);
+        expect(days[0].sessions.map((session) => session.id)).toEqual([11, 22]);
+        expect(days[0].bookings.map((booking) => booking.id)).toEqual([1, 2]);
+        expect(days.slice(1).every((day) => day.bookings.length === 0)).toBe(
+          true,
+        );
+      }
+    },
+  );
+
+  test.each([undefined, "invalid", "0", "-1", "1.5"])(
+    "omits invalid timetable location %s from booking redirects",
+    async (availableLocationId) => {
+      jest.spyOn(BookingsModel, "create").mockResolvedValue({ insertId: 1 });
+      const res = response();
+
+      await BookingsController.handleBookingManagement(
+        request(
+          {},
+          { available_location_id: availableLocationId },
+          { action: "create", sessionId: "11" },
+          { id: 7, role: "member" },
+          "/timetable",
+        ),
+        res,
+      );
+
+      expect(res.redirect).toHaveBeenCalledWith("/timetable?booking_created=1");
+    },
+  );
+
+  test.each([
+    [{}, [1, 2, 3], null],
+    [{ available_trainer_id: "all" }, [1, 2, 3], null],
+    [{ available_trainer_id: "12" }, [1, 3], 12],
+    [{ available_location_id: "1", available_trainer_id: "12" }, [1], 12],
+    [{ available_trainer_id: "99" }, [], 99],
+  ])(
+    "filters timetable sessions with %j",
+    async (query, expectedIds, trainerId) => {
+      const today = new Date();
+      const date = [
+        today.getFullYear(),
+        String(today.getMonth() + 1).padStart(2, "0"),
+        String(today.getDate()).padStart(2, "0"),
+      ].join("-");
+      jest.spyOn(BookingsModel, "getByUserId").mockResolvedValue([]);
+      jest.spyOn(UsersModel, "getAll").mockResolvedValue([
+        { id: 12, role: "trainer", first_name: "Alex", last_name: "Trainer" },
+        { id: 13, role: "trainer", first_name: "Sam", last_name: "Trainer" },
+        { id: 7, role: "member", first_name: "Member", last_name: "Only" },
+      ]);
+      jest.spyOn(SessionsModel, "getAll").mockResolvedValue([
+        {
+          id: 1,
+          trainer_id: "12",
+          location_id: 1,
+          date,
+          time: "09:00:00",
+          title: "First",
+        },
+        {
+          id: 2,
+          trainer_id: 13,
+          location_id: 1,
+          date,
+          time: "10:00:00",
+          title: "Second",
+        },
+        {
+          id: 3,
+          trainer_id: 12,
+          location_id: 2,
+          date,
+          time: "11:00:00",
+          title: "Third",
+        },
+      ]);
+      jest
+        .spyOn(LocationModel, "getAll")
+        .mockResolvedValue([{ id: 1, name: "Main" }]);
+      jest.spyOn(ActivitiesModel, "getAll").mockResolvedValue([]);
+      const res = response();
+      await BookingsController.viewTimetable(
+        request({}, query, {}, { id: 7, role: "member" }),
+        res,
+      );
+      const locals = res.render.mock.calls[0][1];
+      expect(locals.availableTrainerId).toBe(trainerId);
+      expect(locals.sessions.map((session) => session.id)).toEqual(expectedIds);
+      expect(
+        locals.calendarDays[0].sessions.map((session) => session.id),
+      ).toEqual(expectedIds);
+      const html = await ejs.renderFile(
+        fileURLToPath(
+          new URL("../../views/booking_management.ejs", import.meta.url),
+        ),
+        locals,
+      );
+      expect(html.indexOf('id="available-location-filter"')).toBeLessThan(
+        html.indexOf('id="available-trainer-filter"'),
+      );
+      const trainerSelect = html.match(
+        /<select id="available-trainer-filter"[\s\S]*?<\/select>/,
+      )[0];
+      expect(trainerSelect).not.toContain("Member");
+      expect(trainerSelect).toContain("Trainer, Alex");
+      if (!trainerId)
+        expect(trainerSelect).toMatch(/value="all"\s+selected\s*>All/);
+      if (trainerId === 12)
+        expect(trainerSelect).toMatch(/value="12"\s+selected/);
+      if (query.available_location_id) {
+        expect(html).toContain(
+          'action="/timetable?available_location_id=1&amp;available_trainer_id=12"',
+        );
+      }
+    },
+  );
+
+  test("preserves both timetable filters after creating a booking", async () => {
+    jest.spyOn(BookingsModel, "create").mockResolvedValue({ insertId: 1 });
+    const res = response();
+    await BookingsController.handleBookingManagement(
+      request(
+        {},
+        { available_location_id: "1", available_trainer_id: "12" },
+        { action: "create", sessionId: "11" },
+        { id: 7, role: "member" },
+        "/timetable",
+      ),
+      res,
+    );
+    expect(res.redirect).toHaveBeenCalledWith(
+      "/timetable?available_location_id=1&available_trainer_id=12&booking_created=1",
+    );
+  });
+
   test("renders the timetable and bookings on separate routes", async () => {
     const date = new Date().toISOString().slice(0, 10);
     jest.spyOn(BookingsModel, "getByUserId").mockResolvedValue([]);
@@ -1097,7 +1269,9 @@ describe("BookingsController", () => {
       ];
       jest
         .spyOn(BookingsModel, "getByUserId")
-        .mockResolvedValue(bookings.filter((booking) => Number(booking.user_id) === 12));
+        .mockResolvedValue(
+          bookings.filter((booking) => Number(booking.user_id) === 12),
+        );
       jest.spyOn(SessionsModel, "getAll").mockResolvedValue(sessions);
       jest.spyOn(UsersModel, "getAll").mockResolvedValue([
         { id: 12, role: "trainer", first_name: "Own", last_name: "Trainer" },
@@ -1108,7 +1282,12 @@ describe("BookingsController", () => {
       jest.spyOn(ActivitiesModel, "getAll").mockResolvedValue([]);
       const res = response();
       await BookingsController.viewBookingManagement(
-        request({ id: "2" }, { booking_user_id: "all" }, {}, { id: "12", role }),
+        request(
+          { id: "2" },
+          { booking_user_id: "all" },
+          {},
+          { id: "12", role },
+        ),
         res,
       );
       const locals = res.render.mock.calls[0][1];
@@ -1165,9 +1344,7 @@ describe("BookingsController", () => {
         { id: 4, session_id: 3, user_id: 21 },
         { id: 5, session_id: 4, user_id: 21 },
       ];
-      jest
-        .spyOn(BookingsModel, "getByUserId")
-        .mockResolvedValue(ownBookings);
+      jest.spyOn(BookingsModel, "getByUserId").mockResolvedValue(ownBookings);
       jest.spyOn(BookingsModel, "getAll");
       jest.spyOn(UsersModel, "getAll").mockResolvedValue([
         { id: 12, role: "trainer", first_name: "Own", last_name: "Trainer" },

@@ -10,9 +10,21 @@ const manageLinks = [
   ["/activities", "Activities"],
   ["/locations", "Locations"],
   ["/users", "Users"],
+  ["/manage/blogs", "Blogs"],
 ];
 
 describe("navigation menu", () => {
+  test.each(["member", "admin", "trainer", undefined])(
+    "shows Bookings only to members when role is %s",
+    async (role) => {
+      const html = await ejs.renderFile(navigation, {
+        authenticatedUser: role ? { role } : undefined,
+      });
+      expect(html.includes('href="/bookings"')).toBe(role === "member");
+      expect(html).toContain('href="/timetable"');
+    },
+  );
+
   test("shows all management links to admins", async () => {
     const html = await ejs.renderFile(navigation, {
       authenticatedUser: { role: "admin" },

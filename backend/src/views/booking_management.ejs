@@ -23,6 +23,12 @@
                 ].join(String.fromCharCode(10));
                 }; %>
                 <% const sortedLocations=[...locations].sort((a, b)=> a.name.localeCompare(b.name)); %>
+                <% const sortedTrainers=[...users].filter((user)=> user.role === 'trainer').sort((a, b) =>
+                    a.last_name.localeCompare(b.last_name) || a.first_name.localeCompare(b.first_name)); %>
+                <% const availableFilterQuery=new URLSearchParams({
+                    ...(availableLocationId ? { available_location_id: availableLocationId } : {}),
+                    ...(availableTrainerId ? { available_trainer_id: availableTrainerId } : {})
+                }).toString(); %>
                     <% const bookingFilterQuery=new URLSearchParams({ booking_trainer_id: String(bookingTrainerId ?? 'all' ),
                         booking_location_id: String(bookingLocationId ?? '') }).toString(); %>
                         <% const xmlExportQuery=new URLSearchParams({ booking_user_id: String(bookingUserId ?? '' ),
@@ -32,7 +38,7 @@
                                 <%- include("partials/header.ejs") %>
                                     <%- include("partials/nav.ejs", { role, authenticatedUser }) %>
 
-                                        <% if (typeof hasFormFeedback !== 'undefined' && hasFormFeedback && authenticatedUser) { %>
+                                        <% if (typeof hasFormFeedback !== 'undefined' && hasFormFeedback && authenticatedUser?.role === 'member') { %>
                                             <section id="booking-validation">
                                                 <h2>Correct booking submission</h2>
                                                 <form action="<%= formDestination %>" method="post" novalidate class="form-grid responsive-half">
@@ -68,6 +74,15 @@
                                                     </option>
                                                     <% }) %>
                                             </select>
+                                            <label for="available-trainer-filter">Available session trainer</label>
+                                            <select id="available-trainer-filter"
+                                                onchange="filterBookings('available_trainer_id', this.value)">
+                                                <option value="all" <%=availableTrainerId ? '' : 'selected' %>>All</option>
+                                                <% sortedTrainers.forEach((trainer)=> { %>
+                                                    <option value="<%= trainer.id %>"
+                                                        <%=availableTrainerId===Number(trainer.id) ? 'selected' : '' %>><%= trainer.last_name %>, <%= trainer.first_name %></option>
+                                                <% }) %>
+                                            </select>
                                             <div class="session-calendar available-sessions-calendar">
                                                 <% calendarDays.forEach((day)=> { %>
                                                     <article class="session-day card bg-base-100">
@@ -88,7 +103,7 @@
                                                                                     locationSuffix=!availableLocationId
                                                                                     && sessionLocation ? `
                                                                                     (${sessionLocation.name})` : '' ; %>
-                                                                                    <% if (authenticatedUser) { %>
+                                                                                    <% if (authenticatedUser?.role === 'member') { %>
                                                                                         <button type="button"
                                                                                             class="available-session-select"
                                                                                             title="<%= getSessionHoverText(session) %>">
@@ -99,7 +114,7 @@
                                                                                                         %>
                                                                                         </button>
                                                                                         <form class="session-book-form"
-                                                                                            action="/timetable"
+                                                                                            action="/timetable<%= availableFilterQuery ? '?' + availableFilterQuery : '' %>"
                                                                                             method="post" novalidate>
                                                                                             <input type="hidden"
                                                                                                 name="sessionId"
@@ -163,10 +178,6 @@
                                                         <% }) %>
                                                 </select>
                                                 <% if (canManageBookings) { %>
-                                                        <% const sortedTrainers=[...users].filter((user)=> user.role ===
-                                                            'trainer').sort((a, b) =>
-                                                            a.last_name.localeCompare(b.last_name)
-                                                            || a.first_name.localeCompare(b.first_name)); %>
                                                                 <label for="booking-trainer-filter">Booked
                                                                     trainer</label>
                                                                 <select id="booking-trainer-filter"
