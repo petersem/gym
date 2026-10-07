@@ -23,18 +23,52 @@
         <% if (typeof authenticatedUser !== 'undefined' && authenticatedUser) { %>
             <span
                 class="badge badge-neutral authenticated-user role-badge role-<%= authenticatedUser.role %>"
-                title="<%= authenticatedUser.role %>"
+                title="<%= authenticatedUser.first_name + ' ' + authenticatedUser.last_name + ', ' + authenticatedUser.role %>"
                 aria-label="<%= authenticatedUser.first_name + ' ' + authenticatedUser.last_name + ', ' + authenticatedUser.role %>">
-                <%= authenticatedUser.first_name %> <%= authenticatedUser.last_name %>
+                <span class="user-full-name"><%= authenticatedUser.first_name %> <%= authenticatedUser.last_name %></span>
+                <span class="user-initials" hidden><%= [authenticatedUser.first_name, authenticatedUser.last_name].map((name) => Array.from(String(name ?? '').trim())[0] ?? '').join('').toUpperCase() %></span>
             </span>
         <% } %>
         <label class="theme-toggle-control" for="theme-toggle" title="Switch between light and dark themes">
-            <span>Light</span>
+            <svg class="theme-toggle-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true" focusable="false">
+                <circle cx="12" cy="12" r="4" />
+                <path d="M12 2v2M12 20v2M2 12h2M20 12h2M5 5l1.5 1.5M17.5 17.5L19 19M5 19l1.5-1.5M17.5 6.5L19 5" />
+            </svg>
             <input class="toggle toggle-sm" id="theme-toggle" type="checkbox" aria-label="Use dark theme">
-            <span>Dark</span>
+            <svg class="theme-toggle-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true" focusable="false">
+                <path d="M20.9 13A9 9 0 0 1 11 3.1 9 9 0 1 0 20.9 13Z" />
+            </svg>
         </label>
     </div>
     <script>
+        const userBadge = document.querySelector(".authenticated-user");
+        if (userBadge) {
+            const header = userBadge.closest(".site-header");
+            const fullName = userBadge.querySelector(".user-full-name");
+            const initials = userBadge.querySelector(".user-initials");
+            const fitUserBadge = () => {
+                header.classList.remove("compact-user-badge");
+                fullName.hidden = false;
+                initials.hidden = true;
+                const headerStyle = getComputedStyle(header);
+                const children = [...header.children].filter((child) =>
+                    child.tagName !== "SCRIPT" && getComputedStyle(child).display !== "none");
+                const requiredWidth = children.reduce((width, child) => {
+                    const style = getComputedStyle(child);
+                    return width + child.scrollWidth + (parseFloat(style.marginLeft) || 0)
+                        + (parseFloat(style.marginRight) || 0);
+                }, 0) + (children.length - 1) * (parseFloat(headerStyle.columnGap) || 0);
+                const availableWidth = header.clientWidth - (parseFloat(headerStyle.paddingLeft) || 0)
+                    - (parseFloat(headerStyle.paddingRight) || 0);
+                const compact = requiredWidth > availableWidth;
+                fullName.hidden = compact;
+                initials.hidden = !compact;
+                header.classList.toggle("compact-user-badge", compact);
+            };
+            new ResizeObserver(fitUserBadge).observe(header);
+            document.fonts.ready.then(fitUserBadge);
+            fitUserBadge();
+        }
         const themeToggle = document.getElementById("theme-toggle");
         themeToggle.checked = document.documentElement.dataset.theme === "dark";
         themeToggle.addEventListener("change", () => {

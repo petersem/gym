@@ -2555,6 +2555,9 @@
       --alert-color: var(--color-error);
     }
   }
+  .uppercase {
+    text-transform: uppercase;
+  }
   .filter {
     filter: var(--tw-blur,) var(--tw-brightness,) var(--tw-contrast,) var(--tw-grayscale,) var(--tw-hue-rotate,) var(--tw-invert,) var(--tw-saturate,) var(--tw-sepia,) var(--tw-drop-shadow,);
   }
@@ -2723,6 +2726,11 @@ main {
   background: var(--gym-surface);
   color: var(--gym-ink);
   font-weight: 600;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.authenticated-user [hidden] {
+  display: none;
 }
 .role-badge.role-admin {
   border-color: var(--gym-admin);
@@ -3446,6 +3454,9 @@ section > ul:not(.menu) > li {
     gap: 8px 14px;
     margin-bottom: 34px;
     padding: 12px 0;
+  }
+  .site-header.compact-user-badge {
+    column-gap: 6px;
   }
   .mobile-menu {
     display: block;

@@ -201,6 +201,12 @@ main {
   background: var(--gym-surface);
   color: var(--gym-ink);
   font-weight: 600;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.authenticated-user [hidden] {
+  display: none;
 }
 
 .role-badge.role-admin {
@@ -1108,6 +1114,10 @@ section > ul:not(.menu) > li {
     gap: 8px 14px;
     margin-bottom: 34px;
     padding: 12px 0;
+  }
+
+  .site-header.compact-user-badge {
+    column-gap: 6px;
   }
 
   .mobile-menu {
