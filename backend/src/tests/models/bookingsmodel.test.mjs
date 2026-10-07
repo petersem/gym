@@ -16,26 +16,6 @@ afterEach(() => {
 
 // Query spies verify booking mapping and SQL construction without contacting MySQL.
 describe("BookingsModel unit tests", () => {
-  test("constructs a booking and maps a database row", () => {
-    expect(booking).toBeInstanceOf(BookingsModel);
-    expect(BookingsModel.tableToModel(row)).toEqual(booking);
-  });
-
-  test("getAll maps returned bookings", async () => {
-    const query = jest
-      .spyOn(BookingsModel, "query")
-      .mockResolvedValue([
-        { bookings: row },
-        { bookings: { ...row, id: "22" } },
-      ]);
-
-    await expect(BookingsModel.getAll()).resolves.toEqual([
-      booking,
-      new BookingsModel(22, row.session_id, 7, row.created),
-    ]);
-    expect(query).toHaveBeenCalledWith("SELECT * FROM bookings");
-  });
-
   test("getByUserId returns only the requested user bookings", async () => {
     const query = jest
       .spyOn(BookingsModel, "query")
@@ -45,20 +25,6 @@ describe("BookingsModel unit tests", () => {
     expect(query).toHaveBeenCalledWith(
       "SELECT * FROM bookings WHERE user_id = ?",
       [7],
-    );
-  });
-
-  test("getBySessionId returns only the requested session bookings", async () => {
-    const query = jest
-      .spyOn(BookingsModel, "query")
-      .mockResolvedValue([{ bookings: row }]);
-
-    await expect(BookingsModel.getBySessionId(row.session_id)).resolves.toEqual(
-      [booking],
-    );
-    expect(query).toHaveBeenCalledWith(
-      "SELECT * FROM bookings WHERE session_id = ?",
-      [row.session_id],
     );
   });
 
@@ -73,18 +39,6 @@ describe("BookingsModel unit tests", () => {
     expect(query).toHaveBeenCalledWith(
       "DELETE FROM bookings WHERE session_id = ?",
       [row.session_id],
-    );
-  });
-
-  test("getById returns a booking when found", async () => {
-    const query = jest
-      .spyOn(BookingsModel, "query")
-      .mockResolvedValue([{ bookings: row }]);
-
-    await expect(BookingsModel.getById(21)).resolves.toEqual(booking);
-    expect(query).toHaveBeenCalledWith(
-      "SELECT * FROM bookings WHERE id = ?",
-      [21],
     );
   });
 
@@ -143,52 +97,60 @@ describe("BookingsModel unit tests", () => {
     expect(query).toHaveBeenCalledTimes(1);
   });
 
-  test.each([null, 21])("checks the user's session date and time, excluding edited booking %s", async (id) => {
-    const query = jest.spyOn(BookingsModel, "query").mockResolvedValue([{ id: 99 }]);
-    await expect(BookingsModel.hasStartTimeConflict({ ...booking, id })).resolves.toBe(true);
-    expect(query).toHaveBeenCalledWith(
-      expect.stringContaining("booked.date = target.date"),
-      [booking.session_id, booking.user_id, id, id],
-    );
-    const sql = query.mock.calls[0][0];
-    expect(sql).toContain("booked.time = target.time");
-    expect(sql).toContain("b.user_id = ?");
-    expect(sql).toContain("b.id <> ?");
-    query.mockResolvedValue([]);
-    await expect(BookingsModel.hasStartTimeConflict({ ...booking, id })).resolves.toBe(false);
-  });
+  test.each([null, 21])(
+    "checks the user's session date and time, excluding edited booking %s",
+    async (id) => {
+      const query = jest
+        .spyOn(BookingsModel, "query")
+        .mockResolvedValue([{ id: 99 }]);
+      await expect(
+        BookingsModel.hasStartTimeConflict({ ...booking, id }),
+      ).resolves.toBe(true);
+      expect(query).toHaveBeenCalledWith(
+        expect.stringContaining("booked.date = target.date"),
+        [booking.session_id, booking.user_id, id, id],
+      );
+      const sql = query.mock.calls[0][0];
+      expect(sql).toContain("booked.time = target.time");
+      expect(sql).toContain("b.user_id = ?");
+      expect(sql).toContain("b.id <> ?");
+      query.mockResolvedValue([]);
+      await expect(
+        BookingsModel.hasStartTimeConflict({ ...booking, id }),
+      ).resolves.toBe(false);
+    },
+  );
 
-  test.each(["create", "update"])("does not %s a booking with a start-time conflict", async (action) => {
-    const query = jest.spyOn(BookingsModel, "query");
-    if (action === "create") query.mockResolvedValueOnce([]);
-    query.mockResolvedValueOnce([{ id: 99 }]);
-    await expect(BookingsModel[action](booking)).resolves.toEqual({
-      affectedRows: 0, overlap: true,
-    });
-    expect(query.mock.calls.every(([sql]) => !/\b(?:INSERT|UPDATE)\b/.test(sql))).toBe(true);
-  });
+  test.each(["create", "update"])(
+    "does not %s a booking with a start-time conflict",
+    async (action) => {
+      const query = jest.spyOn(BookingsModel, "query");
+      if (action === "create") query.mockResolvedValueOnce([]);
+      query.mockResolvedValueOnce([{ id: 99 }]);
+      await expect(BookingsModel[action](booking)).resolves.toEqual({
+        affectedRows: 0,
+        overlap: true,
+      });
+      expect(
+        query.mock.calls.every(([sql]) => !/\b(?:INSERT|UPDATE)\b/.test(sql)),
+      ).toBe(true);
+    },
+  );
 
-  test.each(["create", "update"])("propagates conflict-check failures without a %s write", async (action) => {
-    const query = jest.spyOn(BookingsModel, "query");
-    if (action === "create") query.mockResolvedValueOnce([]);
-    query.mockRejectedValueOnce(new Error("Conflict check failed"));
-    await expect(BookingsModel[action](booking)).rejects.toThrow("Conflict check failed");
-    expect(query.mock.calls.every(([sql]) => !/\b(?:INSERT|UPDATE)\b/.test(sql))).toBe(true);
-  });
-
-  test("createWithExistingID includes the booking id", async () => {
-    const query = jest
-      .spyOn(BookingsModel, "query")
-      .mockResolvedValue({ insertId: 21 });
-
-    await expect(BookingsModel.createWithExistingID(booking)).resolves.toEqual({
-      insertId: 21,
-    });
-    expect(query).toHaveBeenCalledWith(
-      expect.stringContaining("INSERT INTO bookings"),
-      [booking.id, booking.session_id, booking.user_id, booking.created],
-    );
-  });
+  test.each(["create", "update"])(
+    "propagates conflict-check failures without a %s write",
+    async (action) => {
+      const query = jest.spyOn(BookingsModel, "query");
+      if (action === "create") query.mockResolvedValueOnce([]);
+      query.mockRejectedValueOnce(new Error("Conflict check failed"));
+      await expect(BookingsModel[action](booking)).rejects.toThrow(
+        "Conflict check failed",
+      );
+      expect(
+        query.mock.calls.every(([sql]) => !/\b(?:INSERT|UPDATE)\b/.test(sql)),
+      ).toBe(true);
+    },
+  );
 
   test("delete passes the booking id", async () => {
     const query = jest

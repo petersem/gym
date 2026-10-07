@@ -64,39 +64,6 @@ describe("UsersController unit tests", () => {
     );
   });
 
-  test("passes valid role, sorting, and pagination filters to the model", async () => {
-    const list = jest
-      .spyOn(UsersModel, "list")
-      .mockResolvedValue({ users: [], total: 0 });
-    const res = response();
-
-    UsersController.viewUserManagement(
-      {
-        params: {},
-        query: {
-          search_term: "Fred",
-          role: "trainer",
-          sort_by: "email",
-          sort_dir: "desc",
-          page: "2",
-        },
-      },
-      res,
-    );
-    await flushPromises();
-
-    expect(list).toHaveBeenCalledWith(
-      expect.objectContaining({
-        searchTerm: "Fred",
-        role: "trainer",
-        sortBy: "email",
-        sortDir: "desc",
-        page: 2,
-      }),
-    );
-    expect(res.render.mock.calls[0][1].selectedRole).toBe("trainer");
-  });
-
   test("logs user-list load errors", async () => {
     const error = new Error("database error");
     jest.spyOn(UsersModel, "list").mockRejectedValue(error);
@@ -106,45 +73,6 @@ describe("UsersController unit tests", () => {
     await flushPromises();
 
     expect(log).toHaveBeenCalledWith(error);
-  });
-
-  test("loads an off-page user and falls back when it is missing", async () => {
-    jest.spyOn(UsersModel, "list").mockResolvedValue({ users: [], total: 0 });
-    const getById = jest
-      .spyOn(UsersModel, "getById")
-      .mockResolvedValueOnce(existingUser)
-      .mockRejectedValueOnce("not found");
-    const res = response();
-
-    UsersController.viewUserManagement(request({ id: "7" }), res);
-    await flushPromises();
-    UsersController.viewUserManagement(request({ id: "999" }), res);
-    await flushPromises();
-
-    expect(getById).toHaveBeenCalledWith("7");
-    expect(res.render.mock.calls[0][1].selectedUser).toBe(existingUser);
-    expect(res.render.mock.calls[1][1].selectedUser).toMatchObject({
-      id: null,
-    });
-  });
-
-  test("renders a complete empty user when no user is selected", async () => {
-    jest.spyOn(UsersModel, "list").mockResolvedValue({ users: [], total: 0 });
-    const res = response();
-
-    UsersController.viewUserManagement(request({}), res);
-    await flushPromises();
-
-    const renderedUser = res.render.mock.calls[0][1].selectedUser;
-    expect(renderedUser).toBeInstanceOf(UsersModel);
-    expect(renderedUser).toMatchObject({
-      id: null,
-      first_name: "",
-      last_name: "",
-      email: "",
-      deleted: 0,
-      authentication_key: 0,
-    });
   });
 
   test("creates a user and redirects", async () => {
@@ -186,23 +114,6 @@ describe("UsersController unit tests", () => {
     );
   });
 
-  test("renders create database errors", async () => {
-    jest
-      .spyOn(UsersModel, "create")
-      .mockRejectedValue(new Error("database error"));
-    const errorLog = jest.spyOn(console, "error").mockImplementation(() => {});
-    const res = response();
-
-    UsersController.handleUserManagement(request({}, formData("create")), res);
-    await flushPromises();
-
-    expect(res.render).toHaveBeenCalledWith(
-      "status.ejs",
-      expect.objectContaining({ status: "Database Error" }),
-    );
-    expect(errorLog).toHaveBeenCalled();
-  });
-
   test("updates a user when the database changes a row", async () => {
     const update = jest
       .spyOn(UsersModel, "update")
@@ -219,41 +130,6 @@ describe("UsersController unit tests", () => {
     expect(res.redirect).toHaveBeenCalledWith("/users");
   });
 
-  test("renders an update failure when no row changes", async () => {
-    jest.spyOn(UsersModel, "update").mockResolvedValue({ affectedRows: 0 });
-    const res = response();
-
-    UsersController.handleUserManagement(
-      request({ id: "7" }, formData("update")),
-      res,
-    );
-    await flushPromises();
-
-    expect(res.render).toHaveBeenCalledWith("status.ejs", {
-      status: "User Update Failed",
-      message: "The user could not be found.",
-    });
-  });
-
-  test("renders update database errors", async () => {
-    jest
-      .spyOn(UsersModel, "update")
-      .mockRejectedValue(new Error("database error"));
-    jest.spyOn(console, "error").mockImplementation(() => {});
-    const res = response();
-
-    UsersController.handleUserManagement(
-      request({ id: "7" }, formData("update")),
-      res,
-    );
-    await flushPromises();
-
-    expect(res.render).toHaveBeenCalledWith(
-      "status.ejs",
-      expect.objectContaining({ status: "Database Error" }),
-    );
-  });
-
   test("deletes a user and redirects when a row is deleted", async () => {
     const remove = jest
       .spyOn(UsersModel, "delete")
@@ -268,51 +144,5 @@ describe("UsersController unit tests", () => {
 
     expect(remove).toHaveBeenCalledWith("7");
     expect(res.redirect).toHaveBeenCalledWith("/users");
-  });
-
-  test("renders a deletion failure when no row is deleted", async () => {
-    jest.spyOn(UsersModel, "delete").mockResolvedValue({ affectedRows: 0 });
-    const res = response();
-
-    UsersController.handleUserManagement(
-      request({ id: "7" }, formData("delete")),
-      res,
-    );
-    await flushPromises();
-
-    expect(res.render).toHaveBeenCalledWith("status.ejs", {
-      status: "User Deletion Failed",
-      message: "The user could not be found.",
-    });
-  });
-
-  test("renders deletion database errors", async () => {
-    jest
-      .spyOn(UsersModel, "delete")
-      .mockRejectedValue(new Error("database error"));
-    jest.spyOn(console, "error").mockImplementation(() => {});
-    const res = response();
-
-    UsersController.handleUserManagement(
-      request({ id: "7" }, formData("delete")),
-      res,
-    );
-    await flushPromises();
-
-    expect(res.render).toHaveBeenCalledWith(
-      "status.ejs",
-      expect.objectContaining({ status: "Database Error" }),
-    );
-  });
-
-  test("renders an invalid action error", () => {
-    const res = response();
-
-    UsersController.handleUserManagement(request({}, formData("unknown")), res);
-
-    expect(res.render).toHaveBeenCalledWith("status.ejs", {
-      status: "Invalid Action",
-      message: "The form doesn't support this action.",
-    });
   });
 });

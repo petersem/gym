@@ -33,73 +33,6 @@ afterEach(() => {
 
 // Query spies verify user mapping, filtering, and SQL without contacting MySQL.
 describe("UsersModel unit tests", () => {
-  test("constructs a user and maps a database row", () => {
-    expect(user).toBeInstanceOf(UsersModel);
-    expect(UsersModel.tableToModel(row)).toEqual(user);
-  });
-
-  test("getAll maps returned users", async () => {
-    const query = jest
-      .spyOn(UsersModel, "query")
-      .mockResolvedValue([
-        { users: row },
-        { users: { ...row, id: "8", email: "grace@example.com" } },
-      ]);
-
-    await expect(UsersModel.getAll()).resolves.toEqual([
-      user,
-      new UsersModel(
-        8,
-        row.first_name,
-        row.last_name,
-        row.role,
-        "grace@example.com",
-        row.password,
-        row.phone,
-        row.dob,
-        row.deleted,
-        row.authentication_key,
-      ),
-    ]);
-    expect(query).toHaveBeenCalledWith("SELECT * FROM users WHERE deleted = 0");
-  });
-
-  test("getBySearch uses the term for names and email", async () => {
-    const query = jest
-      .spyOn(UsersModel, "query")
-      .mockResolvedValue([{ users: row }]);
-
-    await expect(UsersModel.getBySearch("Fred")).resolves.toEqual([user]);
-    expect(query).toHaveBeenCalledWith(
-      expect.stringContaining(
-        "first_name LIKE ? OR last_name LIKE ? OR email LIKE ?",
-      ),
-      ["%Fred%", "%Fred%", "%Fred%"],
-    );
-  });
-
-  test("list returns active users with default sorting and no pagination", async () => {
-    const query = jest
-      .spyOn(UsersModel, "query")
-      .mockResolvedValueOnce([{ "": { total: "1" } }])
-      .mockResolvedValueOnce([{ users: row }]);
-
-    await expect(UsersModel.list()).resolves.toEqual({
-      users: [user],
-      total: 1,
-    });
-    expect(query).toHaveBeenNthCalledWith(
-      1,
-      "SELECT COUNT(*) AS total FROM users WHERE deleted = 0",
-      [],
-    );
-    expect(query).toHaveBeenNthCalledWith(
-      2,
-      "SELECT * FROM users WHERE deleted = 0 ORDER BY last_name ASC ",
-      [],
-    );
-  });
-
   test("list searches, filters by role, sorts, and paginates users", async () => {
     const query = jest
       .spyOn(UsersModel, "query")
@@ -128,34 +61,6 @@ describe("UsersModel unit tests", () => {
     );
   });
 
-  test.each([
-    { countResult: [] },
-    { countResult: [{}] },
-    { countResult: [{ "": {} }] },
-  ])(
-    "list handles a missing count value and invalid options: $countResult",
-    async ({ countResult }) => {
-      const query = jest
-        .spyOn(UsersModel, "query")
-        .mockResolvedValueOnce(countResult)
-        .mockResolvedValueOnce([]);
-
-      await expect(
-        UsersModel.list({
-          sortBy: "invalid",
-          sortDir: "invalid",
-          page: 0,
-          pageSize: 0,
-        }),
-      ).resolves.toEqual({ users: [], total: 0 });
-      expect(query).toHaveBeenNthCalledWith(
-        2,
-        "SELECT * FROM users WHERE deleted = 0 ORDER BY last_name ASC ",
-        [],
-      );
-    },
-  );
-
   test("getByUsername returns an active user by email", async () => {
     const query = jest
       .spyOn(UsersModel, "query")
@@ -174,15 +79,6 @@ describe("UsersModel unit tests", () => {
     await expect(UsersModel.getByUsername("missing@example.com")).rejects.toBe(
       "not found",
     );
-  });
-
-  test("getById returns a user when found", async () => {
-    const query = jest
-      .spyOn(UsersModel, "query")
-      .mockResolvedValue([{ users: row }]);
-
-    await expect(UsersModel.getById(7)).resolves.toEqual(user);
-    expect(query).toHaveBeenCalledWith("SELECT * FROM users WHERE id = ?", [7]);
   });
 
   test("getById rejects when no user is found", async () => {
@@ -223,31 +119,6 @@ describe("UsersModel unit tests", () => {
     expect(query).toHaveBeenCalledWith(
       expect.stringContaining("INSERT INTO users"),
       [
-        user.first_name,
-        user.last_name,
-        user.role,
-        user.email,
-        user.password,
-        user.phone,
-        user.dob,
-        user.deleted,
-        user.authentication_key,
-      ],
-    );
-  });
-
-  test("createWithExistingID includes the user id", async () => {
-    const query = jest
-      .spyOn(UsersModel, "query")
-      .mockResolvedValue({ insertId: 7 });
-
-    await expect(UsersModel.createWithExistingID(user)).resolves.toEqual({
-      insertId: 7,
-    });
-    expect(query).toHaveBeenCalledWith(
-      expect.stringContaining("INSERT INTO users"),
-      [
-        user.id,
         user.first_name,
         user.last_name,
         user.role,

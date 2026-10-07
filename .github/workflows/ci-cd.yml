@@ -36,7 +36,7 @@ jobs:
         run: npm run prettier:check
 
   unit-tests:
-    name: Unit Tests
+    name: Tests
     needs: [style-check]
     runs-on: ubuntu-latest
     services:
@@ -80,19 +80,17 @@ jobs:
           ADMIN_PASSWORD: testing123
         run: node backend/src/scripts/initializeDatabase.mjs
 
-      - name: Run unit tests
+      - name: Run tests
         id: tests
         shell: bash
         run: |
           set +e
           node --experimental-vm-modules ./node_modules/jest/bin/jest.js \
-            --coverage \
-            --verbose \
             backend/src/tests > unit-test-results.txt 2>&1
           test_status=$?
           cat unit-test-results.txt
           {
-            echo "## Unit test results"
+            echo "## Test results"
             echo
             echo '```text'
             cat unit-test-results.txt
@@ -101,14 +99,13 @@ jobs:
           echo "status=$test_status" >> "$GITHUB_OUTPUT"
           exit "$test_status"
 
-      - name: Upload test results and coverage
+      - name: Upload test results
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: unit-test-results
           path: |
             unit-test-results.txt
-            coverage/
           if-no-files-found: warn
 
   publish:

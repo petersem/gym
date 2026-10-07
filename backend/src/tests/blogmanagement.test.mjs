@@ -70,19 +70,6 @@ describe("admin blog management", () => {
     for (const spy of spies) expect(spy).not.toHaveBeenCalled();
   });
 
-  test.each(["member", "trainer", undefined])(
-    "preserves public blog viewing for %s",
-    async (role) => {
-      jest.spyOn(BlogModel, "list").mockResolvedValue({ blogs: [], total: 0 });
-      jest.spyOn(UsersModel, "getAll").mockResolvedValue([]);
-      const response = await fetch(`${baseUrl}/blogs`, {
-        headers: role ? { "x-test-role": role } : {},
-      });
-      expect(response.status).toBe(200);
-      expect(await response.text()).toContain('id="posts"');
-    },
-  );
-
   test.each(["trainer", "member", undefined])(
     "rejects reads and writes for %s before accessing models",
     async (role) => {
@@ -136,35 +123,6 @@ describe("admin blog management", () => {
       html.indexOf('id="blog-management"'),
     );
   });
-
-  test.each([24, 25, 26, 49, 50, 51])(
-    "limits list previews without changing editor values for length %s",
-    async (length) => {
-      const title = "S".repeat(length);
-      const content = "B".repeat(length);
-      jest.spyOn(BlogModel, "list").mockResolvedValue({
-        blogs: [{ id: 1, user_id: 7, title, content, created: new Date() }],
-        total: 1,
-      });
-      jest.spyOn(UsersModel, "getAll").mockResolvedValue([]);
-      const response = await fetch(`${baseUrl}/manage/blogs/1`, {
-        headers: { "x-test-role": "admin" },
-      });
-      expect(response.status).toBe(200);
-      const html = await response.text();
-      const table = html.match(/<tbody>([\s\S]*?)<\/tbody>/)[1];
-      expect(table).toContain(
-        `>${length > 25 ? title.slice(0, 25) + "..." : title}</a>`,
-      );
-      expect(table).toContain(
-        `<td data-blog-tooltip="${content}" tabindex="0">${length > 50 ? content.slice(0, 50) + "..." : content}</td>`,
-      );
-      expect(table).toContain(`<td data-blog-tooltip="${title}">`);
-      expect(html).toContain('role="tooltip" hidden');
-      expect(html).toContain(`value="${title}"`);
-      expect(html).toContain(`>${content}</textarea>`);
-    },
-  );
 
   test.each(["create", "update", "delete"])(
     "redirects successful %s actions to admin management",

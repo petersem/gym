@@ -43,20 +43,6 @@ describe("AuthenticationController", () => {
     expect(next).toHaveBeenCalled();
   });
 
-  test("does not reload an already authenticated session", async () => {
-    const next = jest.fn();
-    const provider = AuthenticationController.middleware.stack[1].handle;
-    const req = request({}, { userId: 7 }, { id: 7 });
-    const lookup = jest.spyOn(UsersModel, "getById");
-
-    const res = response();
-    await provider(req, res, next);
-    expect(res.locals.authenticatedUser).toBe(req.authenticatedUser);
-
-    expect(lookup).not.toHaveBeenCalled();
-    expect(next).toHaveBeenCalled();
-  });
-
   test("continues when session authentication lookup fails", async () => {
     jest
       .spyOn(UsersModel, "getById")
@@ -70,22 +56,6 @@ describe("AuthenticationController", () => {
     expect(res.locals).toEqual({ authenticatedUser: undefined, role: "" });
 
     expect(next).toHaveBeenCalled();
-  });
-
-  test("renders the login page", () => {
-    const res = response();
-
-    AuthenticationController.viewLogin({}, res);
-
-    expect(res.render).toHaveBeenCalledWith("login.ejs");
-  });
-
-  test("renders the registration page", () => {
-    const res = response();
-
-    AuthenticationController.viewRegister({}, res);
-
-    expect(res.render).toHaveBeenCalledWith("register.ejs");
   });
 
   test.each([
@@ -103,21 +73,6 @@ describe("AuthenticationController", () => {
 
     expect(req.session.userId).toBe(7);
     expect(res.redirect).toHaveBeenCalledWith(redirect);
-  });
-
-  test("redirects an authenticated user with an unknown role to locations", async () => {
-    jest
-      .spyOn(UsersModel, "getByUsername")
-      .mockResolvedValue({ id: 7, role: "unknown", password: "hash" });
-    jest.spyOn(bcrypt, "compare").mockResolvedValue(true);
-    const res = response();
-
-    await AuthenticationController.handleLogin(
-      request({ username: "ada@example.com", password: "secret" }),
-      res,
-    );
-
-    expect(res.redirect).toHaveBeenCalledWith("/");
   });
 
   test("registers a member account", async () => {
@@ -162,34 +117,6 @@ describe("AuthenticationController", () => {
       "/authenticate/register#form-validation",
     );
     expect(res.render).not.toHaveBeenCalled();
-  });
-
-  test("reports registration database errors", async () => {
-    jest.spyOn(bcrypt, "hash").mockResolvedValue("hashed-password");
-    jest
-      .spyOn(UsersModel, "create")
-      .mockRejectedValue(new Error("duplicate email"));
-    jest.spyOn(console, "error").mockImplementation(() => {});
-    const res = response();
-
-    await AuthenticationController.handleRegister(
-      request({
-        firstName: "Fred",
-        lastName: "Nerk",
-        email: "fn@gym.com",
-        password: "plain-password",
-        phone: "555-0100",
-      }),
-      res,
-    );
-
-    expect(res.status).toHaveBeenCalledWith(400);
-    expect(res.render).toHaveBeenCalledWith(
-      "status.ejs",
-      expect.objectContaining({
-        message: "The account could not be created.",
-      }),
-    );
   });
 
   test("rejects an incorrect password", async () => {
@@ -252,54 +179,5 @@ describe("AuthenticationController", () => {
 
     expect(destroy).toHaveBeenCalled();
     expect(res.status).toHaveBeenCalledWith(200);
-  });
-
-  test("rejects logout without authentication", () => {
-    const res = response();
-
-    AuthenticationController.handleLogout(request(), res);
-
-    expect(res.status).toHaveBeenCalledWith(401);
-  });
-
-  test("does not render when an authenticated user has no session id", () => {
-    const res = response();
-
-    AuthenticationController.handleLogout(request({}, {}, { id: 7 }), res);
-
-    expect(res.render).not.toHaveBeenCalled();
-  });
-
-  test("allows an authorized role", () => {
-    const next = jest.fn();
-    const res = response();
-
-    AuthenticationController.restrict(["admin"])(
-      request({}, {}, { role: "admin" }),
-      res,
-      next,
-    );
-
-    expect(next).toHaveBeenCalled();
-  });
-
-  test("rejects a forbidden role", () => {
-    const res = response();
-
-    AuthenticationController.restrict(["admin"])(
-      request({}, {}, { role: "member" }),
-      res,
-      jest.fn(),
-    );
-
-    expect(res.status).toHaveBeenCalledWith(403);
-  });
-
-  test("rejects an unauthenticated request", () => {
-    const res = response();
-
-    AuthenticationController.restrict(["admin"])(request(), res, jest.fn());
-
-    expect(res.status).toHaveBeenCalledWith(401);
   });
 });

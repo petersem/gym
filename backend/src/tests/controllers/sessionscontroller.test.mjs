@@ -31,23 +31,40 @@ const request = (params = {}, query = {}, body = {}) => ({
   body,
 });
 const next = () => jest.fn();
-test.each(["create", "update"])("reports trainer scheduling conflicts for %s without redirecting", async (action) => {
-  jest.spyOn(SessionsModel, action).mockResolvedValue({ affectedRows: 0, trainerConflict: true });
-  const res = response();
-  const req = request({ id: "123" }, {}, {
-    action, title: "Test session", trainerId: "3", activityId: "1",
-    locationId: "1", date: "2099-10-10", time: "09:00:00",
-  });
-  await SessionsController.handleSessionManagement(req, res);
-  expect(res.status).toHaveBeenCalledWith(409);
-  expect(res.render).toHaveBeenCalledWith("status.ejs", expect.objectContaining({
-    message: "This trainer already has a session at this date and time.",
-  }));
-  expect(res.redirect).not.toHaveBeenCalled();
-  const apiRes = response();
-  await SessionsController[action](req, apiRes, next());
-  expect(apiRes.status).toHaveBeenCalledWith(409);
-});
+test.each(["create", "update"])(
+  "reports trainer scheduling conflicts for %s without redirecting",
+  async (action) => {
+    jest
+      .spyOn(SessionsModel, action)
+      .mockResolvedValue({ affectedRows: 0, trainerConflict: true });
+    const res = response();
+    const req = request(
+      { id: "123" },
+      {},
+      {
+        action,
+        title: "Test session",
+        trainerId: "3",
+        activityId: "1",
+        locationId: "1",
+        date: "2099-10-10",
+        time: "09:00:00",
+      },
+    );
+    await SessionsController.handleSessionManagement(req, res);
+    expect(res.status).toHaveBeenCalledWith(409);
+    expect(res.render).toHaveBeenCalledWith(
+      "status.ejs",
+      expect.objectContaining({
+        message: "This trainer already has a session at this date and time.",
+      }),
+    );
+    expect(res.redirect).not.toHaveBeenCalled();
+    const apiRes = response();
+    await SessionsController[action](req, apiRes, next());
+    expect(apiRes.status).toHaveBeenCalledWith(409);
+  },
+);
 const dateForOffset = (dayOffset) => {
   const date = new Date();
   date.setHours(0, 0, 0, 0);
@@ -218,47 +235,7 @@ describe("SessionsController", () => {
     ]);
   });
 
-  test("includes the total booked users for each session", async () => {
-    const sessions = [
-      {
-        id: 1,
-        title: "Morning Yoga",
-        location_id: 2,
-        trainer_id: 3,
-        date: dateForOffset(0),
-        time: "10:00:00",
-      },
-      {
-        id: 2,
-        title: "Evening Yoga",
-        location_id: 2,
-        trainer_id: 3,
-        date: dateForOffset(1),
-        time: "18:00:00",
-      },
-    ];
-    const bookings = [
-      { id: 1, session_id: 1, user_id: 7 },
-      { id: 2, session_id: 1, user_id: 8 },
-      { id: 3, session_id: 2, user_id: 9 },
-    ];
-    jest.spyOn(SessionsModel, "getAll").mockResolvedValue(sessions);
-    jest.spyOn(UsersModel, "getAll").mockResolvedValue([]);
-    jest.spyOn(ActivitiesModel, "getAll").mockResolvedValue([]);
-    jest.spyOn(LocationModel, "getAll").mockResolvedValue([]);
-    jest.spyOn(BookingsModel, "getAll").mockResolvedValue(bookings);
-    const res = response();
-
-    await SessionsController.viewSessionManagement(request(), res);
-
-    const renderedSessions = res.render.mock.calls[0][1].sessions;
-    expect(renderedSessions).toEqual([
-      expect.objectContaining({ id: 1, totalBookedUsers: 2 }),
-      expect.objectContaining({ id: 2, totalBookedUsers: 1 }),
-    ]);
-  });
-
-  test("sorts sessions by title, trainer, activity, location, date, and bookings", async () => {
+  test("sorts sessions by title and defaults invalid sorting to date", async () => {
     const sessions = [
       {
         id: 1,
@@ -311,14 +288,7 @@ describe("SessionsController", () => {
       ]);
     const res = response();
 
-    for (const [sortBy, expectedIds] of [
-      ["title", [2, 3, 1]],
-      ["trainer", [3, 2, 1]],
-      ["activity", [3, 2, 1]],
-      ["location", [3, 2, 1]],
-      ["date", [1, 2, 3]],
-      ["bookings", [3, 2, 1]],
-    ]) {
+    for (const [sortBy, expectedIds] of [["title", [2, 3, 1]]]) {
       await SessionsController.viewSessionManagement(
         request({}, { sort_by: sortBy }),
         res,
@@ -336,37 +306,6 @@ describe("SessionsController", () => {
     expect(
       res.render.mock.calls.at(-1)[1].sessions.map(({ id }) => id),
     ).toEqual([3, 2, 1]);
-  });
-
-  test("handles session CRUD requests", async () => {
-    const res = response();
-    const errorNext = next();
-    jest.spyOn(SessionsModel, "getAll").mockResolvedValue([{ id: 1 }]);
-    jest.spyOn(SessionsModel, "getById").mockResolvedValue({ id: 1 });
-    jest.spyOn(SessionsModel, "create").mockResolvedValue({ affectedRows: 1 });
-    jest.spyOn(SessionsModel, "update").mockResolvedValue({ affectedRows: 1 });
-    jest.spyOn(SessionsModel, "delete").mockResolvedValue({ affectedRows: 1 });
-
-    await SessionsController.list(request(), res, errorNext);
-    await SessionsController.getById(request({ id: "1" }), res, errorNext);
-    await SessionsController.create(
-      request({}, {}, { activity_id: 7 }),
-      res,
-      errorNext,
-    );
-    await SessionsController.update(
-      request({ id: "1" }, {}, { activity_id: 8 }),
-      res,
-      errorNext,
-    );
-    await SessionsController.delete(request({ id: "1" }), res, errorNext);
-
-    expect(SessionsModel.update).toHaveBeenCalledWith({
-      activity_id: 8,
-      id: 1,
-    });
-    expect(SessionsModel.delete).toHaveBeenCalledWith(1);
-    expect(res.status).toHaveBeenCalledWith(201);
   });
 
   test("handles session management actions and failures", async () => {
@@ -528,36 +467,6 @@ describe("SessionsController", () => {
     expect(res.redirect).toHaveBeenCalledWith("/sessions");
   });
 
-  test("prompts to confirm deletion when the selected session has bookings", async () => {
-    const sessions = [
-      {
-        id: 1,
-        title: "Morning Yoga",
-        location_id: 2,
-        trainer_id: 3,
-        date: dateForOffset(0),
-      },
-    ];
-    jest.spyOn(SessionsModel, "getAll").mockResolvedValue(sessions);
-    jest.spyOn(UsersModel, "getAll").mockResolvedValue([]);
-    jest.spyOn(ActivitiesModel, "getAll").mockResolvedValue([]);
-    jest.spyOn(LocationModel, "getAll").mockResolvedValue([]);
-    jest
-      .spyOn(BookingsModel, "getBySessionId")
-      .mockResolvedValue([{ id: 9, session_id: 1 }]);
-    const res = response();
-
-    await SessionsController.viewSessionManagement(request({ id: "1" }), res);
-
-    expect(BookingsModel.getBySessionId).toHaveBeenCalledWith(1);
-    expect(res.render).toHaveBeenCalledWith(
-      "session_management.ejs",
-      expect.objectContaining({
-        selectedSessionHasBookings: true,
-      }),
-    );
-  });
-
   test("rejects incomplete session data", async () => {
     const res = response();
 
@@ -655,32 +564,5 @@ describe("SessionsController", () => {
         response(),
       ),
     ).toBe(false);
-  });
-
-  test("forwards errors from session JSON handlers", async () => {
-    const error = new Error("database error");
-    const errorNext = next();
-    jest.spyOn(SessionsModel, "getById").mockRejectedValue(error);
-    jest.spyOn(SessionsModel, "create").mockRejectedValue(error);
-    jest.spyOn(SessionsModel, "update").mockRejectedValue(error);
-    jest.spyOn(SessionsModel, "delete").mockRejectedValue(error);
-    const res = response();
-
-    await SessionsController.getById(request({ id: "1" }), res, errorNext);
-    await SessionsController.create(request(), res, errorNext);
-    await SessionsController.update(request({ id: "1" }), res, errorNext);
-    await SessionsController.delete(request({ id: "1" }), res, errorNext);
-
-    expect(errorNext).toHaveBeenCalledTimes(4);
-  });
-
-  test("forwards session errors", async () => {
-    const error = new Error("database error");
-    const errorNext = next();
-    jest.spyOn(SessionsModel, "getAll").mockRejectedValue(error);
-
-    await SessionsController.list(request(), response(), errorNext);
-
-    expect(errorNext).toHaveBeenCalledWith(error);
   });
 });

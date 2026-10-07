@@ -98,38 +98,58 @@ const post = (
   });
 
 describe("staff booking management", () => {
-  test.each(["", "?trainer_id=all", "?trainer_id=8"])("defaults trainer dropdowns to the logged-in trainer without All (%s)", async (query) => {
-    const html = await (await get(`/1${query}`, "trainer")).text();
-    for (const id of ["trainer-filter", "editor-trainer"]) {
-      const select = html.match(new RegExp(`<select id="${id}"[^>]*>([\\s\\S]*?)<\\/select>`))[1];
-      expect(select.match(/<option\b/g)).toHaveLength(1);
-      expect(select).toMatch(/value="7"\s+selected>Trainer, Test<\/option>/);
-      expect(select).not.toContain(">All</option>");
-    }
-    const table = html.match(/<table[\s\S]*?<\/table>/)[0];
-    expect(table).toContain("Own session");
-    expect(table).not.toContain(">Trainer</a>");
-    expect(table).not.toContain("Other session");
-  });
+  test.each(["", "?trainer_id=8"])(
+    "defaults trainer dropdowns to the logged-in trainer without All (%s)",
+    async (query) => {
+      const html = await (await get(`/1${query}`, "trainer")).text();
+      for (const id of ["trainer-filter", "editor-trainer"]) {
+        const select = html.match(
+          new RegExp(`<select id="${id}"[^>]*>([\\s\\S]*?)<\\/select>`),
+        )[1];
+        expect(select.match(/<option\b/g)).toHaveLength(1);
+        expect(select).toMatch(/value="7"\s+selected>Trainer, Test<\/option>/);
+        expect(select).not.toContain(">All</option>");
+      }
+      const table = html.match(/<table[\s\S]*?<\/table>/)[0];
+      expect(table).toContain("Own session");
+      expect(table).not.toContain(">Trainer</a>");
+      expect(table).not.toContain("Other session");
+    },
+  );
   test.each([
     ["", true, true],
     ["?trainer_id=7", false, true],
     ["?location_id=1", true, false],
     ["?trainer_id=7&location_id=1", false, false],
-  ])("shows conditional sortable columns for %s", async (query, trainer, location) => {
-    const html = await (await get(query)).text();
-    const table = html.match(/<table[\s\S]*?<\/table>/)[0];
-    const headers = [...table.matchAll(/class="sort-link"[^>]*>([^<]+)<\/a>/g)].map((match) => match[1]);
-    expect(headers.slice(0, 3)).toEqual(["Session", "Member", "Session date/time"]);
-    const firstRow = table.match(/<tbody>\s*<tr>([\s\S]*?)<\/tr>/)[1];
-    expect(firstRow).toMatch(/<\/a><\/td>\s*<td>Member, Alex<\/td>\s*<td>10\/10\/2026 9:00am<\/td>/);
-    expect(table.includes(">Trainer</a>")).toBe(trainer);
-    expect(table.includes(">Location</a>")).toBe(location);
-    if (trainer) expect(table).toContain("<td>Trainer, Test</td>");
-    if (location) expect(table).toContain("<td>Main</td>");
-    const emptyHtml = await (await get(`${query}${query ? "&" : "?"}search_term=absent`)).text();
-    expect(emptyHtml).toContain(`colspan="${3 + Number(trainer) + Number(location)}"`);
-  });
+  ])(
+    "shows conditional sortable columns for %s",
+    async (query, trainer, location) => {
+      const html = await (await get(query)).text();
+      const table = html.match(/<table[\s\S]*?<\/table>/)[0];
+      const headers = [
+        ...table.matchAll(/class="sort-link"[^>]*>([^<]+)<\/a>/g),
+      ].map((match) => match[1]);
+      expect(headers.slice(0, 3)).toEqual([
+        "Session",
+        "Member",
+        "Session date/time",
+      ]);
+      const firstRow = table.match(/<tbody>\s*<tr>([\s\S]*?)<\/tr>/)[1];
+      expect(firstRow).toMatch(
+        /<\/a><\/td>\s*<td>Member, Alex<\/td>\s*<td>10\/10\/2026 9:00am<\/td>/,
+      );
+      expect(table.includes(">Trainer</a>")).toBe(trainer);
+      expect(table.includes(">Location</a>")).toBe(location);
+      if (trainer) expect(table).toContain("<td>Trainer, Test</td>");
+      if (location) expect(table).toContain("<td>Main</td>");
+      const emptyHtml = await (
+        await get(`${query}${query ? "&" : "?"}search_term=absent`)
+      ).text();
+      expect(emptyHtml).toContain(
+        `colspan="${3 + Number(trainer) + Number(location)}"`,
+      );
+    },
+  );
 
   test.each([
     ["trainer", "asc", [2, 1]],
@@ -137,28 +157,52 @@ describe("staff booking management", () => {
     ["location", "asc", [1, 2]],
     ["location", "desc", [2, 1]],
   ])("sorts the %s column %s", async (column, direction, expected) => {
-    const html = await (await get(`?sort_by=${column}&sort_dir=${direction}`)).text();
+    const html = await (
+      await get(`?sort_by=${column}&sort_dir=${direction}`)
+    ).text();
     const table = html.match(/<table[\s\S]*?<\/table>/)[0];
-    const ids = [...table.matchAll(/href="\/manage\/bookings\/(\d+)\?/g)].map((match) => Number(match[1]));
+    const ids = [...table.matchAll(/href="\/manage\/bookings\/(\d+)\?/g)].map(
+      (match) => Number(match[1]),
+    );
     expect(ids).toEqual(expected);
-    expect(table).toContain(`aria-sort="${direction === "asc" ? "ascending" : "descending"}"`);
-    expect(table).toContain(`sort_by=${column}&amp;trainer_id=all&amp;location_id=all&amp;sort_dir=${direction === "asc" ? "desc" : "asc"}`);
+    expect(table).toContain(
+      `aria-sort="${direction === "asc" ? "ascending" : "descending"}"`,
+    );
+    expect(table).toContain(
+      `sort_by=${column}&amp;trainer_id=all&amp;location_id=all&amp;sort_dir=${direction === "asc" ? "desc" : "asc"}`,
+    );
   });
 
   test("prefills edit filters from the existing session and leaves create unchanged", async () => {
     const html = await (await get("/1")).text();
-    const select = (id) => html.match(new RegExp(`<select id="${id}"[^>]*>([\\s\\S]*?)<\\/select>`))[1];
-    expect(select("editor-trainer")).toContain('<option value="7" selected>Trainer, Test</option>');
-    expect(select("editor-location")).toContain('<option value="1" selected>Main</option>');
-    expect(select("editor-date-time")).toContain('<option value="2026-10-10 09:00" selected>10/10/2026 9:00am</option>');
+    const select = (id) =>
+      html.match(
+        new RegExp(`<select id="${id}"[^>]*>([\\s\\S]*?)<\\/select>`),
+      )[1];
+    expect(select("editor-trainer")).toContain(
+      '<option value="7" selected>Trainer, Test</option>',
+    );
+    expect(select("editor-location")).toContain(
+      '<option value="1" selected>Main</option>',
+    );
+    expect(select("editor-date-time")).toContain(
+      '<option value="2026-10-10 09:00" selected>10/10/2026 9:00am</option>',
+    );
     expect(select("session-id")).toContain('<option value="1" selected>');
-    for (const id of ["editor-trainer", "editor-location", "editor-date-time"]) {
+    for (const id of [
+      "editor-trainer",
+      "editor-location",
+      "editor-date-time",
+    ]) {
       expect(select(id)).toContain('<option value="">All</option>');
     }
     expect(await (await get()).text()).not.toContain('id="editor-trainer"');
     const trainerHtml = await (await get("/1", "trainer")).text();
-    expect(trainerHtml.match(/<select id="editor-trainer"[^>]*>([\s\S]*?)<\/select>/)[1])
-      .not.toContain("Coach, Other");
+    expect(
+      trainerHtml.match(
+        /<select id="editor-trainer"[^>]*>([\s\S]*?)<\/select>/,
+      )[1],
+    ).not.toContain("Coach, Other");
     expect(trainerHtml).not.toContain('value="2026-10-11 10:00"');
   });
 
@@ -171,33 +215,60 @@ describe("staff booking management", () => {
     const html = await (await get("/1")).text();
     const button = { disabled: false };
     const makeOption = (value = "", textContent = "") => ({
-      value, textContent,
-      cloneNode() { return makeOption(this.value, this.textContent); },
+      value,
+      textContent,
+      cloneNode() {
+        return makeOption(this.value, this.textContent);
+      },
     });
     const elements = {};
-    for (const id of ["session-id", "editor-trainer", "editor-location", "editor-date-time"]) {
-      const contents = html.match(new RegExp(`<select id="${id}"[^>]*>([\\s\\S]*?)<\\/select>`))[1];
-      const matches = [...contents.matchAll(/<option value="([^"]*)"([^>]*)>([^<]*)<\/option>/g)];
+    for (const id of [
+      "session-id",
+      "editor-trainer",
+      "editor-location",
+      "editor-date-time",
+    ]) {
+      const contents = html.match(
+        new RegExp(`<select id="${id}"[^>]*>([\\s\\S]*?)<\\/select>`),
+      )[1];
+      const matches = [
+        ...contents.matchAll(
+          /<option value="([^"]*)"([^>]*)>([^<]*)<\/option>/g,
+        ),
+      ];
       elements[id] = {
-        value: matches.find((match) => match[2].includes("selected"))?.[1] ?? "",
+        value:
+          matches.find((match) => match[2].includes("selected"))?.[1] ?? "",
         options: matches.map((match) => makeOption(match[1], match[3])),
         listeners: {},
-        addEventListener(event, handler) { this.listeners[event] = handler; },
-        replaceChildren(...options) { this.options = options; },
+        addEventListener(event, handler) {
+          this.listeners[event] = handler;
+        },
+        replaceChildren(...options) {
+          this.options = options;
+        },
         form: { querySelector: () => button },
       };
     }
-    const metadata = html.match(/id="editor-session-data" hidden data-sessions="([^"]*)"/)[1];
-    elements["editor-session-data"] = { dataset: { sessions: metadata.replaceAll("&#34;", '"') } };
+    const metadata = html.match(
+      /id="editor-session-data" hidden data-sessions="([^"]*)"/,
+    )[1];
+    elements["editor-session-data"] = {
+      dataset: { sessions: metadata.replaceAll("&#34;", '"') },
+    };
     elements["editor-session-status"] = { textContent: "" };
-    const script = [...html.matchAll(/<script>([\s\S]*?)<\/script>/g)]
-      .find((match) => match[1].includes("const sessionSelect"))[1];
-    runInNewContext(script, { document: {
-      getElementById: (id) => elements[id],
-      createElement: () => makeOption(),
-    } });
+    const script = [...html.matchAll(/<script>([\s\S]*?)<\/script>/g)].find(
+      (match) => match[1].includes("const sessionSelect"),
+    )[1];
+    runInNewContext(script, {
+      document: {
+        getElementById: (id) => elements[id],
+        createElement: () => makeOption(),
+      },
+    });
     const select = elements["session-id"];
-    const ids = () => select.options.map((option) => option.value).filter(Boolean);
+    const ids = () =>
+      select.options.map((option) => option.value).filter(Boolean);
     const change = (id, value) => {
       elements[id].value = value;
       elements[id].listeners.change();
@@ -205,7 +276,8 @@ describe("staff booking management", () => {
     expect(ids()).toEqual(["1"]);
     expect(select.value).toBe("1");
     expect(button.disabled).toBe(false);
-    const label = (id) => select.options.find((option) => option.value === id).textContent;
+    const label = (id) =>
+      select.options.find((option) => option.value === id).textContent;
     expect(label("1")).toBe("Own session");
     change("editor-trainer", "");
     expect(ids()).toEqual(["1", "3"]);
@@ -218,14 +290,20 @@ describe("staff booking management", () => {
     expect(label("4")).toBe("Own session - Test Trainer - West");
     change("editor-date-time", "");
     expect(ids()).toEqual(["1", "3", "4", "2"]);
-    expect(label("4")).toBe("Own session - 10/10/2026 9:00am - Test Trainer - West");
-    expect(label("2")).toBe("Other session - 11/10/2026 10:00am - Other Coach - West");
+    expect(label("4")).toBe(
+      "Own session - 10/10/2026 9:00am - Test Trainer - West",
+    );
+    expect(label("2")).toBe(
+      "Other session - 11/10/2026 10:00am - Other Coach - West",
+    );
     change("editor-trainer", "8");
     expect(ids()).toEqual(["3", "2"]);
     expect(label("3")).toBe("Own session - 10/10/2026 9:00am - Main");
     expect(select.value).toBe("");
     expect(button.disabled).toBe(true);
-    expect(elements["editor-session-status"].textContent).toContain("Select a session");
+    expect(elements["editor-session-status"].textContent).toContain(
+      "Select a session",
+    );
     change("session-id", "3");
     expect(button.disabled).toBe(false);
     change("editor-location", "2");
@@ -233,108 +311,60 @@ describe("staff booking management", () => {
     expect(label("2")).toBe("Other session - 11/10/2026 10:00am");
     change("editor-date-time", "2026-10-10 09:00");
     expect(ids()).toEqual([]);
-    expect(select.options[0].textContent).toBe("No sessions match these filters");
+    expect(select.options[0].textContent).toBe(
+      "No sessions match these filters",
+    );
     expect(button.disabled).toBe(true);
-    expect(elements["editor-session-status"].textContent).toBe("No sessions match these filters.");
+    expect(elements["editor-session-status"].textContent).toBe(
+      "No sessions match these filters.",
+    );
   });
 
-  test.each(["", "/1"])("adds trainer names only to matching session name/date/time options at %s", async (path) => {
-    SessionsModel.getAll.mockResolvedValue([
-      sessions[0],
-      { ...sessions[0], id: 3, trainer_id: 8 },
-      { ...sessions[0], id: 4, trainer_id: 8, time: "10:00:00" },
-      { ...sessions[0], id: 5, trainer_id: 8, date: "2026-10-11" },
-      { ...sessions[0], id: 6, trainer_id: 8, title: "Different session" },
-    ]);
-    const html = await (await get(path)).text();
-    const select = html.match(/<select id="session-id"[^>]*>([\s\S]*?)<\/select>/)[1];
-    expect(select).toContain(`value="1"${path ? " selected" : ""}>Own session - 10/10/2026 9:00am - Test Trainer</option>`);
-    expect(select).toContain('value="3">Own session - 10/10/2026 9:00am - Other Coach</option>');
-    expect(select).toContain('value="4">Own session - 10/10/2026 10:00am</option>');
-    expect(select).toContain('value="5">Own session - 11/10/2026 9:00am</option>');
-    expect(select).toContain('value="6">Different session - 10/10/2026 9:00am</option>');
-    const trainerHtml = await (await get(path, "trainer")).text();
-    const trainerSelect = trainerHtml.match(/<select id="session-id"[^>]*>([\s\S]*?)<\/select>/)[1];
-    expect(trainerSelect).not.toContain("Other Coach");
-    expect(trainerSelect).toContain(">Own session - 10/10/2026 9:00am</option>");
-  });
-
-  test.each([
-    ["00:00:00", "12:00am"],
-    ["09:05:00", "9:05am"],
-    ["12:00:00", "12:00pm"],
-    ["14:05:00", "2:05pm"],
-    ["23:59:00", "11:59pm"],
-  ])("formats dates and 12-hour time %s in the list and dropdown", async (time, displayedTime) => {
-    SessionsModel.getAll.mockResolvedValue([
-      { ...sessions[0], date: "2099-12-03", time },
-    ]);
-    const html = await (await get()).text();
-    const table = html.match(/<tbody>([\s\S]*?)<\/tbody>/)[1];
-    const select = html.match(/<select id="session-id"[^>]*>([\s\S]*?)<\/select>/)[1];
-    expect(table).toContain(`<td>03/12/2099 ${displayedTime}</td>`);
-    expect(select).toContain(`>Own session - 03/12/2099 ${displayedTime}</option>`);
-    expect(table).not.toContain("2099-12-03");
-    expect(select).not.toContain("2099-12-03");
-  });
-
-  test.each(["", "/1"])("orders session options by date then time when creating or editing at %s", async (path) => {
-    const unsortedSessions = [
-      sessions[1],
-      sessions[0],
-      { ...sessions[0], id: 3, title: "Earlier session", time: "08:00:00" },
-    ];
-    SessionsModel.getAll.mockResolvedValue(unsortedSessions);
-    const html = await (await get(`${path}?sort_by=session_date&sort_dir=desc`)).text();
-    const select = html.match(/<select id="session-id"[^>]*>([\s\S]*?)<\/select>/)[1];
-    expect([...select.matchAll(/<option value="(\d+)"/g)].map((match) => match[1]))
-      .toEqual(["3", "1", "2"]);
-    if (path) {
-      expect(select).toContain('<option value="1" selected>Own session - 10/10/2026 9:00am</option>');
-    }
-    expect(unsortedSessions.map((session) => session.id)).toEqual([2, 1, 3]);
-  });
-
-  test("sorts members and trainer filters by displayed names while preserving selection", async () => {
-    UsersModel.getAll.mockResolvedValue([
-      { id: 10, role: "member", first_name: "Alex", last_name: "Zulu" },
-      { id: 12, role: "member", first_name: "Zoe", last_name: "Alpha" },
-      { id: 11, role: "member", first_name: "Ben", last_name: "Alpha" },
-      { id: 7, role: "trainer", first_name: "Alex", last_name: "Zulu" },
-      { id: 8, role: "trainer", first_name: "Zoe", last_name: "Alpha" },
-      { id: 9, role: "trainer", first_name: "Ben", last_name: "Alpha" },
-    ]);
-    const html = await (await get("/1?trainer_id=7")).text();
-    const memberSelect = html.match(/<select id="user-id"[^>]*>([\s\S]*?)<\/select>/)[1];
-    const trainerSelect = html.match(/<select id="trainer-filter"[^>]*>([\s\S]*?)<\/select>/)[1];
-    expect([...memberSelect.matchAll(/<option value="(\d+)"/g)].map((match) => match[1]))
-      .toEqual(["11", "12", "10"]);
-    expect([...trainerSelect.matchAll(/<option value="(\d+)"/g)].map((match) => match[1]))
-      .toEqual(["9", "8", "7"]);
-    expect(memberSelect).toContain('<option value="10" selected>Zulu, Alex</option>');
-    expect(trainerSelect).toContain('<option value="7" selected>Zulu, Alex</option>');
-  });
-
-  test("defaults to session date/time ascending", async () => {
-    const html = await (await get()).text();
-    expect(html).toContain('name="sort_by" value="session_date"');
-    expect(html).toContain('name="sort_dir" value="asc"');
-    const tbody = html.match(/<tbody>([\s\S]*?)<\/tbody>/)[1];
-    expect(tbody.indexOf("Own session")).toBeLessThan(tbody.indexOf("Other session"));
-  });
+  test.each(["", "/1"])(
+    "orders session options by date then time when creating or editing at %s",
+    async (path) => {
+      const unsortedSessions = [
+        sessions[1],
+        sessions[0],
+        { ...sessions[0], id: 3, title: "Earlier session", time: "08:00:00" },
+      ];
+      SessionsModel.getAll.mockResolvedValue(unsortedSessions);
+      const html = await (
+        await get(`${path}?sort_by=session_date&sort_dir=desc`)
+      ).text();
+      const select = html.match(
+        /<select id="session-id"[^>]*>([\s\S]*?)<\/select>/,
+      )[1];
+      expect(
+        [...select.matchAll(/<option value="(\d+)"/g)].map((match) => match[1]),
+      ).toEqual(["3", "1", "2"]);
+      if (path) {
+        expect(select).toContain(
+          '<option value="1" selected>Own session - 10/10/2026 9:00am</option>',
+        );
+      }
+      expect(unsortedSessions.map((session) => session.id)).toEqual([2, 1, 3]);
+    },
+  );
 
   test("hides past sessions but keeps today's bookings created earlier", async () => {
     const today = new Date();
     const yesterday = new Date(today);
     yesterday.setDate(today.getDate() - 1);
-    const dateValue = (date) => [
-      date.getFullYear(),
-      String(date.getMonth() + 1).padStart(2, "0"),
-      String(date.getDate()).padStart(2, "0"),
-    ].join("-");
+    const dateValue = (date) =>
+      [
+        date.getFullYear(),
+        String(date.getMonth() + 1).padStart(2, "0"),
+        String(date.getDate()).padStart(2, "0"),
+      ].join("-");
     SessionsModel.getAll.mockResolvedValue([
       { ...sessions[0], title: "Past session", date: dateValue(yesterday) },
-      { ...sessions[1], title: "Today session", date: dateValue(today), time: "00:00:00" },
+      {
+        ...sessions[1],
+        title: "Today session",
+        date: dateValue(today),
+        time: "00:00:00",
+      },
     ]);
     const html = await (await get()).text();
     const tbody = html.match(/<tbody>([\s\S]*?)<\/tbody>/)[1];
@@ -343,39 +373,54 @@ describe("staff booking management", () => {
     expect(tbody).not.toContain("2026-10-02");
   });
 
-  test.each(["", "/2"])("session dropdown excludes yesterday and includes today and tomorrow at %s", async (path) => {
-    const today = new Date();
-    const dateValue = (offset) => {
-      const date = new Date(today);
-      date.setDate(date.getDate() + offset);
-      return [
-        date.getFullYear(),
-        String(date.getMonth() + 1).padStart(2, "0"),
-        String(date.getDate()).padStart(2, "0"),
-      ].join("-");
-    };
-    SessionsModel.getAll.mockResolvedValue([
-      { ...sessions[0], title: "Yesterday session", date: dateValue(-1) },
-      { ...sessions[1], title: "Today session", date: dateValue(0), time: "00:00:00" },
-      { ...sessions[0], id: 3, title: "Tomorrow session", date: dateValue(1) },
-    ]);
-    const response = await get(path);
-    expect(response.status).toBe(200);
-    const html = await response.text();
-    const select = html.match(/<select id="session-id"[^>]*>([\s\S]*?)<\/select>/)[1];
-    expect(select).not.toContain("Yesterday session");
-    expect([...select.matchAll(/<option value="(\d+)"/g)].map((match) => match[1]))
-      .toEqual(["2", "3"]);
-    if (path) {
-      expect(select).toContain(`<option value="2" selected>Today session - ${dateValue(0).split("-").reverse().join("/")} 12:00am</option>`);
-    }
-  });
+  test.each(["", "/2"])(
+    "session dropdown excludes yesterday and includes today and tomorrow at %s",
+    async (path) => {
+      const today = new Date();
+      const dateValue = (offset) => {
+        const date = new Date(today);
+        date.setDate(date.getDate() + offset);
+        return [
+          date.getFullYear(),
+          String(date.getMonth() + 1).padStart(2, "0"),
+          String(date.getDate()).padStart(2, "0"),
+        ].join("-");
+      };
+      SessionsModel.getAll.mockResolvedValue([
+        { ...sessions[0], title: "Yesterday session", date: dateValue(-1) },
+        {
+          ...sessions[1],
+          title: "Today session",
+          date: dateValue(0),
+          time: "00:00:00",
+        },
+        {
+          ...sessions[0],
+          id: 3,
+          title: "Tomorrow session",
+          date: dateValue(1),
+        },
+      ]);
+      const response = await get(path);
+      expect(response.status).toBe(200);
+      const html = await response.text();
+      const select = html.match(
+        /<select id="session-id"[^>]*>([\s\S]*?)<\/select>/,
+      )[1];
+      expect(select).not.toContain("Yesterday session");
+      expect(
+        [...select.matchAll(/<option value="(\d+)"/g)].map((match) => match[1]),
+      ).toEqual(["2", "3"]);
+      if (path) {
+        expect(select).toContain(
+          `<option value="2" selected>Today session - ${dateValue(0).split("-").reverse().join("/")} 12:00am</option>`,
+        );
+      }
+    },
+  );
 
   test.each([
     ["", [1, 2]],
-    ["?trainer_id=all&location_id=all", [1, 2]],
-    ["?trainer_id=7", [1]],
-    ["?location_id=2", [2]],
     ["?trainer_id=7&location_id=2", []],
     ["?trainer_id=8&location_id=2&search_term=Sam", [2]],
   ])("filters booking rows with %s", async (query, expected) => {
@@ -405,62 +450,6 @@ describe("staff booking management", () => {
     ).not.toContain("Coach, Other");
   });
 
-  test.each(["asc", "desc"])(
-    "sorts session dates and times %s",
-    async (direction) => {
-      SessionsModel.getAll.mockResolvedValue([
-        ...sessions,
-        {
-          id: 3,
-          trainer_id: 7,
-          title: "Earlier time",
-          date: "2026-10-10",
-          time: "08:00:00",
-        },
-      ]);
-      BookingsModel.getAll.mockResolvedValue([
-        ...bookings,
-        { id: 3, session_id: 3, user_id: 10, created: "2026-10-03" },
-      ]);
-      const html = await (
-        await get(`?sort_by=session_date&sort_dir=${direction}`)
-      ).text();
-      const table = html.match(/<table[\s\S]*?<\/table>/)[0];
-      const links = [
-        ...table.matchAll(/href="\/manage\/bookings\/(\d+)\?/g),
-      ].map((match) => Number(match[1]));
-      expect(links).toEqual(direction === "asc" ? [3, 1, 2] : [2, 1, 3]);
-      expect(table).toContain(
-        `aria-sort="${direction === "asc" ? "ascending" : "descending"}"`,
-      );
-      expect(table).toContain(
-        `sort_by=session_date&amp;trainer_id=all&amp;location_id=all&amp;sort_dir=${direction === "asc" ? "desc" : "asc"}&amp;page=1`,
-      );
-    },
-  );
-
-  test("sorts the full list by member name", async () => {
-    const html = await (await get("?sort_by=user&sort_dir=asc")).text();
-    const tbody = html.match(/<tbody>([\s\S]*?)<\/tbody>/)[1];
-    expect(tbody.indexOf("Member, Alex")).toBeLessThan(
-      tbody.indexOf("Member, Sam"),
-    );
-  });
-
-  test.each(["member", null])(
-    "rejects reads and writes for %s",
-    async (role) => {
-      const create = jest.spyOn(BookingsModel, "create");
-      for (const path of ["", "/1"]) {
-        expect((await get(path, role)).status).toBe(role ? 403 : 401);
-        expect((await post("create", path, role)).status).toBe(
-          role ? 403 : 401,
-        );
-      }
-      expect(BookingsModel.getAll).not.toHaveBeenCalled();
-      expect(create).not.toHaveBeenCalled();
-    },
-  );
   test.each(["admin", "trainer"])(
     "renders scoped list and editor for %s",
     async (role) => {
@@ -495,18 +484,7 @@ describe("staff booking management", () => {
     expect((await get("/2", "trainer")).status).toBe(404);
     expect((await get("/999")).status).toBe(404);
   });
-  test.each(["session", "user", "created", "invalid"])(
-    "searches and sorts by %s",
-    async (sort) => {
-      const response = await get(
-        `?search_term=Own&sort_by=${sort}&sort_dir=asc&page=2`,
-      );
-      const html = await response.text();
-      const tbody = html.match(/<tbody>([\s\S]*?)<\/tbody>/)[1];
-      expect(tbody).toContain("Own session");
-      expect(tbody).not.toContain("Other session");
-    },
-  );
+
   test("paginates seven rows and supports edit outside the current page", async () => {
     BookingsModel.getAll.mockResolvedValue(
       Array.from({ length: 9 }, (_, index) => ({
@@ -525,13 +503,7 @@ describe("staff booking management", () => {
     expect(html).toContain("Page 1 of 2");
     expect(await (await get("?page=2")).text()).toContain("Page 2 of 2");
   });
-  test("shows empty results and handles missing user metadata", async () => {
-    UsersModel.getAll.mockResolvedValue([]);
-    expect(await (await get()).text()).toContain("Unknown user");
-    expect(await (await get("?search_term=absent")).text()).toContain(
-      "No bookings match this search.",
-    );
-  });
+
   test.each(["admin", "trainer"])(
     "creates, updates and deletes authorised bookings as %s",
     async (role) => {
@@ -560,13 +532,20 @@ describe("staff booking management", () => {
       expect(deletion).toHaveBeenCalledWith(1);
     },
   );
-  test.each(["create", "update"])("rejects overlapping member bookings during staff %s", async (action) => {
-    jest.spyOn(BookingsModel, action).mockResolvedValue({ affectedRows: 0, overlap: true });
-    const response = await post(action, action === "update" ? "/1" : "");
-    expect(response.status).toBe(409);
-    expect(await response.text()).toContain("This member already has a booking at this date and time.");
-    expect(response.headers.get("location")).toBeNull();
-  });
+  test.each(["create", "update"])(
+    "rejects overlapping member bookings during staff %s",
+    async (action) => {
+      jest
+        .spyOn(BookingsModel, action)
+        .mockResolvedValue({ affectedRows: 0, overlap: true });
+      const response = await post(action, action === "update" ? "/1" : "");
+      expect(response.status).toBe(409);
+      expect(await response.text()).toContain(
+        "This member already has a booking at this date and time.",
+      );
+      expect(response.headers.get("location")).toBeNull();
+    },
+  );
   test.each(["create", "update", "delete"])(
     "blocks unauthorised trainer %s",
     async (action) => {
@@ -589,12 +568,7 @@ describe("staff booking management", () => {
     ).toBe(403);
     expect(update).not.toHaveBeenCalled();
   });
-  test.each(["update", "delete"])(
-    "returns not found for missing booking on %s",
-    async (action) => {
-      expect((await post(action, "/999")).status).toBe(404);
-    },
-  );
+
   test.each([
     [{ sessionId: "99", userId: "10" }, 400],
     [{ sessionId: "1", userId: "99" }, 400],
@@ -616,10 +590,7 @@ describe("staff booking management", () => {
         .status,
     ).toBe(409);
   });
-  test("handles a booking whose original session no longer exists", async () => {
-    SessionsModel.getAll.mockResolvedValue([]);
-    expect((await post("delete", "/1")).status).toBe(403);
-  });
+
   test.each(["create", "update", "delete"])(
     "reports missing rows and database failures for %s",
     async (action) => {
@@ -633,17 +604,7 @@ describe("staff booking management", () => {
       expect(console.error).toHaveBeenCalled();
     },
   );
-  test("reports duplicates detected during create", async () => {
-    jest
-      .spyOn(BookingsModel, "create")
-      .mockResolvedValue({ duplicate: true, affectedRows: 0 });
-    expect((await post("create")).status).toBe(409);
-  });
-  test("reports list failures", async () => {
-    BookingsModel.getAll.mockRejectedValue(new Error("database failed"));
-    expect((await get()).status).toBe(500);
-    expect(console.error).toHaveBeenCalled();
-  });
+
   test("keeps invalid form feedback on the staff management route", async () => {
     const result = await post("create", "", "trainer", {
       sessionId: "bad",

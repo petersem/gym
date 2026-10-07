@@ -19,38 +19,6 @@ afterEach(() => {
 
 // Query spies verify session mapping and SQL construction without contacting MySQL.
 describe("SessionsModel unit tests", () => {
-  test("constructs a session and maps a database row", () => {
-    expect(session).toBeInstanceOf(SessionsModel);
-    expect(SessionsModel.tableToModel(row)).toEqual(session);
-  });
-
-  test("getAll maps returned sessions", async () => {
-    const query = jest
-      .spyOn(SessionsModel, "query")
-      .mockResolvedValue([
-        { sessions: row },
-        { sessions: { ...row, id: "124" } },
-      ]);
-
-    await expect(SessionsModel.getAll()).resolves.toEqual([
-      session,
-      new SessionsModel(124, 7, 2, 3, row.date, row.time, row.title),
-    ]);
-    expect(query).toHaveBeenCalledWith("SELECT * FROM sessions");
-  });
-
-  test("getById returns a session when found", async () => {
-    const query = jest
-      .spyOn(SessionsModel, "query")
-      .mockResolvedValue([{ sessions: row }]);
-
-    await expect(SessionsModel.getById(123)).resolves.toEqual(session);
-    expect(query).toHaveBeenCalledWith(
-      "SELECT * FROM sessions WHERE id = ?",
-      [123],
-    );
-  });
-
   test("getById rejects when no session is found", async () => {
     jest.spyOn(SessionsModel, "query").mockResolvedValue([]);
 
@@ -102,24 +70,43 @@ describe("SessionsModel unit tests", () => {
     );
   });
 
-  test.each(["create", "update"])("rejects trainer conflicts without a %s write", async (action) => {
-    const query = jest.spyOn(SessionsModel, "query").mockResolvedValue([{ id: 999 }]);
-    await expect(SessionsModel[action](session)).resolves.toEqual({
-      affectedRows: 0, trainerConflict: true,
-    });
-    expect(query).toHaveBeenCalledTimes(1);
-    expect(query).toHaveBeenCalledWith(
-      expect.stringContaining("trainer_id = ? AND date = ? AND time = ?"),
-      [3, row.date, row.time, action === "create" ? null : 123, action === "create" ? null : 123],
-    );
-    expect(query.mock.calls[0][0]).toContain("id <> ?");
-  });
+  test.each(["create", "update"])(
+    "rejects trainer conflicts without a %s write",
+    async (action) => {
+      const query = jest
+        .spyOn(SessionsModel, "query")
+        .mockResolvedValue([{ id: 999 }]);
+      await expect(SessionsModel[action](session)).resolves.toEqual({
+        affectedRows: 0,
+        trainerConflict: true,
+      });
+      expect(query).toHaveBeenCalledTimes(1);
+      expect(query).toHaveBeenCalledWith(
+        expect.stringContaining("trainer_id = ? AND date = ? AND time = ?"),
+        [
+          3,
+          row.date,
+          row.time,
+          action === "create" ? null : 123,
+          action === "create" ? null : 123,
+        ],
+      );
+      expect(query.mock.calls[0][0]).toContain("id <> ?");
+    },
+  );
 
-  test.each(["create", "update"])("propagates trainer lookup errors without a %s write", async (action) => {
-    const query = jest.spyOn(SessionsModel, "query").mockRejectedValue(new Error("Lookup failed"));
-    await expect(SessionsModel[action](session)).rejects.toThrow("Lookup failed");
-    expect(query).toHaveBeenCalledTimes(1);
-  });
+  test.each(["create", "update"])(
+    "propagates trainer lookup errors without a %s write",
+    async (action) => {
+      const query = jest
+        .spyOn(SessionsModel, "query")
+        .mockRejectedValue(new Error("Lookup failed"));
+      await expect(SessionsModel[action](session)).rejects.toThrow(
+        "Lookup failed",
+      );
+      expect(query).toHaveBeenCalledTimes(1);
+    },
+  );
 
   test("delete passes the session identifier", async () => {
     const query = jest

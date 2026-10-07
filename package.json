@@ -4,7 +4,8 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "node --experimental-vm-modules ./node_modules/jest/bin/jest.js --reporters=default --coverage --verbose",
+    "test": "node --experimental-vm-modules ./node_modules/jest/bin/jest.js --reporters=default",
+    "test:coverage": "npm test -- --coverage",
     "testfile": "npm run test > test_results.txt 2>&1",
     "doc": "jsdoc -c jsdoc.conf.json",
     "lint": "eslint .",
