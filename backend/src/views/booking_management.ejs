@@ -54,7 +54,7 @@
                                         <% if (showAvailableSessions) { %>
                                         <section class="available-sessions-section">
                                             <div class="section-heading-row<%= authenticatedUser?.role === 'member' ? ' timetable-booking-heading' : '' %>">
-                                                <h2>Available sessions next 7 days</h2>
+                                                <h2>Timetable next 7 days</h2>
                                                 <% if (authenticatedUser && bookingCreated) { %>
                                                     <div class="alert-stack">
                                                         <div class="alert alert-brand fade-out-alert" role="status">

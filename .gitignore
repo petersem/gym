@@ -4,7 +4,7 @@ backend/node_modules/
 coverage/*
 backend/src/dist/*
 backend/src/public/docs/*
-.env
+# .env
 **/.env
 **/.envprod
 test_results.txt
