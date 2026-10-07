@@ -3135,7 +3135,7 @@ textarea {
   font-size: 13px;
   pointer-events: none;
 }
-.available-session .session-details {
+.available-session .session-details, .booking-session .session-details {
   display: block;
   font-size: 75%;
 }

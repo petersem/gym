@@ -233,7 +233,7 @@
                                                                                                             ===
                                                                                                             Number(booking.user_id));
                                                                                                             %>
-                                                                                                            <li>
+                                                                                                            <li class="booking-session">
                                                                                                                 <% const canDeleteThisBooking = canDeleteBooking(booking, bookingSession); %>
                                                                                                                 <% if (canDeleteThisBooking) { %>
                                                                                                                 <a href="/bookings/<%= booking.id %><%= canManageBookings ? '?' + bookingFilterQuery : '' %>#bookings-next-7-days"
@@ -277,6 +277,12 @@
                                                                                                                 <% } else { %>
                                                                                                                 </span>
                                                                                                                 <% } %>
+                                                                                                                <% if (!bookingLocationId && bookingSession) {
+                                                                                                                    const bookingLocation = locations.find((location) =>
+                                                                                                                        Number(location.id) === Number(bookingSession.location_id));
+                                                                                                                    if (bookingLocation) { %>
+                                                                                                                    <span class="session-details"><%= bookingLocation.name %></span>
+                                                                                                                <% } } %>
                                                                                                                 <% if
                                                                                                                     (selectedBooking.id===booking.id && canDeleteThisBooking)
                                                                                                                     { %>

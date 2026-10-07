@@ -14,6 +14,10 @@ Gym app for Tafe stage 2 assessment
 
 ![Architecture diagram](https://raw.githubusercontent.com/petersem/gym/main/gh-assets/diagram.png)
 
+### Bookings
+
+On the Bookings page, selecting **All locations** shows the session location beneath each booking. Selecting a specific location hides this extra line.
+
 ### Running the code
 
 > There is NO NEED to run any speific database or schema creation SQL. The application takes care of this for you.

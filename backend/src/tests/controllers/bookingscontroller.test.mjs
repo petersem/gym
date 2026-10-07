@@ -166,6 +166,66 @@ describe("BookingsController", () => {
     expect(res.send.mock.calls[0][0]).not.toContain("Next week");
   });
 
+  test.each([
+    [{}, ["Central &amp; East Gym", "West Gym"]],
+    [{ booking_location_id: "" }, ["Central &amp; East Gym", "West Gym"]],
+    [{ booking_location_id: "9" }, []],
+  ])(
+    "shows booking locations only with All locations (%j)",
+    async (query, expectedLocations) => {
+      const today = new Date();
+      const date = [
+        today.getFullYear(),
+        String(today.getMonth() + 1).padStart(2, "0"),
+        String(today.getDate()).padStart(2, "0"),
+      ].join("-");
+      jest.spyOn(BookingsModel, "getByUserId").mockResolvedValue([
+        { id: 1, session_id: 4, user_id: 7 },
+        { id: 2, session_id: 5, user_id: 7 },
+      ]);
+      jest.spyOn(UsersModel, "getAll").mockResolvedValue([]);
+      jest.spyOn(SessionsModel, "getAll").mockResolvedValue([
+        { id: 4, location_id: "9", date, time: "09:00:00", title: "Yoga" },
+        { id: 5, location_id: 10, date, time: "10:00:00", title: "Spin" },
+      ]);
+      jest.spyOn(LocationModel, "getAll").mockResolvedValue([
+        { id: 9, name: "Central & East Gym" },
+        { id: 10, name: "West Gym" },
+      ]);
+      jest.spyOn(ActivitiesModel, "getAll").mockResolvedValue([]);
+      const res = response();
+      await BookingsController.viewBookingManagement(
+        request({}, query, {}, { id: 7, role: "member" }),
+        res,
+      );
+      const html = await ejs.renderFile(
+        fileURLToPath(
+          new URL("../../views/booking_management.ejs", import.meta.url),
+        ),
+        res.render.mock.calls[0][1],
+      );
+      const bookingRows = [
+        ...html.matchAll(/<li class="booking-session">([\s\S]*?)<\/li>/g),
+      ].map((match) => match[1]);
+      expect(bookingRows).toHaveLength(query.booking_location_id ? 1 : 2);
+      expect(
+        bookingRows
+          .flatMap((row) => [
+            ...row.matchAll(/<span class="session-details">([^<]+)<\/span>/g),
+          ])
+          .map((match) => match[1]),
+      ).toEqual(expectedLocations);
+      for (const row of bookingRows) {
+        expect(row).toContain('href="/bookings/');
+        if (expectedLocations.length) {
+          expect(row.indexOf('class="session-details"')).toBeGreaterThan(
+            row.indexOf("</a>"),
+          );
+        }
+      }
+    },
+  );
+
   test("renders booking management and handles load errors", async () => {
     const bookings = [{ id: 1, session_id: 4, user_id: 7 }];
     const authenticatedUser = { id: 7, role: "member" };
