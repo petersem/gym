@@ -54,9 +54,7 @@ test.each(["admin", "trainer", "member", undefined])(
     });
     expect(response.status).toBe(409);
     const html = await response.text();
-    expect(html.includes('href="/manage/bookings"')).toBe(
-      role === "admin",
-    );
+    expect(html.includes('href="/manage/bookings"')).toBe(role === "admin");
     expect(html.includes('href="/users"')).toBe(role === "admin");
     expect(html.includes('href="/bookings"')).toBe(role === "member");
     expect(html.includes('href="/authenticate/logout"')).toBe(Boolean(role));

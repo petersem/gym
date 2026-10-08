@@ -28,11 +28,7 @@ const routes = [
   ["/locations", LocationController.routes, ["admin"]],
   ["/users", UsersController.routes, ["admin"]],
   ["/sessions", SessionsController.routes, ["admin", "trainer"]],
-  [
-    "/manage/bookings",
-    BookingManagementController.routes,
-    ["admin"],
-  ],
+  ["/manage/bookings", BookingManagementController.routes, ["admin"]],
   ["/manage/blogs", BlogController.managementRoutes, ["admin"]],
   ["/bookings", BookingsController.routes, ["member"]],
   [

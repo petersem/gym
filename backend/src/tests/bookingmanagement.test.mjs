@@ -438,9 +438,9 @@ describe("staff booking management", () => {
     expect(table).not.toContain(">Created</a>");
     expect(table).not.toContain("<td>2026-10-01</td>");
     expect(html).toContain("Other session");
-    expect(html.match(/<select id="user-id"[\s\S]*?<\/select>/)[0]).not.toContain(
-      "Trainer, Test",
-    );
+    expect(
+      html.match(/<select id="user-id"[\s\S]*?<\/select>/)[0],
+    ).not.toContain("Trainer, Test");
     expect(html.indexOf('id="booking-search"')).toBeLessThan(
       html.indexOf("<table"),
     );
