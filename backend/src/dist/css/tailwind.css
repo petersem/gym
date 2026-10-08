@@ -3350,6 +3350,20 @@ form.form-grid.public-blog-form {
 .form-grid .two-col {
   grid-column: 1 / -1;
 }
+.booking-session-filters {
+  display: grid;
+  grid-column: 1 / -1;
+  grid-template-columns: inherit;
+  gap: inherit;
+}
+.booking-session-filters h3 {
+  grid-column: 1 / -1;
+  margin: 0;
+}
+.booking-session-heading {
+  grid-column: 1 / -1;
+  margin: 0;
+}
 .form-field {
   min-width: 0;
 }

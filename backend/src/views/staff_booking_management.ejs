@@ -125,9 +125,13 @@
                 <%- include("partials/form-errors.ejs", { fields: ['sessionId', 'userId'] }) %>
                 <p class="two-col">* Required fields</p>
                 <% if (selectedBooking.id) { %>
-                    <%- include("partials/form-field.ejs", { field: 'editorTrainer', id: 'editor-trainer', label: 'Trainer', type: 'select', value: role === 'trainer' ? authenticatedUser.id : editorSession?.trainer_id ?? '', options: [...(role === 'trainer' ? [] : [{ value: '', label: 'All' }]), ...[...trainers].sort((a, b) => a.last_name.localeCompare(b.last_name) || a.first_name.localeCompare(b.first_name)).map((trainer) => ({ value: trainer.id, label: `${trainer.last_name}, ${trainer.first_name}` }))] }) %>
-                    <%- include("partials/form-field.ejs", { field: 'editorLocation', id: 'editor-location', label: 'Location', type: 'select', value: editorSession?.location_id ?? '', options: [{ value: '', label: 'All' }, ...[...locations].sort((a, b) => a.name.localeCompare(b.name)).map((location) => ({ value: location.id, label: location.name }))] }) %>
-                    <%- include("partials/form-field.ejs", { field: 'editorDateTime', id: 'editor-date-time', label: 'Date/time', type: 'select', value: editorSession ? sessionDateTimeKey(editorSession) : '', options: [{ value: '', label: 'All' }, ...dateTimeOptions] }) %>
+                    <div class="booking-session-filters">
+                        <h3>Filters</h3>
+                        <%- include("partials/form-field.ejs", { field: 'editorTrainer', id: 'editor-trainer', label: 'Trainer', type: 'select', value: role === 'trainer' ? authenticatedUser.id : editorSession?.trainer_id ?? '', options: [...(role === 'trainer' ? [] : [{ value: '', label: 'All' }]), ...[...trainers].sort((a, b) => a.last_name.localeCompare(b.last_name) || a.first_name.localeCompare(b.first_name)).map((trainer) => ({ value: trainer.id, label: `${trainer.last_name}, ${trainer.first_name}` }))] }) %>
+                        <%- include("partials/form-field.ejs", { field: 'editorLocation', id: 'editor-location', label: 'Location', type: 'select', value: editorSession?.location_id ?? '', options: [{ value: '', label: 'All' }, ...[...locations].sort((a, b) => a.name.localeCompare(b.name)).map((location) => ({ value: location.id, label: location.name }))] }) %>
+                        <%- include("partials/form-field.ejs", { field: 'editorDateTime', id: 'editor-date-time', label: 'Date/time', type: 'select', value: editorSession ? sessionDateTimeKey(editorSession) : '', options: [{ value: '', label: 'All' }, ...dateTimeOptions] }) %>
+                    </div>
+                    <h3 class="booking-session-heading">Booking</h3>
                 <% } %>
                 <%- include("partials/form-field.ejs", { field: 'sessionId', id: 'session-id', label: 'Session', requiredField: true, type: 'select', value: selectedBooking.session_id, options: sortedSessions.map((session) => ({ value: session.id, label: sessionLabel(session) })) }) %>
                 <% if (selectedBooking.id) { %>
