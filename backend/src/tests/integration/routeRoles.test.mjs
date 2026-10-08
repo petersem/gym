@@ -31,7 +31,7 @@ const routes = [
   [
     "/manage/bookings",
     BookingManagementController.routes,
-    ["admin", "trainer"],
+    ["admin"],
   ],
   ["/manage/blogs", BlogController.managementRoutes, ["admin"]],
   ["/bookings", BookingsController.routes, ["member"]],

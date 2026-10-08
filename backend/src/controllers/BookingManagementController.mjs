@@ -28,7 +28,7 @@ export class BookingManagementController {
   );
 
   static {
-    this.routes.use(AuthenticationController.restrict(["admin", "trainer"]));
+    this.routes.use(AuthenticationController.restrict(["admin"]));
     this.routes.get("/", this.view);
     this.routes.get("/:id", this.view);
     this.routes.post("/", this.formValidation, this.save);

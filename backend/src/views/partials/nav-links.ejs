@@ -7,12 +7,12 @@
     <% } %>
     <% if (typeof authenticatedUser !== 'undefined' && authenticatedUser && (authenticatedUser.role === "admin" || authenticatedUser.role === "trainer")) { %>
         <li><a href="/sessions">Sessions</a></li>
-        <li><a href="/manage/bookings">Bookings</a></li>
         <% if (authenticatedUser.role === "admin") { %>
-            <li><a href="/activities">Activities</a></li>
-            <li><a href="/locations">Locations</a></li>
-            <li><a href="/users">Users</a></li>
-            <li><a href="/manage/blogs">Blogs</a></li>
+        <li><a href="/manage/bookings">Bookings</a></li>
+        <li><a href="/activities">Activities</a></li>
+        <li><a href="/locations">Locations</a></li>
+        <li><a href="/users">Users</a></li>
+        <li><a href="/manage/blogs">Blogs</a></li>
         <% } %>
     <% } %>
     <% if (typeof authenticatedUser === 'undefined' || !authenticatedUser || authenticatedUser.role !== "admin") { %>

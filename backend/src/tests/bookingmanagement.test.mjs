@@ -98,24 +98,10 @@ const post = (
   });
 
 describe("staff booking management", () => {
-  test.each(["", "?trainer_id=8"])(
-    "defaults trainer dropdowns to the logged-in trainer without All (%s)",
-    async (query) => {
-      const html = await (await get(`/1${query}`, "trainer")).text();
-      for (const id of ["trainer-filter", "editor-trainer"]) {
-        const select = html.match(
-          new RegExp(`<select id="${id}"[^>]*>([\\s\\S]*?)<\\/select>`),
-        )[1];
-        expect(select.match(/<option\b/g)).toHaveLength(1);
-        expect(select).toMatch(/value="7"\s+selected>Trainer, Test<\/option>/);
-        expect(select).not.toContain(">All</option>");
-      }
-      const table = html.match(/<table[\s\S]*?<\/table>/)[0];
-      expect(table).toContain("Own session");
-      expect(table).not.toContain(">Trainer</a>");
-      expect(table).not.toContain("Other session");
-    },
-  );
+  test("denies trainers access to the booking management page", async () => {
+    expect((await get("", "trainer")).status).toBe(403);
+    expect((await get("/1", "trainer")).status).toBe(403);
+  });
   test.each([
     ["", true, true],
     ["?trainer_id=7", false, true],
@@ -197,13 +183,7 @@ describe("staff booking management", () => {
       expect(select(id)).toContain('<option value="">All</option>');
     }
     expect(await (await get()).text()).not.toContain('id="editor-trainer"');
-    const trainerHtml = await (await get("/1", "trainer")).text();
-    expect(
-      trainerHtml.match(
-        /<select id="editor-trainer"[^>]*>([\s\S]*?)<\/select>/,
-      )[1],
-    ).not.toContain("Coach, Other");
-    expect(trainerHtml).not.toContain('value="2026-10-11 10:00"');
+    expect((await get("/1", "trainer")).status).toBe(403);
   });
 
   test("edit filters combine, preserve matching selections, and require explicit replacement", async () => {
@@ -439,49 +419,41 @@ describe("staff booking management", () => {
     if (!query) expect(html.match(/value="all" selected/g)).toHaveLength(2);
   });
 
-  test("preserves filters in sort and edit links without widening trainer access", async () => {
+  test("preserves filters in sort and edit links", async () => {
     const html = await (await get("?trainer_id=7&location_id=1")).text();
     expect(html).toContain("trainer_id=7&amp;location_id=1");
-    const trainerHtml = await (await get("?trainer_id=8", "trainer")).text();
-    expect(trainerHtml).toContain("Own session");
-    expect(trainerHtml).not.toContain("Other session");
-    expect(
-      trainerHtml.match(/<select id="trainer-filter"[\s\S]*?<\/select>/)[0],
-    ).not.toContain("Coach, Other");
+    expect((await get("?trainer_id=8", "trainer")).status).toBe(403);
   });
 
-  test.each(["admin", "trainer"])(
-    "renders scoped list and editor for %s",
-    async (role) => {
-      const response = await get("", role);
-      expect(response.status).toBe(200);
-      const html = await response.text();
-      expect(html).toContain("Own session");
-      const table = html.match(/<table[\s\S]*?<\/table>/)[0];
-      expect(table).toContain(">Own session</a>");
-      expect(table).not.toContain("Own session -");
-      expect(table).toContain(">Session date/time</a>");
-      expect(table).toContain("<td>10/10/2026 9:00am</td>");
-      expect(table).not.toContain(">Created</a>");
-      expect(table).not.toContain("<td>2026-10-01</td>");
-      expect(html.includes("Other session")).toBe(role === "admin");
-      expect(
-        html.match(/<select id="user-id"[\s\S]*?<\/select>/)[0],
-      ).not.toContain("Trainer, Test");
-      expect(html.indexOf('id="booking-search"')).toBeLessThan(
-        html.indexOf("<table"),
-      );
-      expect(html.indexOf("<table")).toBeLessThan(
-        html.indexOf('id="booking-management"'),
-      );
-      expect(html).toContain('action="/manage/bookings"');
-      const edit = await get("/1", role);
-      expect(edit.status).toBe(200);
-      expect(await edit.text()).toContain('action="/manage/bookings/1"');
-    },
-  );
-  test("does not expose another trainer's booking in the editor", async () => {
-    expect((await get("/2", "trainer")).status).toBe(404);
+  test("renders booking list and editor for admins", async () => {
+    const response = await get();
+    expect(response.status).toBe(200);
+    const html = await response.text();
+    expect(html).toContain("Own session");
+    const table = html.match(/<table[\s\S]*?<\/table>/)[0];
+    expect(table).toContain(">Own session</a>");
+    expect(table).not.toContain("Own session -");
+    expect(table).toContain(">Session date/time</a>");
+    expect(table).toContain("<td>10/10/2026 9:00am</td>");
+    expect(table).not.toContain(">Created</a>");
+    expect(table).not.toContain("<td>2026-10-01</td>");
+    expect(html).toContain("Other session");
+    expect(html.match(/<select id="user-id"[\s\S]*?<\/select>/)[0]).not.toContain(
+      "Trainer, Test",
+    );
+    expect(html.indexOf('id="booking-search"')).toBeLessThan(
+      html.indexOf("<table"),
+    );
+    expect(html.indexOf("<table")).toBeLessThan(
+      html.indexOf('id="booking-management"'),
+    );
+    expect(html).toContain('action="/manage/bookings"');
+    const edit = await get("/1");
+    expect(edit.status).toBe(200);
+    expect(await edit.text()).toContain('action="/manage/bookings/1"');
+  });
+  test("returns 404 for unknown booking IDs to admins", async () => {
+    expect((await get("/2")).status).toBe(200);
     expect((await get("/999")).status).toBe(404);
   });
 
@@ -504,34 +476,27 @@ describe("staff booking management", () => {
     expect(await (await get("?page=2")).text()).toContain("Page 2 of 2");
   });
 
-  test.each(["admin", "trainer"])(
-    "creates, updates and deletes authorised bookings as %s",
-    async (role) => {
-      const create = jest
-        .spyOn(BookingsModel, "create")
-        .mockResolvedValue({ affectedRows: 1 });
-      const update = jest
-        .spyOn(BookingsModel, "update")
-        .mockResolvedValue({ affectedRows: 1 });
-      const deletion = jest
-        .spyOn(BookingsModel, "delete")
-        .mockResolvedValue({ affectedRows: 1 });
-      for (const action of ["create", "update", "delete"]) {
-        const result = await post(
-          action,
-          action === "create" ? "" : "/1",
-          role,
-        );
-        expect(result.status).toBe(302);
-        expect(result.headers.get("location")).toBe("/manage/bookings");
-      }
-      expect(create).toHaveBeenCalledWith(
-        expect.objectContaining({ session_id: 1, user_id: 11 }),
-      );
-      expect(update).toHaveBeenCalledWith(expect.objectContaining({ id: 1 }));
-      expect(deletion).toHaveBeenCalledWith(1);
-    },
-  );
+  test("allows admins to create, update and delete bookings", async () => {
+    const create = jest
+      .spyOn(BookingsModel, "create")
+      .mockResolvedValue({ affectedRows: 1 });
+    const update = jest
+      .spyOn(BookingsModel, "update")
+      .mockResolvedValue({ affectedRows: 1 });
+    const deletion = jest
+      .spyOn(BookingsModel, "delete")
+      .mockResolvedValue({ affectedRows: 1 });
+    for (const action of ["create", "update", "delete"]) {
+      const result = await post(action, action === "create" ? "" : "/1");
+      expect(result.status).toBe(302);
+      expect(result.headers.get("location")).toBe("/manage/bookings");
+    }
+    expect(create).toHaveBeenCalledWith(
+      expect.objectContaining({ session_id: 1, user_id: 11 }),
+    );
+    expect(update).toHaveBeenCalledWith(expect.objectContaining({ id: 1 }));
+    expect(deletion).toHaveBeenCalledWith(1);
+  });
   test.each(["create", "update"])(
     "rejects overlapping member bookings during staff %s",
     async (action) => {
@@ -606,7 +571,7 @@ describe("staff booking management", () => {
   );
 
   test("keeps invalid form feedback on the staff management route", async () => {
-    const result = await post("create", "", "trainer", {
+    const result = await post("create", "", "admin", {
       sessionId: "bad",
       userId: "",
     });
