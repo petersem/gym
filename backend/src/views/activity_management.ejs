@@ -13,14 +13,16 @@
 
                 <section>
                     <h2>Manage Activities</h2>
-                    <div class="list-search">
+                    <form class="list-search" action="/activities" method="get">
+                        <input type="hidden" name="sort_by" value="<%= selectedSortBy %>">
+                        <input type="hidden" name="sort_dir" value="<%= selectedSortDir %>">
                         <label for="activity-search">Search activities</label>
                         <div class="list-search-control">
-                            <input id="activity-search" type="search" value="<%= selectedSearchTerm %>"
+                            <input id="activity-search" name="search_term" type="search" value="<%= selectedSearchTerm %>"
                                 onkeydown="if (event.key === 'Enter') { event.preventDefault(); filterActivities(); }">
-                            <button type="button" class="btn-accent" onclick="filterActivities()">Search</button>
+                            <button type="submit" class="btn-accent" onclick="filterActivities(); return false;">Search</button>
                         </div>
-                    </div>
+                    </form>
                     <div class="list-results">
                         <table class="list-results-table">
                             <% const activitySortLink=(column)=> {
@@ -111,8 +113,8 @@
                         </button>
 
                         <% if (selectedActivity.id) { %>
-                            <button type="button"
-                                onclick="window.location.href='/activities#activity-management'">Discard</button>
+                            <a class="btn btn-outline"
+                                href="/activities#activity-management">Discard</a>
                             <button type="submit" name="action" value="delete">Delete activity</button>
                             <% } %>
                     </form>

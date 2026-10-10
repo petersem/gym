@@ -13,14 +13,16 @@
 
                 <section>
                     <h2>Manage Locations</h2>
-                    <div class="list-search">
+                    <form class="list-search" action="/locations" method="get">
+                        <input type="hidden" name="sort_by" value="<%= selectedSortBy %>">
+                        <input type="hidden" name="sort_dir" value="<%= selectedSortDir %>">
                         <label for="location-search">Search locations</label>
                         <div class="list-search-control">
-                            <input id="location-search" type="search" value="<%= selectedSearchTerm %>"
+                            <input id="location-search" name="search_term" type="search" value="<%= selectedSearchTerm %>"
                                 onkeydown="if (event.key === 'Enter') { event.preventDefault(); filterLocations(); }">
-                            <button type="button" class="btn-accent" onclick="filterLocations()">Search</button>
+                            <button type="submit" class="btn-accent" onclick="filterLocations(); return false;">Search</button>
                         </div>
-                    </div>
+                    </form>
                     <div class="list-results">
                         <table class="list-results-table">
                             <% const locationSortLink=(column)=> {
@@ -123,8 +125,8 @@
                         </button>
 
                         <% if (selectedLocation.id) { %>
-                            <button type="button"
-                                onclick="window.location.href='/locations#location-management'">Discard</button>
+                            <a class="btn btn-outline"
+                                href="/locations#location-management">Discard</a>
                             <button type="submit" name="action" value="delete">Delete location</button>
                             <% } %>
                     </form>

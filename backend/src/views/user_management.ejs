@@ -13,9 +13,12 @@
 
                 <section>
                     <h2>Manage Users</h2>
+                    <form action="/users" method="get">
+                    <input type="hidden" name="sort_by" value="<%= selectedSortBy %>">
+                    <input type="hidden" name="sort_dir" value="<%= selectedSortDir %>">
                     <div class="list-search">
                         <label for="role-filter">Filter by role</label>
-                        <select id="role-filter" onchange="filterUsers()">
+                        <select id="role-filter" name="role" onchange="filterUsers()">
                             <option value="" <%=selectedRole==='' ? 'selected' : '' %>>All roles</option>
                             <option value="admin" <%=selectedRole==='admin' ? 'selected' : '' %>>Admin</option>
                             <option value="trainer" <%=selectedRole==='trainer' ? 'selected' : '' %>>Trainer</option>
@@ -25,11 +28,12 @@
                     <div class="list-search">
                         <label for="user-search">Search users</label>
                         <div class="list-search-control">
-                            <input id="user-search" type="search" value="<%= selectedSearchTerm %>"
+                            <input id="user-search" name="search_term" type="search" value="<%= selectedSearchTerm %>"
                                 onkeydown="if (event.key === 'Enter') { event.preventDefault(); filterUsers(); }">
-                            <button type="button" class="btn-accent" onclick="filterUsers()">Search</button>
+                            <button type="submit" class="btn-accent" onclick="filterUsers(); return false;">Search</button>
                         </div>
                     </div>
+                    </form>
                     <div class="list-results">
                         <table class="list-results-table">
                             <% const userSortLink=(column)=> {
@@ -135,8 +139,8 @@
                             <%= selectedUser.id ? 'Update user' : 'Create user' %>
                         </button>
                         <% if (selectedUser.id) { %>
-                            <button type="button"
-                                onclick="window.location.href='/users#user-management'">Discard</button>
+                            <a class="btn btn-outline"
+                                href="/users#user-management">Discard</a>
                             <button type="submit" name="action" value="delete">Delete user</button>
                             <% } %>
                     </form>

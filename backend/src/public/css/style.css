@@ -183,6 +183,14 @@ main {
   margin-left: auto;
 }
 
+.theme-toggle-form {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 6px;
+  margin: 0;
+}
+
 .theme-toggle-control {
   display: inline-flex;
   flex: 0 0 auto;

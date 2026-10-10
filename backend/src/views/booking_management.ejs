@@ -66,9 +66,10 @@
                                             <% if (authenticatedUser?.role === 'member') { %>
                                                 <p class="timetable-booking-hint">Click a session to book</p>
                                             <% } %>
-                                            <div class="timetable-filter-controls">
+                                            <form class="timetable-filter-controls" action="/timetable" method="get">
                                             <label for="available-location-filter">Location</label>
                                             <select id="available-location-filter"
+                                                name="available_location_id"
                                                 onchange="filterBookings('available_location_id', this.value)">
                                                 <option value="">All locations</option>
                                                 <% sortedLocations.forEach((location)=> { %>
@@ -80,6 +81,7 @@
                                             </select>
                                             <label for="available-trainer-filter">Trainer</label>
                                             <select id="available-trainer-filter"
+                                                name="available_trainer_id"
                                                 onchange="filterBookings('available_trainer_id', this.value)">
                                                 <option value="all" <%=availableTrainerId ? '' : 'selected' %>>All</option>
                                                 <% sortedTrainers.forEach((trainer)=> { %>
@@ -87,7 +89,8 @@
                                                         <%=availableTrainerId===Number(trainer.id) ? 'selected' : '' %>><%= trainer.last_name %>, <%= trainer.first_name %></option>
                                                 <% }) %>
                                             </select>
-                                            </div>
+                                            <noscript><button type="submit">Apply filters</button></noscript>
+                                            </form>
                                             <div class="session-calendar available-sessions-calendar">
                                                 <% calendarDays.forEach((day)=> { %>
                                                     <article class="session-day card bg-base-100">
@@ -178,8 +181,10 @@
                                                         href="/bookings/export.xml?<%= xmlExportQuery %>">Download
                                                         </a>
                                                 </div>
+                                                <form action="/bookings" method="get">
                                                 <label for="booking-location-filter">Booked session location</label>
                                                 <select id="booking-location-filter"
+                                                    name="booking_location_id"
                                                     onchange="filterBookings('booking_location_id', this.value)">
                                                     <option value="">All locations</option>
                                                     <% sortedLocations.forEach((location)=> { %>
@@ -193,6 +198,7 @@
                                                                 <label for="booking-trainer-filter">Booked
                                                                     trainer</label>
                                                                 <select id="booking-trainer-filter"
+                                                                    name="booking_trainer_id"
                                                                     onchange="filterBookings('booking_trainer_id', this.value)">
                                                                     <option value="all" <%=bookingTrainerId ? ''
                                                                         : 'selected' %>>All trainers</option>
@@ -207,6 +213,8 @@
 
                                                                 </select>
                                                                     <% } %>
+                                                                    <noscript><button type="submit">Apply filters</button></noscript>
+                                                                    </form>
                                                                         <div class="session-calendar bookings-days-calendar">
                                                                             <% bookingCalendarDays.forEach((day)=> { %>
                                                                                 <article
@@ -313,6 +321,9 @@
                                                 </section>
                                             <% } %>
 
+                                                <noscript><style>
+                                                    .available-session .session-book-button[hidden] { display: flex !important; }
+                                                </style></noscript>
                                                 <script>
                                                     document.querySelectorAll(".available-session-select:not(:disabled)").forEach((sessionButton) => {
                                                         sessionButton.addEventListener("click", () => {

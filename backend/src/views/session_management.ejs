@@ -26,20 +26,24 @@
 
                                     <section>
                                         <h2>Manage Sessions</h2>
+                                        <form action="/sessions" method="get">
+                                            <input type="hidden" name="sort_by" value="<%= selectedSortBy %>">
+                                            <input type="hidden" name="sort_dir" value="<%= selectedSortDir %>">
                                         <div class="session-name-search">
                                             <label for="session-search">Search session names</label>
                                             <div class="session-search-control">
                                                 <input id="session-search" type="search"
+                                                    name="search_term"
                                                     value="<%= selectedSearchTerm %>"
                                                     onkeydown="if (event.key === 'Enter') { event.preventDefault(); filterSessions(); }">
-                                                <button type="button" class="btn-accent"
-                                                    onclick="filterSessions()">Search</button>
+                                                <button type="submit" class="btn-accent"
+                                                    onclick="filterSessions(); return false;">Search</button>
                                             </div>
                                         </div>
                                         <div class="form-grid responsive-half session-filter-controls" role="group"
                                             aria-label="Filter sessions">
                                             <label for="location-filter">Filter by location</label>
-                                            <select id="location-filter" onchange="filterSessions()">
+                                            <select id="location-filter" name="location_id" onchange="filterSessions()">
                                                 <option value="">All locations</option>
                                                 <% locations.forEach((location)=> { %>
                                                     <option value="<%= location.id %>"
@@ -49,7 +53,7 @@
                                                     <% }) %>
                                             </select>
                                             <label for="trainer-filter">Filter by trainer</label>
-                                            <select id="trainer-filter" onchange="filterSessions()">
+                                            <select id="trainer-filter" name="trainer_id" onchange="filterSessions()">
                                                 <% const isTrainerUser=authenticatedUser?.role==='trainer' ; %>
                                                     <% const trainerFilterOptions=users.filter((user)=> user.role ===
                                                         'trainer'
@@ -67,6 +71,8 @@
                                                                     <% }) %>
                                             </select>
                                         </div>
+                                        <noscript><button type="submit">Apply filters</button></noscript>
+                                        </form>
                                         <div class="session-results">
                                             <table class="session-results-table">
                                                 <% const sessionSortLink=(column)=> {
@@ -228,6 +234,7 @@
                                             <div role="group" aria-labelledby="time-label"
                                                 aria-invalid="<%= typeof formErrors !== 'undefined' && Boolean(formErrors.time) %>"
                                                 <% if (typeof formErrors !== 'undefined' && formErrors.time) { %>aria-describedby="time-error"<% } %>>
+                                                <div class="session-time-picker">
                                                 <select id="time-hour" aria-label="Hour">
                                                     <% for (let hour=1; hour <=12; hour +=1) { %>
                                                         <option value="<%= hour %>" <%=pickerHour===hour ? 'selected'
@@ -250,16 +257,28 @@
                                                     <option value="pm" <%=pickerMeridiem==='pm' ? 'selected' : '' %>>pm
                                                     </option>
                                                 </select>
-                                                <input id="time" name="time" type="hidden" value="<%= timeValue %>">
-                                                <%- include("partials/form-error.ejs", { field: 'time', errorId: 'time-error' }) %>
+                                                <input id="time" name="time" type="hidden" value="<%= timeValue %>" disabled>
+                                                </div>
                                             </div>
+                                            <noscript>
+                                                <style>
+                                                    .session-time-picker { display: none; }
+                                                </style>
+                                                <input aria-label="Time" name="time" type="time"
+                                                    value="<%= String(storedHour).padStart(2, '0') %>:<%= String(storedTime[1]).padStart(2, '0') %>">
+                                            </noscript>
+                                            <% if (typeof formErrors !== 'undefined' && formErrors.time) { %>
+                                                <div class="two-col">
+                                                    <%- include("partials/form-error.ejs", { field: 'time', errorId: 'time-error' }) %>
+                                                </div>
+                                            <% } %>
                                             <button type="submit" name="action"
                                                 value="<%= selectedSession.id ? 'update' : 'create' %>">
                                                 <%= selectedSession.id ? 'Update session' : 'Create session' %>
                                             </button>
                                             <% if (selectedSession.id) { %>
-                                                <button type="button"
-                                                    onclick="window.location.href='/sessions#session-management'">Discard</button>
+                                                <a class="btn btn-outline"
+                                                    href="/sessions#session-management">Discard</a>
                                                 <% } %>
                                                     <% if (selectedSession.id) { %>
                                                         <button type="submit" name="action" value="delete" <%-
@@ -278,8 +297,10 @@
                                             const meridiem = document.getElementById("time-meridiem").value;
                                             let hour24 = hour % 12;
                                             if (meridiem === "pm") hour24 += 12;
-                                            document.getElementById("time").value = `${String(hour24).padStart(2, "0")}:${minute}:00`;
+                                            const time = `${String(hour24).padStart(2, "0")}:${minute}:00`;
+                                            document.getElementById("time").value = time;
                                         };
+                                        document.getElementById("time").disabled = false;
                                         document.querySelectorAll("#time-hour, #time-minute, #time-meridiem").forEach((picker) => picker.addEventListener("change", updateSessionTime));
                                         document.getElementById("time").form.addEventListener("submit", updateSessionTime);
                                     </script>

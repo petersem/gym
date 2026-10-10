@@ -29,16 +29,20 @@
                 <span class="user-initials" hidden><%= [authenticatedUser.first_name, authenticatedUser.last_name].map((name) => Array.from(String(name ?? '').trim())[0] ?? '').join('').toUpperCase() %></span>
             </span>
         <% } %>
-        <label class="theme-toggle-control" for="theme-toggle" title="Switch between light and dark themes">
-            <svg class="theme-toggle-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true" focusable="false">
-                <circle cx="12" cy="12" r="4" />
-                <path d="M12 2v2M12 20v2M2 12h2M20 12h2M5 5l1.5 1.5M17.5 17.5L19 19M5 19l1.5-1.5M17.5 6.5L19 5" />
-            </svg>
-            <input class="toggle toggle-sm" id="theme-toggle" type="checkbox" aria-label="Use dark theme">
-            <svg class="theme-toggle-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true" focusable="false">
-                <path d="M20.9 13A9 9 0 0 1 11 3.1 9 9 0 1 0 20.9 13Z" />
-            </svg>
-        </label>
+        <form class="theme-toggle-form" action="/theme" method="post">
+            <input type="hidden" name="returnTo" value="<%= typeof returnTo !== 'undefined' ? returnTo : '/' %>">
+            <label class="theme-toggle-control" for="theme-toggle" title="Switch between light and dark themes">
+                <svg class="theme-toggle-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true" focusable="false">
+                    <circle cx="12" cy="12" r="4" />
+                    <path d="M12 2v2M12 20v2M2 12h2M20 12h2M5 5l1.5 1.5M17.5 17.5L19 19M5 19l1.5-1.5M17.5 6.5L19 5" />
+                </svg>
+                <input class="toggle toggle-sm" id="theme-toggle" name="theme" value="dark" type="checkbox" aria-label="Use dark theme" <%= typeof theme !== 'undefined' && theme === 'dark' ? 'checked' : '' %>>
+                <svg class="theme-toggle-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true" focusable="false">
+                    <path d="M20.9 13A9 9 0 0 1 11 3.1 9 9 0 1 0 20.9 13Z" />
+                </svg>
+            </label>
+            <noscript><button class="theme-submit" type="submit">Apply theme</button></noscript>
+        </form>
     </div>
     <script>
         const userBadge = document.querySelector(".authenticated-user");
@@ -71,6 +75,7 @@
         }
         const themeToggle = document.getElementById("theme-toggle");
         themeToggle.checked = document.documentElement.dataset.theme === "dark";
+        document.cookie = `gym-theme=${themeToggle.checked ? "dark" : "light"}; Path=/; Max-Age=31536000; SameSite=Lax`;
         themeToggle.addEventListener("change", () => {
             const theme = themeToggle.checked ? "dark" : "light";
             document.documentElement.dataset.theme = theme;
@@ -78,6 +83,7 @@
             try {
                 window.localStorage.setItem("gym-theme", theme);
             } catch {}
+            document.cookie = `gym-theme=${theme}; Path=/; Max-Age=31536000; SameSite=Lax`;
         });
     </script>
 </header>
