@@ -9,7 +9,7 @@
     "prod": "npm run build:css && node --env-file=.env src/scripts/startServer.mjs production",
     "tailwind": "npx @tailwindcss/cli -i src/public/css/style.css -o src/dist/css/tailwind.css --watch",
     "dbcreate": "node --env-file=.env src/scripts/initializeDatabase.mjs",
-    "devfull": "npm-run-all --parallel dbcreate dev tailwind",
+    "devall": "npm-run-all --parallel dbcreate dev tailwind",
     "doc": "npm --prefix .. run doc"
   },
   "keywords": [],
