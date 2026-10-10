@@ -22,6 +22,7 @@ record-edit pages. This works with or without JavaScript.
 On the Bookings page, selecting **All locations** shows the session location beneath each booking. Selecting a specific location hides this extra line.
 
 ### Sitemap by Role
+
 **Role colors:**
 
 ![Guest on blue, Member on green, Trainer on orange and Admin on purple backgrounds](gh-assets/role-legend.svg)
@@ -48,11 +49,14 @@ members, trainers and admins; the dashboard views below are not separate pages.
 If you choose to seed sample data on your first install, the passowrd for all sample users is `testing123`.
 
 Besides your app admin account, here are a few users to get you started:
+
 #### Trainers
+
 - dv@gym.com
 - de@gym.com
 
 #### Members
+
 - ep@gym.com
 - ww@gym.com
 
