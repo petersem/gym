@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="408" height="36" viewBox="0 0 408 36" role="img" aria-labelledby="title description">
+  <title id="title">Role colors</title>
+  <desc id="description">Guest: blue. Member: green. Trainer: orange. Admin: purple.</desc>
+  <g font-family="Arial, Helvetica, sans-serif" font-size="15" font-weight="700" text-anchor="middle">
+    <rect x="0" y="2" width="96" height="32" rx="5" fill="#1d4ed8"/>
+    <text x="48" y="23" fill="#ffffff">Guest</text>
+    <rect x="104" y="2" width="96" height="32" rx="5" fill="#15803d"/>
+    <text x="152" y="23" fill="#ffffff">Member</text>
+    <rect x="208" y="2" width="96" height="32" rx="5" fill="#f97316"/>
+    <text x="256" y="23" fill="#17231d">Trainer</text>
+    <rect x="312" y="2" width="96" height="32" rx="5" fill="#7e22ce"/>
+    <text x="360" y="23" fill="#ffffff">Admin</text>
+  </g>
+</svg>

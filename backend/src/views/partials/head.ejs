@@ -3,7 +3,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <script>
 	(() => {
-		let theme = "<%= typeof theme !== 'undefined' ? theme : '' %>" || (window.matchMedia("(prefers-color-scheme: light)").matches ? "dark" : "light");
+		let theme = window.matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark";
 		try {
 			const savedTheme = window.localStorage.getItem("gym-theme");
 			if (savedTheme === "light" || savedTheme === "dark") theme = savedTheme;

@@ -183,14 +183,6 @@ main {
   margin-left: auto;
 }
 
-.theme-toggle-form {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: 6px;
-  margin: 0;
-}
-
 .theme-toggle-control {
   display: inline-flex;
   flex: 0 0 auto;
@@ -285,6 +277,12 @@ main {
 .site-menu li > details > summary:focus-visible {
   background: rgba(255, 255, 255, 0.12);
   color: #ffffff;
+}
+
+.site-menu li > a[aria-current="page"] {
+  background: var(--gym-citron);
+  color: #17231d;
+  font-weight: 700;
 }
 
 .site-menu li > details > ul {

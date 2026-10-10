@@ -1,26 +1,35 @@
-        <li><a href="/">Dashboard</a></li>
+<%
+const navigationPath = typeof currentPath !== 'undefined' ? currentPath : '';
+const currentLink = (path) => {
+    const active = path === '/' || path.startsWith('/authenticate')
+        ? navigationPath === path
+        : navigationPath === path || navigationPath.startsWith(`${path}/`);
+    return active ? ' aria-current="page"' : '';
+};
+%>
+        <li><a href="/"<%- currentLink('/') %>>Dashboard</a></li>
     <% if (typeof authenticatedUser === 'undefined' || !authenticatedUser || !["admin", "trainer"].includes(authenticatedUser.role)) { %>
-        <li><a href="/timetable">Timetable</a></li>
+        <li><a href="/timetable"<%- currentLink('/timetable') %>>Timetable</a></li>
     <% } %>
     <% if (typeof authenticatedUser !== 'undefined' && authenticatedUser && authenticatedUser.role === "member") { %>
-        <li><a href="/bookings">Bookings</a></li>
+        <li><a href="/bookings"<%- currentLink('/bookings') %>>Bookings</a></li>
     <% } %>
     <% if (typeof authenticatedUser !== 'undefined' && authenticatedUser && (authenticatedUser.role === "admin" || authenticatedUser.role === "trainer")) { %>
-        <li><a href="/sessions">Sessions</a></li>
+        <li><a href="/sessions"<%- currentLink('/sessions') %>>Sessions</a></li>
         <% if (authenticatedUser.role === "admin") { %>
-            <li><a href="/manage/bookings">Bookings</a></li>
-            <li><a href="/activities">Activities</a></li>
-            <li><a href="/locations">Locations</a></li>
-            <li><a href="/users">Users</a></li>
-            <li><a href="/manage/blogs">Blogs</a></li>
+            <li><a href="/manage/bookings"<%- currentLink('/manage/bookings') %>>Bookings</a></li>
+            <li><a href="/activities"<%- currentLink('/activities') %>>Activities</a></li>
+            <li><a href="/locations"<%- currentLink('/locations') %>>Locations</a></li>
+            <li><a href="/users"<%- currentLink('/users') %>>Users</a></li>
+            <li><a href="/manage/blogs"<%- currentLink('/manage/blogs') %>>Blogs</a></li>
         <% } %>
     <% } %>
     <% if (typeof authenticatedUser === 'undefined' || !authenticatedUser || authenticatedUser.role !== "admin") { %>
-        <li><a href="/blogs">Blogs</a></li>
+        <li><a href="/blogs"<%- currentLink('/blogs') %>>Blogs</a></li>
     <% } %>
     <% if (typeof authenticatedUser !== 'undefined' && authenticatedUser) { %>
-        <li><a href="/authenticate/logout">Log out</a></li>
+        <li><a href="/authenticate/logout"<%- currentLink('/authenticate/logout') %>>Log out</a></li>
     <% } else { %>
-        <li><a href="/authenticate">Log in</a></li>
-        <li><a href="/authenticate/register">Register</a></li>
+        <li><a href="/authenticate"<%- currentLink('/authenticate') %>>Log in</a></li>
+        <li><a href="/authenticate/register"<%- currentLink('/authenticate/register') %>>Register</a></li>
     <% } %>

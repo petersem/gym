@@ -57,15 +57,7 @@ app.locals.version = appVersion;
 
 app.use((req, res, next) => {
   res.locals.version = appVersion;
-  const themeCookie = req.headers.cookie
-    ?.split(";")
-    .map((cookie) => cookie.trim())
-    .find((cookie) => cookie.startsWith("gym-theme="))
-    ?.slice("gym-theme=".length);
-  res.locals.theme = ["light", "dark"].includes(themeCookie)
-    ? themeCookie
-    : "";
-  res.locals.returnTo = req.originalUrl;
+  res.locals.currentPath = req.path;
   next();
 });
 
@@ -75,24 +67,6 @@ app.use(express.urlencoded({ extended: true }));
 const limiter = rateLimit(limiterOptions);
 app.use(cors(corsOptions));
 app.use(limiter);
-
-app.post("/theme", (req, res) => {
-  const theme = req.body.theme === "dark" ? "dark" : "light";
-  const candidate = req.body.returnTo;
-  const returnTo =
-    typeof candidate === "string" &&
-    candidate.startsWith("/") &&
-    !candidate.startsWith("//") &&
-    !/[\u0000-\u001f\u007f\\]/.test(candidate)
-      ? candidate
-      : "/";
-  res.cookie("gym-theme", theme, {
-    sameSite: "lax",
-    path: "/",
-    maxAge: 365 * 24 * 60 * 60 * 1000,
-  });
-  res.redirect(303, returnTo);
-});
 
 app.use(AuthenticationController.middleware);
 app.use(formFeedback);

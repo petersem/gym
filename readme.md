@@ -16,7 +16,28 @@ Gym app for Tafe stage 2 assessment
 
 ### Bookings
 
+The desktop and mobile menus highlight the current page section, including its
+record-edit pages. This works with or without JavaScript.
+
 On the Bookings page, selecting **All locations** shows the session location beneath each booking. Selecting a specific location hides this extra line.
+
+### Sitemap by Role
+**Role colors:**
+
+![Guest on blue, Member on green, Trainer on orange and Admin on purple backgrounds](gh-assets/role-legend.svg)
+
+![Role sitemap with blue Guest, green Member, orange Trainer and purple Admin tick backgrounds](gh-assets/role-sitemap.svg)
+
+¹ Trainers can manage only their own
+
+² Guests can only view, not book sessions
+
+### Hierarchical Sitemap
+
+The Dashboard is the landing page for all roles. Its content changes for guests,
+members, trainers and admins; the dashboard views below are not separate pages.
+
+![Hierarchical gym sitemap with connected page boxes and colored access circles: blue Guest, green Member, orange Trainer and purple Admin](gh-assets/hierarchical-sitemap.svg)
 
 ### Running the code
 
@@ -27,14 +48,13 @@ On the Bookings page, selecting **All locations** shows the session location ben
 If you choose to seed sample data on your first install, the passowrd for all sample users is `testing123`.
 
 Besides your app admin account, here are a few users to get you started:
-_Trainers_
-
+#### Trainers
 - dv@gym.com
 - de@gym.com
 
-_Members_
-ep@gym.com
-ww@gym.com
+#### Members
+- ep@gym.com
+- ww@gym.com
 
 #### Development Environment
 

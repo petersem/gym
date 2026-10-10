@@ -1,0 +1,133 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="820" height="522" viewBox="0 0 820 522" role="img" aria-labelledby="title description">
+  <title id="title">Gym sitemap by role</title>
+  <desc id="description">Page access for Guest, Member, Trainer and Admin. Allowed pages have a tick on a blue, green, orange or purple background respectively. Trainers can manage only their own sessions. Guests can only view, not book sessions. Annotations are provided in the README.</desc>
+  <style>
+    text { font-family: Arial, Helvetica, sans-serif; font-size: 15px; fill: #17231d; }
+    .heading { font-weight: 700; }
+    .tick { text-anchor: middle; font-size: 19px; font-weight: 700; }
+    .guest rect { fill: #1d4ed8; }
+    .guest text { fill: #ffffff; }
+    .member rect { fill: #15803d; }
+    .member text { fill: #ffffff; }
+    .trainer rect { fill: #f97316; }
+    .trainer text { fill: #17231d; }
+    .admin rect { fill: #7e22ce; }
+    .admin text { fill: #ffffff; }
+    .unavailable text { fill: #65736b; text-anchor: middle; }
+  </style>
+  <rect x="1" y="1" width="818" height="520" rx="10" fill="#ffffff" stroke="#dfe7e0"/>
+  <path d="M1 60H819V94H1Z" fill="#f3f6f2"/>
+  <text x="20" y="36" class="heading" font-size="20">Sitemap by Role</text>
+  <g class="heading">
+    <text x="20" y="82">Page</text>
+    <text x="450" y="82" text-anchor="middle">Guest</text>
+    <text x="550" y="82" text-anchor="middle">Member</text>
+    <text x="650" y="82" text-anchor="middle">Trainer</text>
+    <text x="750" y="82" text-anchor="middle">Admin</text>
+  </g>
+  <g stroke="#edf0ed">
+    <path d="M1 128H819M1 162H819M1 196H819M1 230H819M1 264H819M1 298H819M1 332H819M1 366H819M1 400H819M1 434H819M1 468H819"/>
+  </g>
+  <g>
+    <text x="20" y="116">Dashboard (home)</text>
+    <text x="20" y="150">Timetable</text>
+    <text x="20" y="184">My bookings</text>
+    <text x="20" y="218">Sessions</text>
+    <text x="20" y="252">Bookings management</text>
+    <text x="20" y="286">Users management</text>
+    <text x="20" y="320">Activities management</text>
+    <text x="20" y="354">Locations management</text>
+    <text x="20" y="388">Blog</text>
+    <text x="20" y="422">Blog management</text>
+    <text x="20" y="456">Privacy policy</text>
+    <text x="20" y="490">Log in / Register</text>
+  </g>
+  <g class="guest">
+    <rect x="426" y="99" width="48" height="25" rx="5"/>
+    <rect x="426" y="133" width="48" height="25" rx="5"/>
+    <rect x="426" y="371" width="48" height="25" rx="5"/>
+    <rect x="426" y="439" width="48" height="25" rx="5"/>
+    <rect x="426" y="473" width="48" height="25" rx="5"/>
+    <g class="tick">
+      <text x="450" y="118">&#x2713;</text>
+      <text x="450" y="152">&#x2713;&#xB2;</text>
+      <text x="450" y="390">&#x2713;</text>
+      <text x="450" y="458">&#x2713;</text>
+      <text x="450" y="492">&#x2713;</text>
+    </g>
+  </g>
+  <g class="member">
+    <rect x="526" y="99" width="48" height="25" rx="5"/>
+    <rect x="526" y="133" width="48" height="25" rx="5"/>
+    <rect x="526" y="167" width="48" height="25" rx="5"/>
+    <rect x="526" y="371" width="48" height="25" rx="5"/>
+    <rect x="526" y="439" width="48" height="25" rx="5"/>
+    <g class="tick">
+      <text x="550" y="118">&#x2713;</text>
+      <text x="550" y="152">&#x2713;</text>
+      <text x="550" y="186">&#x2713;</text>
+      <text x="550" y="390">&#x2713;</text>
+      <text x="550" y="458">&#x2713;</text>
+    </g>
+  </g>
+  <g class="trainer">
+    <rect x="626" y="99" width="48" height="25" rx="5"/>
+    <rect x="626" y="201" width="48" height="25" rx="5"/>
+    <rect x="626" y="371" width="48" height="25" rx="5"/>
+    <rect x="626" y="439" width="48" height="25" rx="5"/>
+    <g class="tick">
+      <text x="650" y="118">&#x2713;</text>
+      <text x="650" y="220">&#x2713;&#xB9;</text>
+      <text x="650" y="390">&#x2713;</text>
+      <text x="650" y="458">&#x2713;</text>
+    </g>
+  </g>
+  <g class="admin">
+    <rect x="726" y="99" width="48" height="25" rx="5"/>
+    <rect x="726" y="201" width="48" height="25" rx="5"/>
+    <rect x="726" y="235" width="48" height="25" rx="5"/>
+    <rect x="726" y="269" width="48" height="25" rx="5"/>
+    <rect x="726" y="303" width="48" height="25" rx="5"/>
+    <rect x="726" y="337" width="48" height="25" rx="5"/>
+    <rect x="726" y="405" width="48" height="25" rx="5"/>
+    <rect x="726" y="439" width="48" height="25" rx="5"/>
+    <g class="tick">
+      <text x="750" y="118">&#x2713;</text>
+      <text x="750" y="220">&#x2713;</text>
+      <text x="750" y="254">&#x2713;</text>
+      <text x="750" y="288">&#x2713;</text>
+      <text x="750" y="322">&#x2713;</text>
+      <text x="750" y="356">&#x2713;</text>
+      <text x="750" y="424">&#x2713;</text>
+      <text x="750" y="458">&#x2713;</text>
+    </g>
+  </g>
+  <g class="unavailable">
+    <text x="450" y="184">&#x2014;</text>
+    <text x="450" y="218">&#x2014;</text>
+    <text x="450" y="252">&#x2014;</text>
+    <text x="450" y="286">&#x2014;</text>
+    <text x="450" y="320">&#x2014;</text>
+    <text x="450" y="354">&#x2014;</text>
+    <text x="450" y="422">&#x2014;</text>
+    <text x="550" y="218">&#x2014;</text>
+    <text x="550" y="252">&#x2014;</text>
+    <text x="550" y="286">&#x2014;</text>
+    <text x="550" y="320">&#x2014;</text>
+    <text x="550" y="354">&#x2014;</text>
+    <text x="550" y="422">&#x2014;</text>
+    <text x="550" y="490">&#x2014;</text>
+    <text x="650" y="150">&#x2014;</text>
+    <text x="650" y="184">&#x2014;</text>
+    <text x="650" y="252">&#x2014;</text>
+    <text x="650" y="286">&#x2014;</text>
+    <text x="650" y="320">&#x2014;</text>
+    <text x="650" y="354">&#x2014;</text>
+    <text x="650" y="422">&#x2014;</text>
+    <text x="650" y="490">&#x2014;</text>
+    <text x="750" y="150">&#x2014;</text>
+    <text x="750" y="184">&#x2014;</text>
+    <text x="750" y="388">&#x2014;</text>
+    <text x="750" y="490">&#x2014;</text>
+  </g>
+</svg>
