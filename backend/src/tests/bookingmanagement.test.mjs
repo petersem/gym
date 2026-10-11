@@ -452,9 +452,7 @@ describe("staff booking management", () => {
     expect(table).toContain(">Own session</a>");
     expect(table).not.toContain("Own session -");
     expect(table).toContain(">Session date/time</a>");
-    expect(table).toContain(
-      `<td>${displayDate(ownSessionDate)} 9:00am</td>`,
-    );
+    expect(table).toContain(`<td>${displayDate(ownSessionDate)} 9:00am</td>`);
     expect(table).not.toContain(">Created</a>");
     expect(table).not.toContain("<td>2026-10-01</td>");
     expect(html).toContain("Other session");
