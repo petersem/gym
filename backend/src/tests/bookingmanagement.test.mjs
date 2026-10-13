@@ -19,13 +19,25 @@ import { LocationModel } from "../models/LocationModel.mjs";
 
 let server;
 let baseUrl;
+const dateValue = (offset) => {
+  const date = new Date();
+  date.setDate(date.getDate() + offset);
+  return [
+    date.getFullYear(),
+    String(date.getMonth() + 1).padStart(2, "0"),
+    String(date.getDate()).padStart(2, "0"),
+  ].join("-");
+};
+const displayDate = (value) => value.split("-").reverse().join("/");
+const ownSessionDate = dateValue(30);
+const otherSessionDate = dateValue(31);
 const sessions = [
   {
     id: 1,
     trainer_id: 7,
     location_id: 1,
     title: "Own session",
-    date: "2026-10-10",
+    date: ownSessionDate,
     time: "09:00:00",
   },
   {
@@ -33,7 +45,7 @@ const sessions = [
     trainer_id: 8,
     location_id: 2,
     title: "Other session",
-    date: "2026-10-11",
+    date: otherSessionDate,
     time: "10:00:00",
   },
 ];
@@ -122,7 +134,9 @@ describe("staff booking management", () => {
       ]);
       const firstRow = table.match(/<tbody>\s*<tr>([\s\S]*?)<\/tr>/)[1];
       expect(firstRow).toMatch(
-        /<\/a><\/td>\s*<td>Member, Alex<\/td>\s*<td>10\/10\/2026 9:00am<\/td>/,
+        new RegExp(
+          `<\\/a><\\/td>\\s*<td>Member, Alex<\\/td>\\s*<td>${displayDate(ownSessionDate)} 9:00am<\\/td>`,
+        ),
       );
       expect(table.includes(">Trainer</a>")).toBe(trainer);
       expect(table.includes(">Location</a>")).toBe(location);
@@ -172,7 +186,7 @@ describe("staff booking management", () => {
       '<option value="1" selected>Main</option>',
     );
     expect(select("editor-date-time")).toContain(
-      '<option value="2026-10-10 09:00" selected>10/10/2026 9:00am</option>',
+      `<option value="${ownSessionDate} 09:00" selected>${displayDate(ownSessionDate)} 9:00am</option>`,
     );
     expect(select("session-id")).toContain('<option value="1" selected>');
     for (const id of [
@@ -271,14 +285,16 @@ describe("staff booking management", () => {
     change("editor-date-time", "");
     expect(ids()).toEqual(["1", "3", "4", "2"]);
     expect(label("4")).toBe(
-      "Own session - 10/10/2026 9:00am - Test Trainer - West",
+      `Own session - ${displayDate(ownSessionDate)} 9:00am - Test Trainer - West`,
     );
     expect(label("2")).toBe(
-      "Other session - 11/10/2026 10:00am - Other Coach - West",
+      `Other session - ${displayDate(otherSessionDate)} 10:00am - Other Coach - West`,
     );
     change("editor-trainer", "8");
     expect(ids()).toEqual(["3", "2"]);
-    expect(label("3")).toBe("Own session - 10/10/2026 9:00am - Main");
+    expect(label("3")).toBe(
+      `Own session - ${displayDate(ownSessionDate)} 9:00am - Main`,
+    );
     expect(select.value).toBe("");
     expect(button.disabled).toBe(true);
     expect(elements["editor-session-status"].textContent).toContain(
@@ -288,8 +304,10 @@ describe("staff booking management", () => {
     expect(button.disabled).toBe(false);
     change("editor-location", "2");
     expect(ids()).toEqual(["2"]);
-    expect(label("2")).toBe("Other session - 11/10/2026 10:00am");
-    change("editor-date-time", "2026-10-10 09:00");
+    expect(label("2")).toBe(
+      `Other session - ${displayDate(otherSessionDate)} 10:00am`,
+    );
+    change("editor-date-time", `${ownSessionDate} 09:00`);
     expect(ids()).toEqual([]);
     expect(select.options[0].textContent).toBe(
       "No sessions match these filters",
@@ -320,7 +338,7 @@ describe("staff booking management", () => {
       ).toEqual(["3", "1", "2"]);
       if (path) {
         expect(select).toContain(
-          '<option value="1" selected>Own session - 10/10/2026 9:00am</option>',
+          `<option value="1" selected>Own session - ${displayDate(ownSessionDate)} 9:00am</option>`,
         );
       }
       expect(unsortedSessions.map((session) => session.id)).toEqual([2, 1, 3]);
@@ -434,7 +452,7 @@ describe("staff booking management", () => {
     expect(table).toContain(">Own session</a>");
     expect(table).not.toContain("Own session -");
     expect(table).toContain(">Session date/time</a>");
-    expect(table).toContain("<td>10/10/2026 9:00am</td>");
+    expect(table).toContain(`<td>${displayDate(ownSessionDate)} 9:00am</td>`);
     expect(table).not.toContain(">Created</a>");
     expect(table).not.toContain("<td>2026-10-01</td>");
     expect(html).toContain("Other session");
