@@ -101,8 +101,8 @@ const defaultAllowed = { GET: 200, POST: 303 };
 
 /**
  * Expands a router entry into the individual requests to check.
- * @param {(typeof routes)[number]} entry Router entry.
- * @returns {{url: string, method: "GET"|"POST", allowedStatus: number}[]} Requests to send.
+ * @param {Object} entry Router entry.
+ * @returns {Array.<{url: string, method: string, allowedStatus: number}>} Requests to send.
  */
 const requestsFor = ({ mount, paths = [], readOnlyPaths = [] }) => {
   const expand = (entry, methods) => {
