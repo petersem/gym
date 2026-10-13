@@ -12,7 +12,7 @@ WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 RUN npm run build:css -w backend
-RUN npm run doc -w backend
+RUN npm run doc 
 
 FROM node:22-alpine AS runtime
 ENV NODE_ENV=production
