@@ -178,6 +178,22 @@ export class UsersModel extends DatabaseModel {
   }
 
   /**
+   *
+   * @param {number} id
+   * @returns {Promise<UsersModel>}
+   */
+  static getByAuthenticationKey(authenticationKey) {
+    return this.query(
+      "SELECT * FROM users WHERE authentication_key = ? AND deleted = 0",
+      [authenticationKey],
+    ).then((result) =>
+      result.length > 0
+        ? this.tableToModel(result[0].users)
+        : Promise.reject("not found"),
+    );
+  }
+
+  /**
    * Update an existing user.
    * @param {UsersModel} user User to update.
    * @returns {Promise<OkPacket>} Database result.

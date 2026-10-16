@@ -2,7 +2,6 @@ import { readFileSync } from "node:fs";
 import express from "express";
 import path from "path";
 import cors from "cors";
-import swaggerUi from "swagger-ui-express";
 import pkg from "../package.json" with { type: "json" };
 import { UsersController } from "./controllers/UsersController.mjs";
 import { LocationController } from "./controllers/LocationController.mjs";
@@ -12,6 +11,7 @@ import { BookingsController } from "./controllers/BookingsController.mjs";
 import { BookingManagementController } from "./controllers/BookingManagementController.mjs";
 import { SessionsController } from "./controllers/SessionsController.mjs";
 import { ActivitiesController } from "./controllers/ActivitiesController.mjs";
+import { APIController } from "./controllers/api/APIController.mjs";
 import { UsersModel } from "./models/UsersModel.mjs";
 import { LocationModel } from "./models/LocationModel.mjs";
 import { ActivitiesModel } from "./models/ActivitiesModel.mjs";
@@ -25,7 +25,6 @@ import {
   limiterOptions,
   rateLimit,
   corsOptions,
-  swaggerSpec,
 } from "./middleware/middlewareLoader.mjs";
 import { logInfo } from "./utilities/logger.mjs";
 import { formFeedback } from "./middleware/formFeedback.mjs";
@@ -61,12 +60,14 @@ app.use((req, res, next) => {
   next();
 });
 
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
-
 const limiter = rateLimit(limiterOptions);
 app.use(cors(corsOptions));
 app.use(limiter);
+
+app.use("/api/v1", APIController.routes);
+
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
 app.use(AuthenticationController.middleware);
 app.use(formFeedback);
@@ -91,7 +92,6 @@ app.use("/manage/bookings", BookingManagementController.routes);
 app.use("/sessions", SessionsController.routes);
 app.use("/activities", ActivitiesController.routes);
 app.use("/authenticate", AuthenticationController.routes);
-app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
 // Date range string boundaries covering today through seven days ahead.
 const nextSevenDaysRange = () => {

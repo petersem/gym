@@ -1,0 +1,776 @@
+components:
+  schemas:
+    AuthenticationKey:
+      type: object
+      required:
+        - key
+      properties:
+        key:
+          type: string
+          format: uuid
+          description:
+            Send this key in the x-auth-key header. Login replaces the previous
+            key; logout revokes it.
+    UserCredentials:
+      type: object
+      additionalProperties: false
+      required:
+        - username
+        - password
+      properties:
+        username:
+          type: string
+          format: email
+          maxLength: 100
+          description: The user's login email address.
+          example: member@example.com
+        password:
+          type: string
+          minLength: 1
+          maxLength: 72
+          format: password
+          writeOnly: true
+    UserCreate:
+      type: object
+      additionalProperties: false
+      required:
+        - first_name
+        - last_name
+        - role
+        - email
+        - password
+        - phone
+      properties:
+        first_name:
+          type: string
+          minLength: 1
+          maxLength: 45
+          pattern: \S
+          example: Jane
+        last_name:
+          type: string
+          minLength: 1
+          maxLength: 45
+          pattern: \S
+          example: Doe
+        role:
+          type: string
+          enum:
+            - admin
+            - trainer
+            - member
+          example: member
+        email:
+          type: string
+          format: email
+          maxLength: 100
+          example: jane@example.com
+        password:
+          type: string
+          format: password
+          writeOnly: true
+          minLength: 8
+          maxLength: 36
+          description:
+            Plain text, 8-36 characters and at most 36 UTF-8 bytes; stored as a
+            bcrypt hash.
+        phone:
+          type: string
+          maxLength: 20
+          pattern: '^\+?[0-9 ().-]*[0-9][0-9 ().-]*$'
+          description: Valid Australian phone number; spaces, parentheses, dots and hyphens are accepted.
+          example: "0412345678"
+        dob:
+          type: string
+          format: date
+          nullable: true
+          example: 1990-05-12
+    UserUpdate:
+      type: object
+      additionalProperties: false
+      required:
+        - first_name
+        - last_name
+        - role
+        - email
+        - phone
+      properties:
+        first_name:
+          type: string
+          minLength: 1
+          maxLength: 45
+          pattern: \S
+          example: Jane
+        last_name:
+          type: string
+          minLength: 1
+          maxLength: 45
+          pattern: \S
+          example: Doe
+        role:
+          type: string
+          enum:
+            - admin
+            - trainer
+            - member
+          example: member
+        email:
+          type: string
+          format: email
+          maxLength: 100
+          example: jane@example.com
+        password:
+          type: string
+          format: password
+          writeOnly: true
+          minLength: 8
+          maxLength: 36
+          description:
+            Plain text, 8-36 characters and at most 36 UTF-8 bytes; stored as a
+            bcrypt hash.
+        phone:
+          type: string
+          maxLength: 20
+          pattern: '^\+?[0-9 ().-]*[0-9][0-9 ().-]*$'
+          description: Valid Australian phone number; spaces, parentheses, dots and hyphens are accepted.
+          example: "0412345678"
+        dob:
+          type: string
+          format: date
+          nullable: true
+          example: 1990-05-12
+      description:
+        Replace editable user fields. Omit password to keep it unchanged;
+        changing it revokes the current API key.
+    User:
+      type: object
+      additionalProperties: false
+      required:
+        - id
+        - first_name
+        - last_name
+        - role
+        - email
+        - phone
+        - dob
+      properties:
+        id:
+          type: integer
+          minimum: 1
+          maximum: 2147483647
+          example: 1
+        first_name:
+          type: string
+          minLength: 1
+          maxLength: 45
+          pattern: \S
+          example: Jane
+        last_name:
+          type: string
+          minLength: 1
+          maxLength: 45
+          pattern: \S
+          example: Doe
+        role:
+          type: string
+          enum:
+            - admin
+            - trainer
+            - member
+          example: member
+        email:
+          type: string
+          format: email
+          maxLength: 100
+          example: jane@example.com
+        phone:
+          type: string
+          maxLength: 20
+          example: "0412345678"
+        dob:
+          type: string
+          format: date
+          nullable: true
+          example: 1990-05-12
+    ActivityCreate:
+      type: object
+      additionalProperties: false
+      required:
+        - name
+        - description
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 45
+          pattern: \S
+          example: Yoga
+        description:
+          type: string
+          minLength: 1
+          maxLength: 150
+          pattern: \S
+          example: Strength, flexibility and breathing exercises.
+    ActivityUpdate:
+      type: object
+      additionalProperties: false
+      required:
+        - name
+        - description
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 45
+          pattern: \S
+          example: Yoga
+        description:
+          type: string
+          minLength: 1
+          maxLength: 150
+          pattern: \S
+          example: Strength, flexibility and breathing exercises.
+    Activity:
+      type: object
+      required:
+        - id
+        - name
+        - description
+        - deleted
+        - updated_by
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 45
+          pattern: \S
+          example: Yoga
+        description:
+          type: string
+          minLength: 1
+          maxLength: 150
+          pattern: \S
+          example: Strength, flexibility and breathing exercises.
+        id:
+          type: integer
+          minimum: 1
+          maximum: 2147483647
+          example: 1
+        deleted:
+          type: integer
+          enum:
+            - 0
+            - 1
+          readOnly: true
+          description: Soft-delete flag; deleted records are excluded from the API.
+        updated_by:
+          type: integer
+          minimum: 1
+          maximum: 2147483647
+          example: 1
+    LocationCreate:
+      type: object
+      additionalProperties: false
+      required:
+        - name
+        - phone
+        - email
+        - street
+        - suburb
+        - postcode
+        - manager
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 100
+          pattern: \S
+          example: High Street Gym
+        phone:
+          type: string
+          minLength: 1
+          maxLength: 20
+          pattern: ^\+?[0-9 ().-]*[0-9][0-9 ().-]*$
+          example: "0733334444"
+        email:
+          type: string
+          format: email
+          maxLength: 45
+          example: reception@example.com
+        street:
+          type: string
+          minLength: 1
+          maxLength: 100
+          pattern: \S
+          example: 12 High Street
+        suburb:
+          type: string
+          minLength: 1
+          maxLength: 100
+          pattern: \S
+          example: Brisbane
+        postcode:
+          type: integer
+          minimum: 0
+          maximum: 9999
+          example: 4000
+        manager:
+          type: integer
+          minimum: 1
+          maximum: 2147483647
+          example: 1
+          description: ID of an existing active user.
+    LocationUpdate:
+      type: object
+      additionalProperties: false
+      required:
+        - name
+        - phone
+        - email
+        - street
+        - suburb
+        - postcode
+        - manager
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 100
+          pattern: \S
+          example: High Street Gym
+        phone:
+          type: string
+          minLength: 1
+          maxLength: 20
+          pattern: ^\+?[0-9 ().-]*[0-9][0-9 ().-]*$
+          example: "0733334444"
+        email:
+          type: string
+          format: email
+          maxLength: 45
+          example: reception@example.com
+        street:
+          type: string
+          minLength: 1
+          maxLength: 100
+          pattern: \S
+          example: 12 High Street
+        suburb:
+          type: string
+          minLength: 1
+          maxLength: 100
+          pattern: \S
+          example: Brisbane
+        postcode:
+          type: integer
+          minimum: 0
+          maximum: 9999
+          example: 4000
+        manager:
+          type: integer
+          minimum: 1
+          maximum: 2147483647
+          example: 1
+          description: ID of an existing active user.
+    Location:
+      type: object
+      required:
+        - id
+        - name
+        - phone
+        - email
+        - street
+        - suburb
+        - postcode
+        - manager
+        - deleted
+        - updated_by
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 100
+          pattern: \S
+          example: High Street Gym
+        phone:
+          type: string
+          minLength: 1
+          maxLength: 20
+          pattern: ^\+?[0-9 ().-]*[0-9][0-9 ().-]*$
+          example: "0733334444"
+        email:
+          type: string
+          format: email
+          maxLength: 45
+          example: reception@example.com
+        street:
+          type: string
+          minLength: 1
+          maxLength: 100
+          pattern: \S
+          example: 12 High Street
+        suburb:
+          type: string
+          minLength: 1
+          maxLength: 100
+          pattern: \S
+          example: Brisbane
+        postcode:
+          type: integer
+          minimum: 0
+          maximum: 9999
+          example: 4000
+        manager:
+          type: integer
+          minimum: 1
+          maximum: 2147483647
+          example: 1
+          description: ID of an existing active user.
+        id:
+          type: integer
+          minimum: 1
+          maximum: 2147483647
+          example: 1
+        deleted:
+          type: integer
+          enum:
+            - 0
+            - 1
+          readOnly: true
+          description: Soft-delete flag; deleted records are excluded from the API.
+        updated_by:
+          type: integer
+          minimum: 1
+          maximum: 2147483647
+          example: 1
+    SessionCreate:
+      type: object
+      additionalProperties: false
+      required:
+        - title
+        - activity_id
+        - location_id
+        - trainer_id
+        - date
+        - time
+      properties:
+        title:
+          type: string
+          minLength: 1
+          maxLength: 200
+          pattern: \S
+          example: Morning yoga
+        activity_id:
+          type: integer
+          minimum: 1
+          maximum: 2147483647
+          example: 1
+          description: ID of an existing active activity.
+        location_id:
+          type: integer
+          minimum: 1
+          maximum: 2147483647
+          example: 1
+          description: ID of an existing active location.
+        trainer_id:
+          type: integer
+          minimum: 1
+          maximum: 2147483647
+          example: 1
+          description: ID of an active trainer. Trainers must use their own ID.
+        date:
+          type: string
+          format: date
+          description: Local session date; must be today or later when writing.
+          example: 2026-12-01
+        time:
+          type: string
+          pattern: ^(?:[01][0-9]|2[0-3]):[0-5][0-9](?::[0-5][0-9])?$
+          description: Local 24-hour start time; responses use HH:mm:ss.
+          example: 09:00:00
+    SessionUpdate:
+      type: object
+      additionalProperties: false
+      required:
+        - title
+        - activity_id
+        - location_id
+        - trainer_id
+        - date
+        - time
+      properties:
+        title:
+          type: string
+          minLength: 1
+          maxLength: 200
+          pattern: \S
+          example: Morning yoga
+        activity_id:
+          type: integer
+          minimum: 1
+          maximum: 2147483647
+          example: 1
+          description: ID of an existing active activity.
+        location_id:
+          type: integer
+          minimum: 1
+          maximum: 2147483647
+          example: 1
+          description: ID of an existing active location.
+        trainer_id:
+          type: integer
+          minimum: 1
+          maximum: 2147483647
+          example: 1
+          description: ID of an active trainer. Trainers must use their own ID.
+        date:
+          type: string
+          format: date
+          description: Local session date; must be today or later when writing.
+          example: 2026-12-01
+        time:
+          type: string
+          pattern: ^(?:[01][0-9]|2[0-3]):[0-5][0-9](?::[0-5][0-9])?$
+          description: Local 24-hour start time; responses use HH:mm:ss.
+          example: 09:00:00
+    Session:
+      type: object
+      required:
+        - id
+        - title
+        - activity_id
+        - location_id
+        - trainer_id
+        - date
+        - time
+      properties:
+        title:
+          type: string
+          minLength: 1
+          maxLength: 200
+          pattern: \S
+          example: Morning yoga
+        activity_id:
+          type: integer
+          minimum: 1
+          maximum: 2147483647
+          example: 1
+          description: ID of an existing active activity.
+        location_id:
+          type: integer
+          minimum: 1
+          maximum: 2147483647
+          example: 1
+          description: ID of an existing active location.
+        trainer_id:
+          type: integer
+          minimum: 1
+          maximum: 2147483647
+          example: 1
+          description: ID of an active trainer. Trainers must use their own ID.
+        date:
+          type: string
+          format: date
+          description: Local session date; must be today or later when writing.
+          example: 2026-12-01
+        time:
+          type: string
+          pattern: ^(?:[01][0-9]|2[0-3]):[0-5][0-9](?::[0-5][0-9])?$
+          description: Local 24-hour start time; responses use HH:mm:ss.
+          example: 09:00:00
+        id:
+          type: integer
+          minimum: 1
+          maximum: 2147483647
+          example: 1
+    BookingCreate:
+      type: object
+      additionalProperties: false
+      required:
+        - session_id
+      properties:
+        session_id:
+          type: integer
+          minimum: 1
+          maximum: 2147483647
+          example: 1
+          description: ID of an existing session, today or later.
+        user_id:
+          type: integer
+          minimum: 1
+          maximum: 2147483647
+          example: 1
+          description:
+            Active member ID. Members may only use their own ID. Defaults to
+            the authenticated user's ID on create; remains unchanged on update
+            if omitted.
+    BookingUpdate:
+      type: object
+      additionalProperties: false
+      required:
+        - session_id
+      properties:
+        session_id:
+          type: integer
+          minimum: 1
+          maximum: 2147483647
+          example: 1
+          description: ID of an existing session, today or later.
+        user_id:
+          type: integer
+          minimum: 1
+          maximum: 2147483647
+          example: 1
+          description:
+            Active member ID. Members may only use their own ID. Defaults to
+            the authenticated user's ID on create; remains unchanged on update
+            if omitted.
+    Booking:
+      type: object
+      required:
+        - id
+        - session_id
+        - user_id
+        - created
+      properties:
+        session_id:
+          type: integer
+          minimum: 1
+          maximum: 2147483647
+          example: 1
+          description: ID of an existing session, today or later.
+        user_id:
+          type: integer
+          minimum: 1
+          maximum: 2147483647
+          example: 1
+          description:
+            Active member ID. Members may only use their own ID. Defaults to
+            the authenticated user's ID on create; remains unchanged on update
+            if omitted.
+        id:
+          type: integer
+          minimum: 1
+          maximum: 2147483647
+          example: 1
+        created:
+          type: string
+          format: date-time
+          readOnly: true
+          example: 2026-10-16T05:00:00.000Z
+    BlogCreate:
+      type: object
+      additionalProperties: false
+      required:
+        - title
+        - content
+      properties:
+        title:
+          type: string
+          minLength: 1
+          maxLength: 100
+          pattern: \S
+          example: Welcome to High Street Gym
+        content:
+          type: string
+          minLength: 1
+          maxLength: 250
+          pattern: \S
+          example: Discover our latest classes and gym news.
+    BlogUpdate:
+      type: object
+      additionalProperties: false
+      required:
+        - title
+        - content
+      properties:
+        title:
+          type: string
+          minLength: 1
+          maxLength: 100
+          pattern: \S
+          example: Welcome to High Street Gym
+        content:
+          type: string
+          minLength: 1
+          maxLength: 250
+          pattern: \S
+          example: Discover our latest classes and gym news.
+    Blog:
+      type: object
+      required:
+        - id
+        - title
+        - content
+        - user_id
+        - created
+      properties:
+        title:
+          type: string
+          minLength: 1
+          maxLength: 100
+          pattern: \S
+          example: Welcome to High Street Gym
+        content:
+          type: string
+          minLength: 1
+          maxLength: 250
+          pattern: \S
+          example: Discover our latest classes and gym news.
+        id:
+          type: integer
+          minimum: 1
+          maximum: 2147483647
+          example: 1
+        user_id:
+          type: integer
+          minimum: 1
+          maximum: 2147483647
+          example: 1
+          readOnly: true
+          description: The authenticated author at creation time.
+        created:
+          type: string
+          format: date-time
+          readOnly: true
+          example: 2026-10-16T05:00:00.000Z
+    Message:
+      type: object
+      required:
+        - message
+      properties:
+        message:
+          type: string
+          example: Operation completed.
+    Error:
+      type: object
+      required:
+        - message
+      properties:
+        message:
+          type: string
+          example: Resource not found.
+        errors:
+          type: array
+          items: {}
+  responses:
+    Error:
+      description: Invalid input (400), missing/invalid authentication (401),
+        forbidden (403), not found (404), conflict (409), unsupported content
+        type (415), or internal error (500).
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+    LoginSuccessful:
+      description: Login successful. Copy key into Swagger's Authorize dialog.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/AuthenticationKey"
+    Updated:
+      description: Operation completed successfully.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Message"

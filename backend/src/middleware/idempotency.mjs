@@ -54,7 +54,9 @@ export function idempotencyMiddleware(options = {}) {
     const idempotencyKey = req.headers[config.headerName?.toLowerCase()];
 
     // Require idempotency key for protected methods
-    if (!idempotencyKey) {
+    console.log(req.path);
+    console.log(req.path.toLowerCase().startsWith("/api/"));
+    if (!idempotencyKey && !req.path.toLowerCase().startsWith("/api/")) {
       if (process.env?.NODE_ENV === "development") {
         console.log(
           logWarning,

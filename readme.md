@@ -3,7 +3,7 @@
 Gym app for Tafe stage 2 assessment
 
 - Backend MVC app
-- Backend API (coming soon)
+- Backend JSON API with interactive Swagger documentation
 - Frontend React app (coming soon)
 
 ## Backend Gym App
@@ -20,6 +20,53 @@ The desktop and mobile menus highlight the current page section, including its
 record-edit pages. This works with or without JavaScript.
 
 On the Bookings page, selecting **All locations** shows the session location beneath each booking. Selecting a specific location hides this extra line.
+
+### Backend API
+
+All API endpoints use the `/api/v1` prefix.
+Open `/api/v1/docs/` for interactive Swagger documentation, or `/api/v1/openapi.json`
+for the OpenAPI specification. The specification includes request examples,
+field limits, response schemas, error codes, and role/ownership rules.
+
+1. Send `POST /api/v1/authenticate` with JSON
+   `{"username":"your-email@example.com","password":"your-password"}`.
+2. Copy the returned `key` into Swagger's **Authorize** dialog, or send it as
+   the `x-auth-key` request header.
+3. Send `DELETE /api/v1/authenticate` to revoke the key. Logging in again replaces
+   the previous key.
+
+| Resource        | Endpoints                                       | Access                                                                               |
+| --------------- | ----------------------------------------------- | ------------------------------------------------------------------------------------ |
+| Current profile | `GET /api/v1/user/self`                         | Any authenticated user                                                               |
+| Users           | `/api/v1/users`, `/api/v1/users/{id}`           | Admin                                                                                |
+| Activities      | `/api/v1/activities`, `/api/v1/activities/{id}` | Admin                                                                                |
+| Locations       | `/api/v1/locations`, `/api/v1/locations/{id}`   | Admin                                                                                |
+| Sessions        | `/api/v1/sessions`, `/api/v1/sessions/{id}`     | Admin; trainers restricted to their own sessions                                     |
+| Timetable       | `GET /api/v1/timetable`                         | Guests and members; next seven days, optional `location_id` and `trainer_id` filters |
+| Bookings        | `/api/v1/bookings`, `/api/v1/bookings/{id}`     | Admin; members restricted to their own bookings                                      |
+| Blogs           | `/api/v1/blogs`, `/api/v1/blogs/{id}`           | Public reads; authenticated writes, restricted to author or admin                    |
+
+Each resource supports `GET` (list/detail), `POST` (create), `PUT` (update), and
+`DELETE`. Create/update bodies use JSON with snake_case field names. `PUT`
+requires all editable fields, except user passwords and booking user IDs may be
+omitted to preserve their current values. Blog authors and creation timestamps
+are server-managed. Passwords are bcrypt-hashed, and user responses never include
+passwords or authentication keys.
+
+Creation returns `201`, the created record, and its `Location` header. Updates
+return the updated record; deletion returns a message. Users, activities and
+locations are soft-deleted; deleting a session also deletes its bookings.
+Duplicate/overlapping bookings and trainer scheduling conflicts return `409`.
+
+The API uses API keys rather than browser cookie sessions, validates JSON against
+OpenAPI instead of the HTML form sanitiser, and does not require an
+`Idempotency-Key` header. Browser page routes keep their existing middleware.
+
+#### Auth keys for testing purposes
+
+- Admin: d4c89800-a459-491d-a2ee-f097477c22fe
+- Trainer: 7625c5aa-716e-4f9e-b70e-7c40078a9f4d
+- Member: e8331a60-3567-4ea4-aafc-62cee5a05aa3
 
 ### Sitemap by Role
 

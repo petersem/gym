@@ -37,5 +37,10 @@
     "unrs-resolver@1.12.2": true,
     "bson@0.2.22": true,
     "kerberos@0.0.4": true
+  },
+  "dependencies": {
+    "bcrypt": "^6.0.0",
+    "bcryptjs": "^3.0.3",
+    "express-openapi-validator": "^5.6.2"
   }
 }
