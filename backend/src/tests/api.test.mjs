@@ -790,7 +790,7 @@ describe("ownership and gym rules", () => {
     expect(blog.status).toBe(201);
     expect(blog.body.user_id).toBe(2);
   });
-  test("hashes new passwords, preserves omitted or unchanged ones, and never returns hashes or keys", async () => {
+  test("hashes new passwords, preserves omitted, empty or unchanged ones, and never returns hashes or keys", async () => {
     const body = { ...bodies.users };
     delete body.password;
     const updated = await request("/users/3", {
@@ -803,6 +803,16 @@ describe("ownership and gym rules", () => {
     expect(records.users[2].authentication_key).toBe(key(3));
     expect(updated.body).not.toHaveProperty("password");
     expect(updated.body).not.toHaveProperty("authentication_key");
+    expect((await request("/user/self", { user: 3 })).status).toBe(200);
+    const empty = await request("/users/3", {
+      method: "PUT",
+      user: 3,
+      body: { ...body, first_name: "Empty password update", password: "" },
+    });
+    expect(empty.status).toBe(200);
+    expect(empty.body.first_name).toBe("Empty password update");
+    expect(records.users[2].password).toBe(passwordHash);
+    expect(records.users[2].authentication_key).toBe(key(3));
     expect((await request("/user/self", { user: 3 })).status).toBe(200);
     const unchanged = await request("/users/3", {
       method: "PUT",

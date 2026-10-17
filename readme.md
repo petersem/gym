@@ -56,7 +56,8 @@ omitted to preserve their current values. Omit `user_id` when creating a booking
 to use your own user ID. Blog authors and creation timestamps
 are server-managed. Passwords are bcrypt-hashed, and user responses never include
 passwords or authentication keys. Changing your password revokes your API key;
-omitting the password or supplying the current password preserves it.
+omitting the password, leaving it empty (`"password": ""`) or supplying the
+current password preserves it.
 Use `GET /api/v1/user/self` to find your user ID,
 then `PUT /api/v1/users/{id}` to update your details.
 

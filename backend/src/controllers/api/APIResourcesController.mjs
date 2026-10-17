@@ -249,7 +249,9 @@ async function prepareRecord(resource, req, existing) {
       ) {
         throw new APIError(400, "Date of birth must be a real calendar date.");
       }
-      if (req.body.password !== undefined) {
+      if (existing && req.body.password === "") {
+        record.password = existing.password;
+      } else if (req.body.password !== undefined) {
         if (Buffer.byteLength(req.body.password, "utf8") > 36) {
           throw new APIError(400, "Password must be at most 36 UTF-8 bytes.");
         }
