@@ -13,10 +13,12 @@ const options = {
     openapi: "3.0.0",
     info: {
       title: "HSG App API",
-      version: pkg.version,
+      version: "v" + pkg.version,
       description:
         "JSON REST API for the High Street Gym Tafe assessment app.\n\n" +
         "Guests can read blogs. Only members and trainers can authenticate; administrators have no API access.\n\n" +
+        "### Access by role\n" +
+        "![API access by role for guests, members, trainers and administrators](/images/api-role-sitemap.svg)\n\n" +
         "### Getting started\n" +
         "1. POST your email (as `username`) and password to `/api/v1/authenticate`.\n" +
         "2. Copy the returned `key`, click **Authorize**, and paste it into the ApiKey field.\n" +
@@ -37,7 +39,7 @@ const options = {
       {
         name: "Sessions",
         description:
-          "Member and trainer timetable reads and trainers' own session cancellations.",
+          "Member and trainer timetable browsing and trainers' own session cancellations. Session list and detail reads are not available.",
       },
       {
         name: "Bookings",

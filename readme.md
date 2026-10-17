@@ -39,14 +39,15 @@ field limits, response schemas, error codes, and role/ownership rules.
 | --------------- | ------------------------------------------- | --------------------------------------------------------------------------------------------------------------------- |
 | Current profile | `GET /api/v1/user/self`                     | Any authenticated user                                                                                                |
 | Users           | `GET/PUT /api/v1/users/{id}`                | Members/trainers can read and update only their own record, without changing role                                     |
-| Sessions        | `/api/v1/sessions`, `/api/v1/sessions/{id}` | Members/trainers can read all sessions; trainers can delete only their own sessions                                   |
+| Sessions        | `DELETE /api/v1/sessions/{id}`              | Trainers can delete only their own sessions; session list/detail reads are not available                              |
 | Timetable       | `GET /api/v1/timetable`                     | Members and trainers; next seven days, optional `location_id` and `trainer_id` filters                                |
 | Bookings        | `/api/v1/bookings`, `/api/v1/bookings/{id}` | Members read/create/cancel their own bookings (no updates); trainers only read bookings for sessions assigned to them |
 | Blogs           | `/api/v1/blogs`, `/api/v1/blogs/{id}`       | Guest/member/trainer reads; member/trainer writes restricted to the creator                                           |
 
 Administrators cannot log in to the API or use existing API keys (returns `403`).
 User listing/creation/deletion, all activity/location endpoints and session
-creation/updates are removed from the API and Swagger documentation.
+list/detail reads, creation and updates are removed from the API and Swagger
+documentation; use the timetable to browse sessions.
 Booking updates remain access-restricted.
 Guests without a key can only read blogs; documentation and login remain public.
 
@@ -74,6 +75,10 @@ OpenAPI instead of the HTML form sanitiser, and does not require an
 
 - Trainer: 7625c5aa-716e-4f9e-b70e-7c40078a9f4d
 - Member: e8331a60-3567-4ea4-aafc-62cee5a05aa3
+
+#### API access by role
+
+![API access matrix showing Guest, Member, Trainer and Admin permissions, including ownership and trainer-session restrictions](gh-assets/api-role-sitemap.svg)
 
 ### Sitemap by Role
 

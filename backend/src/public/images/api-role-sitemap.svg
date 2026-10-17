@@ -1,0 +1,114 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="614" viewBox="0 0 960 614" role="img" aria-labelledby="title description">
+  <title id="title">Gym API access by role</title>
+  <desc id="description">Guest, Member, Trainer and Admin API permissions. Guests can read blogs. Members and trainers can authenticate, read and update their own profile, view the timetable, and create blog posts or edit and delete their own posts. Members can read, create and cancel their own bookings. Trainers can read bookings for sessions assigned to them and delete their own sessions, but cannot make or cancel bookings. Administrators have no API access. Documentation remains public.</desc>
+  <style>
+    text { font-family: Arial, Helvetica, sans-serif; font-size: 15px; fill: #17231d; }
+    .heading { font-weight: 700; }
+    .title { font-size: 22px; font-weight: 700; }
+    .note { font-size: 14px; fill: #526158; }
+    .tick { text-anchor: middle; font-size: 18px; font-weight: 700; }
+    .guest rect { fill: #1d4ed8; }
+    .guest text { fill: #ffffff; }
+    .member rect { fill: #15803d; }
+    .member text { fill: #ffffff; }
+    .trainer rect { fill: #f97316; }
+    .trainer text { fill: #17231d; }
+    .admin rect { fill: #7e22ce; }
+    .admin text { fill: #ffffff; }
+    .guest { --badge-background: #1d4ed8; --badge-text: #ffffff; }
+    .member { --badge-background: #15803d; --badge-text: #ffffff; }
+    .trainer { --badge-background: #f97316; --badge-text: #17231d; }
+    .admin { --badge-background: #7e22ce; --badge-text: #ffffff; }
+    .badge-background { fill: var(--badge-background); }
+    .tick { fill: var(--badge-text); }
+    .unavailable { fill: #65736b; text-anchor: middle; }
+  </style>
+  <defs>
+    <g id="allowed">
+      <rect class="badge-background" x="-24" y="-18" width="48" height="25" rx="5"/>
+      <text class="tick" y="1">&#x2713;</text>
+    </g>
+    <g id="own">
+      <rect class="badge-background" x="-24" y="-18" width="48" height="25" rx="5"/>
+      <text class="tick" y="1">&#x2713;&#xB9;</text>
+    </g>
+    <g id="linked">
+      <rect class="badge-background" x="-24" y="-18" width="48" height="25" rx="5"/>
+      <text class="tick" y="1">&#x2713;&#xB2;</text>
+    </g>
+  </defs>
+  <rect x="1" y="1" width="958" height="612" rx="10" fill="#ffffff" stroke="#dfe7e0"/>
+  <text x="20" y="36" class="title">API Access by Role</text>
+  <text x="20" y="61" class="note">Base path: /api/v1 &#x2022; Member and Trainer access requires an x-auth-key.</text>
+  <path d="M1 80H959V126H1Z" fill="#f3f6f2"/>
+  <text x="20" y="109" class="heading">Operation</text>
+  <g class="heading" text-anchor="middle">
+    <g class="guest"><rect x="526" y="88" width="88" height="30" rx="5"/><text x="570" y="109">Guest</text></g>
+    <g class="member"><rect x="636" y="88" width="88" height="30" rx="5"/><text x="680" y="109">Member</text></g>
+    <g class="trainer"><rect x="746" y="88" width="88" height="30" rx="5"/><text x="790" y="109">Trainer</text></g>
+    <g class="admin"><rect x="856" y="88" width="88" height="30" rx="5"/><text x="900" y="109">Admin</text></g>
+  </g>
+  <g stroke="#edf0ed">
+    <path d="M1 162H959M1 198H959M1 234H959M1 270H959M1 306H959M1 342H959M1 378H959M1 414H959M1 450H959M1 486H959"/>
+  </g>
+  <g>
+    <text x="20" y="150">Read blogs &#x2014; GET /blogs, /blogs/{id}</text>
+    <text x="20" y="186">Create blog &#x2014; POST /blogs</text>
+    <text x="20" y="222">Update / delete blog &#x2014; PUT / DELETE /blogs/{id}</text>
+    <text x="20" y="258">Read profile &#x2014; GET /user/self, /users/{id}</text>
+    <text x="20" y="294">Update profile &#x2014; PUT /users/{id}</text>
+    <text x="20" y="330">View timetable &#x2014; GET /timetable</text>
+    <text x="20" y="366">Read bookings &#x2014; GET /bookings, /bookings/{id}</text>
+    <text x="20" y="402">Make booking &#x2014; POST /bookings</text>
+    <text x="20" y="438">Cancel booking &#x2014; DELETE /bookings/{id}</text>
+    <text x="20" y="474">Delete session &#x2014; DELETE /sessions/{id}</text>
+    <text x="20" y="510">Log in / out &#x2014; POST / DELETE /authenticate</text>
+  </g>
+  <g class="guest">
+    <use href="#allowed" x="570" y="150"/>
+  </g>
+  <g class="member">
+    <use href="#allowed" x="680" y="150"/>
+    <use href="#allowed" x="680" y="186"/>
+    <use href="#own" x="680" y="222"/>
+    <use href="#own" x="680" y="258"/>
+    <use href="#own" x="680" y="294"/>
+    <use href="#allowed" x="680" y="330"/>
+    <use href="#own" x="680" y="366"/>
+    <use href="#own" x="680" y="402"/>
+    <use href="#own" x="680" y="438"/>
+    <use href="#allowed" x="680" y="510"/>
+  </g>
+  <g class="trainer">
+    <use href="#allowed" x="790" y="150"/>
+    <use href="#allowed" x="790" y="186"/>
+    <use href="#own" x="790" y="222"/>
+    <use href="#own" x="790" y="258"/>
+    <use href="#own" x="790" y="294"/>
+    <use href="#allowed" x="790" y="330"/>
+    <use href="#linked" x="790" y="366"/>
+    <use href="#own" x="790" y="474"/>
+    <use href="#allowed" x="790" y="510"/>
+  </g>
+  <g class="unavailable">
+    <text x="570" y="186">&#x2014;</text><text x="570" y="222">&#x2014;</text>
+    <text x="570" y="258">&#x2014;</text><text x="570" y="294">&#x2014;</text>
+    <text x="570" y="330">&#x2014;</text>
+    <text x="570" y="366">&#x2014;</text><text x="570" y="402">&#x2014;</text>
+    <text x="570" y="438">&#x2014;</text><text x="570" y="474">&#x2014;</text>
+    <text x="570" y="510">&#x2014;</text>
+    <text x="680" y="474">&#x2014;</text>
+    <text x="790" y="402">&#x2014;</text><text x="790" y="438">&#x2014;</text>
+    <text x="900" y="150">&#x2014;</text><text x="900" y="186">&#x2014;</text>
+    <text x="900" y="222">&#x2014;</text><text x="900" y="258">&#x2014;</text>
+    <text x="900" y="294">&#x2014;</text><text x="900" y="330">&#x2014;</text>
+    <text x="900" y="366">&#x2014;</text><text x="900" y="402">&#x2014;</text>
+    <text x="900" y="438">&#x2014;</text><text x="900" y="474">&#x2014;</text>
+    <text x="900" y="510">&#x2014;</text>
+  </g>
+  <path d="M20 530H940" stroke="#dfe7e0"/>
+  <g class="note">
+    <text x="20" y="554">&#x2713; Allowed    &#x2014; No access    &#xB9; Own record / own post / assigned session only.</text>
+    <text x="20" y="578">&#xB2; Trainers read bookings for sessions assigned to them, regardless of who made the booking.</text>
+  </g>
+</svg>

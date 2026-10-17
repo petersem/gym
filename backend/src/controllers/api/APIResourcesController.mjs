@@ -33,15 +33,15 @@ const resources = [
   },
   {
     path: "sessions",
-    removedMethods: ["post", "put"],
+    removedMethods: ["post", "get", "put"],
+    list: false,
     schema: "Session",
     tag: "Sessions",
     model: SessionsModel,
     roles: [],
-    getRoles: ["trainer", "member"],
     deleteRoles: ["trainer"],
     description:
-      "Members and trainers can read all sessions; trainers can also delete their own sessions, but cannot create or update sessions. Deleting a session also removes its bookings.",
+      "Trainers can delete only their own sessions; sessions cannot be listed, read, created or updated through this resource. Members and trainers use the timetable to browse sessions. Deleting a session also removes its bookings.",
   },
   {
     path: "bookings",
@@ -179,7 +179,7 @@ apiResourcePaths["/api/v1/timetable"] = {
   },
 };
 
-async function authorizeRecord(resource, user, record, method) {
+async function authorizeRecord(resource, user, record) {
   if (resource.path === "bookings" && user.role === "trainer") {
     const session = await activeRecord(SessionsModel, record.session_id);
     if (Number(session.trainer_id) !== Number(user.id)) {
@@ -188,9 +188,6 @@ async function authorizeRecord(resource, user, record, method) {
         "You can only view bookings for your own sessions.",
       );
     }
-    return;
-  }
-  if (resource.path === "sessions" && method === "GET") {
     return;
   }
   const ownerField =
@@ -414,21 +411,18 @@ export class APIResourcesController {
           res.json(records.map(serialize));
         });
       }
-      router.get("/:id", async (req, res) => {
-        const record = await activeRecord(
-          resource.model,
-          Number(req.params.id),
-        );
-        if (!resource.publicRead) {
-          await authorizeRecord(
-            resource,
-            req.authenticatedUser,
-            record,
-            req.method,
+      if (!resource.removedMethods?.includes("get")) {
+        router.get("/:id", async (req, res) => {
+          const record = await activeRecord(
+            resource.model,
+            Number(req.params.id),
           );
-        }
-        res.json(serialize(record));
-      });
+          if (!resource.publicRead) {
+            await authorizeRecord(resource, req.authenticatedUser, record);
+          }
+          res.json(serialize(record));
+        });
+      }
       if (resource.publicRead) {
         router.use(APIAuthenticationController.restrict(resource.roles));
       }

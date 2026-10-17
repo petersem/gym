@@ -1,4 +1,4 @@
-import {
+﻿import {
   afterAll,
   afterEach,
   beforeAll,
@@ -35,8 +35,9 @@ const models = {
 };
 const removedMethods = {
   users: ["post", "delete"],
-  sessions: ["post", "put"],
+  sessions: ["post", "get", "put"],
 };
+const removedBasePaths = ["users", "sessions"];
 const bodies = {
   users: {
     first_name: "New",
@@ -224,7 +225,7 @@ describe("OpenAPI contract", () => {
   });
 
   test.each(Object.entries(removedMethods))(
-    "removes unsupported %s writes from the contract and rejects direct requests",
+    "removes unsupported %s operations from the contract and rejects direct requests",
     async (resource, methods) => {
       for (const method of methods) {
         const path = `/${resource}${method === "post" ? "" : "/1"}`;
@@ -232,19 +233,38 @@ describe("OpenAPI contract", () => {
           const result = await request(path, {
             method: method.toUpperCase(),
             user,
-            ...(method !== "delete" ? { body: bodies[resource] } : {}),
+            ...(["post", "put"].includes(method)
+              ? { body: bodies[resource] }
+              : {}),
           });
           expect(result.status).toBe(
-            resource === "users" && method === "post" ? 404 : 405,
+            removedBasePaths.includes(resource) && method === "post"
+              ? 404
+              : 405,
           );
           expect(result.body).toHaveProperty("message");
         }
       }
+      expect(models[resource].getById).not.toHaveBeenCalled();
       expect(models[resource].create).not.toHaveBeenCalled();
       expect(models[resource].update).not.toHaveBeenCalled();
       expect(models[resource].delete).not.toHaveBeenCalled();
     },
   );
+
+  test("removes session list and detail reads but keeps the timetable", async () => {
+    expect(swaggerSpec.paths).not.toHaveProperty("/api/v1/sessions");
+    expect(swaggerSpec.paths["/api/v1/sessions/{id}"]).not.toHaveProperty(
+      "get",
+    );
+    expect(swaggerSpec.paths["/api/v1/sessions/{id}"]).toHaveProperty("delete");
+    for (const user of [2, 3]) {
+      expect((await request("/sessions", { user })).status).toBe(404);
+      expect((await request("/sessions/1", { user })).status).toBe(405);
+      expect((await request("/timetable", { user })).status).toBe(200);
+    }
+    expect(SessionsModel.getById).not.toHaveBeenCalled();
+  });
 
   test.each(["authorizeOperationBtn"])(
     "reverses only the padlock presentation for %s",
@@ -345,6 +365,13 @@ describe("OpenAPI contract", () => {
         expect(swaggerSpec.paths).not.toHaveProperty("/api/v1/users");
         expect(swaggerSpec.paths["/api/v1/users/{id}"]).toHaveProperty("get");
         expect(swaggerSpec.paths["/api/v1/users/{id}"]).toHaveProperty("put");
+        continue;
+      }
+      if (resource === "sessions") {
+        expect(swaggerSpec.paths).not.toHaveProperty("/api/v1/sessions");
+        expect(
+          Object.keys(swaggerSpec.paths["/api/v1/sessions/{id}"]).sort(),
+        ).toEqual(["delete", "parameters"]);
         continue;
       }
       for (const method of ["get", "post", "put", "delete"]) {
@@ -504,8 +531,7 @@ describe("API authentication and access", () => {
       expect((await request(`/bookings/${otherId}`, { user })).status).toBe(
         403,
       );
-      expect((await request("/sessions", { user })).status).toBe(200);
-      expect((await request("/sessions/1", { user })).status).toBe(200);
+      expect((await request("/timetable", { user })).status).toBe(200);
       const login = await request("/authenticate", {
         method: "POST",
         body: { username: `user${user}@example.com`, password: "testing123" },
@@ -672,7 +698,7 @@ describe("API authentication and access", () => {
         });
         expect(result.status).toBe(
           ["activities", "locations"].includes(resource) ||
-            (resource === "users" && method === "POST")
+            (removedBasePaths.includes(resource) && method === "POST")
             ? 404
             : removedMethods[resource]?.includes(method.toLowerCase())
               ? 405
@@ -736,7 +762,11 @@ describe("API authentication and access", () => {
       "/locations",
     ]) {
       expect((await request(path)).status).toBe(
-        ["/users", "/activities", "/locations"].includes(path) ? 404 : 401,
+        ["/users", "/sessions", "/activities", "/locations"].includes(path)
+          ? 404
+          : path === "/sessions/1"
+            ? 405
+            : 401,
       );
     }
     expect((await request("/blogs")).status).toBe(200);
@@ -827,7 +857,7 @@ describe("ownership and gym rules", () => {
           body: bodies.sessions,
         })
       ).status,
-    ).toBe(405);
+    ).toBe(404);
     expect(SessionsModel.create).not.toHaveBeenCalled();
     const blog = await request("/blogs", {
       method: "POST",
@@ -924,11 +954,10 @@ describe("ownership and gym rules", () => {
     ).toBe(400);
   });
 
-  test("scopes trainer sessions and prevents reassignment", async () => {
+  test("prevents trainers reading, changing or deleting other trainers' sessions", async () => {
     records.sessions.push({ ...records.sessions[0], id: 2, trainer_id: 5 });
-    const list = await request("/sessions", { user: 2 });
-    expect(list.body.map((item) => item.id)).toEqual([1, 2]);
-    expect((await request("/sessions/2", { user: 2 })).status).toBe(200);
+    expect((await request("/sessions", { user: 2 })).status).toBe(404);
+    expect((await request("/sessions/2", { user: 2 })).status).toBe(405);
     for (const method of ["PUT", "DELETE"]) {
       const result = await request("/sessions/2", {
         method,
@@ -946,7 +975,7 @@ describe("ownership and gym rules", () => {
           body: otherTrainer,
         })
       ).status,
-    ).toBe(405);
+    ).toBe(404);
     expect(
       (
         await request("/sessions/1", {
@@ -977,7 +1006,7 @@ describe("ownership and gym rules", () => {
           body: { ...bodies.sessions, date: "2000-01-01" },
         })
       ).status,
-    ).toBe(405);
+    ).toBe(404);
     expect(
       (
         await request("/sessions", {
@@ -986,7 +1015,7 @@ describe("ownership and gym rules", () => {
           body: { ...bodies.sessions, trainer_id: 3 },
         })
       ).status,
-    ).toBe(405);
+    ).toBe(404);
     expect(
       (await request("/sessions/1", { method: "DELETE", user: 3 })).status,
     ).toBe(403);
