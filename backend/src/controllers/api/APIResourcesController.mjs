@@ -19,57 +19,68 @@ import {
 const resources = [
   {
     path: "users",
+    removedMethods: ["post", "delete"],
     schema: "User",
     tag: "Users",
     model: UsersModel,
-    roles: ["admin"],
+    roles: [],
+    listRoles: [],
+    getRoles: ["trainer", "member"],
+    putRoles: ["trainer", "member"],
     description:
-      "Administrators only. Passwords and authentication keys are never returned.",
+      "Members and trainers can read and update only their own record, without changing their role. User listing, creation and deletion are not available through the API. Passwords and authentication keys are never returned.",
     serialize: publicUser,
   },
   {
     path: "activities",
+    removedMethods: ["post", "put", "delete"],
     schema: "Activity",
     tag: "Activities",
     model: ActivitiesModel,
-    roles: ["admin"],
-    description: "Administrators only. Deletion soft-deletes the activity.",
+    roles: [],
+    description: "Activity management is not available through the API.",
   },
   {
     path: "locations",
+    removedMethods: ["post", "put", "delete"],
     schema: "Location",
     tag: "Locations",
     model: LocationModel,
-    roles: ["admin"],
-    description: "Administrators only. Deletion soft-deletes the location.",
+    roles: [],
+    description: "Location management is not available through the API.",
   },
   {
     path: "sessions",
+    removedMethods: ["post", "put"],
     schema: "Session",
     tag: "Sessions",
     model: SessionsModel,
-    roles: ["admin", "trainer"],
+    roles: [],
+    getRoles: ["trainer", "member"],
+    deleteRoles: ["trainer"],
     description:
-      "Administrators manage all sessions; trainers can only access and manage their own. Deleting a session also removes its bookings. Guests and members browse /api/v1/timetable instead.",
+      "Members and trainers can read all sessions; trainers can also delete their own sessions, but cannot create or update sessions. Deleting a session also removes its bookings.",
   },
   {
     path: "bookings",
     schema: "Booking",
     tag: "Bookings",
     model: BookingsModel,
-    roles: ["admin", "member"],
+    roles: ["member"],
+    getRoles: ["trainer", "member"],
+    putRoles: [],
     description:
-      "Administrators manage all bookings; members can only access and manage their own. Trainers cannot access booking management. Duplicate and overlapping bookings return 409.",
+      "Members can read, create and cancel only their own bookings, but cannot update bookings. Trainers can read bookings only for sessions assigned to them; they cannot create, update or cancel bookings. Duplicate and overlapping bookings return 409.",
   },
   {
     path: "blogs",
     schema: "Blog",
     tag: "Blogs",
     model: BlogModel,
-    roles: "any",
+    roles: ["trainer", "member"],
     publicRead: true,
     description:
-      "Anyone can read posts. Authenticated users create posts as themselves and edit or delete their own; administrators can edit or delete any post. Authors and creation timestamps are immutable.",
+      "Guests, members and trainers can read posts. Members and trainers create posts as themselves and edit or delete only their own posts. Authors and creation timestamps are immutable. Administrators have no API access.",
   },
 ];
 
@@ -149,6 +160,11 @@ for (const resource of resources) {
       ref("Message"),
     ),
   };
+  for (const method of resource.removedMethods ?? []) {
+    delete apiResourcePaths[method === "post" ? basePath : `${basePath}/{id}`][
+      method
+    ];
+  }
 }
 
 apiResourcePaths["/api/v1/timetable"] = {
@@ -157,8 +173,8 @@ apiResourcePaths["/api/v1/timetable"] = {
     operationId: "getTimetable",
     summary: "Browse the next seven days of sessions",
     description:
-      "Public for guests and members, matching the app timetable. Administrators and trainers use /api/v1/sessions.",
-    security: [],
+      "Members and trainers can browse the next seven days of sessions. Guests and administrators have no timetable access.",
+    security: [{ ApiKey: [] }],
     parameters: ["location_id", "trainer_id"].map((name) => ({
       name,
       in: "query",
@@ -175,13 +191,28 @@ apiResourcePaths["/api/v1/timetable"] = {
   },
 };
 
-function authorizeRecord(resource, user, record) {
-  if (user?.role === "admin") {
+async function authorizeRecord(resource, user, record, method) {
+  if (resource.path === "bookings" && user.role === "trainer") {
+    const session = await activeRecord(SessionsModel, record.session_id);
+    if (Number(session.trainer_id) !== Number(user.id)) {
+      throw new APIError(
+        403,
+        "You can only view bookings for your own sessions.",
+      );
+    }
     return;
   }
-  const ownerField = resource.path === "sessions" ? "trainer_id" : "user_id";
+  if (resource.path === "sessions" && method === "GET") {
+    return;
+  }
+  const ownerField =
+    resource.path === "users"
+      ? "id"
+      : resource.path === "sessions"
+        ? "trainer_id"
+        : "user_id";
   if (
-    ["sessions", "bookings", "blogs"].includes(resource.path) &&
+    ["users", "sessions", "bookings", "blogs"].includes(resource.path) &&
     Number(record[ownerField]) !== Number(user?.id)
   ) {
     throw new APIError(403, "You can only manage your own records.");
@@ -193,6 +224,12 @@ async function prepareRecord(resource, req, existing) {
   const record = { ...existing, ...req.body, id: existing?.id ?? null };
   switch (resource.path) {
     case "users":
+      if (existing && record.role !== existing.role) {
+        throw new APIError(403, "You cannot change your role.");
+      }
+      if (record.dob instanceof Date) {
+        record.dob = DatabaseModel.toMySqlDate(record.dob);
+      }
       if (
         !/^(?:0[23478]\d{8}|\+61[23478]\d{8}|13\d{4}|(?:1300|1800)\d{6})$/.test(
           record.phone.replace(/[ ().-]/g, ""),
@@ -216,8 +253,15 @@ async function prepareRecord(resource, req, existing) {
         if (Buffer.byteLength(req.body.password, "utf8") > 36) {
           throw new APIError(400, "Password must be at most 36 UTF-8 bytes.");
         }
-        record.password = await bcrypt.hash(req.body.password, 10);
-        record.authentication_key = null;
+        if (
+          existing &&
+          (await bcrypt.compare(req.body.password, existing.password))
+        ) {
+          record.password = existing.password;
+        } else {
+          record.password = await bcrypt.hash(req.body.password, 10);
+          record.authentication_key = null;
+        }
       }
       record.dob ??= null;
       record.deleted = 0;
@@ -239,15 +283,6 @@ async function prepareRecord(resource, req, existing) {
         })
       ) {
         throw new APIError(400, "Session date must be a real calendar date.");
-      }
-      if (
-        user.role === "trainer" &&
-        Number(record.trainer_id) !== Number(user.id)
-      ) {
-        throw new APIError(
-          403,
-          "Trainers can only schedule their own sessions.",
-        );
       }
       const trainer = await activeRecord(UsersModel, record.trainer_id);
       if (trainer.role !== "trainer") {
@@ -312,55 +347,78 @@ export class APIResourcesController {
   static routes = express.Router();
 
   static {
-    this.routes.get("/timetable", async (req, res) => {
-      if (["admin", "trainer"].includes(req.authenticatedUser?.role)) {
-        throw new APIError(
-          403,
-          "Staff use /api/v1/sessions instead of the timetable.",
-        );
-      }
-      const today = new Date();
-      const end = new Date(today);
-      end.setDate(end.getDate() + 7);
-      const startDate = DatabaseModel.toMySqlDate(today);
-      const endDate = DatabaseModel.toMySqlDate(end);
-      const sessions = (await SessionsModel.getAll())
-        .map(publicRecord)
-        .filter(
-          (session) =>
-            session.date >= startDate &&
-            session.date < endDate &&
-            (!req.query.location_id ||
-              Number(session.location_id) === Number(req.query.location_id)) &&
-            (!req.query.trainer_id ||
-              Number(session.trainer_id) === Number(req.query.trainer_id)),
-        )
-        .sort((a, b) =>
-          `${a.date} ${a.time}`.localeCompare(`${b.date} ${b.time}`),
-        );
-      res.json(sessions);
-    });
+    this.routes.get(
+      "/timetable",
+      APIAuthenticationController.restrict(["member", "trainer"]),
+      async (req, res) => {
+        const today = new Date();
+        const end = new Date(today);
+        end.setDate(end.getDate() + 7);
+        const startDate = DatabaseModel.toMySqlDate(today);
+        const endDate = DatabaseModel.toMySqlDate(end);
+        const sessions = (await SessionsModel.getAll())
+          .map(publicRecord)
+          .filter(
+            (session) =>
+              session.date >= startDate &&
+              session.date < endDate &&
+              (!req.query.location_id ||
+                Number(session.location_id) ===
+                  Number(req.query.location_id)) &&
+              (!req.query.trainer_id ||
+                Number(session.trainer_id) === Number(req.query.trainer_id)),
+          )
+          .sort((a, b) =>
+            `${a.date} ${a.time}`.localeCompare(`${b.date} ${b.time}`),
+          );
+        res.json(sessions);
+      },
+    );
 
     for (const resource of resources) {
       const router = express.Router();
       const serialize = resource.serialize ?? publicRecord;
       if (!resource.publicRead) {
-        router.use(APIAuthenticationController.restrict(resource.roles));
+        router.use((req, res, next) => {
+          const roles =
+            resource[`${req.method.toLowerCase()}Roles`] ?? resource.roles;
+          return APIAuthenticationController.restrict(roles)(req, res, next);
+        });
       }
-      router.get("/", async (req, res) => {
-        let records =
-          resource.path === "bookings" &&
-          req.authenticatedUser.role === "member"
-            ? await BookingsModel.getByUserId(req.authenticatedUser.id)
-            : await resource.model.getAll();
+      const listAccess = resource.publicRead
+        ? []
+        : [
+            APIAuthenticationController.restrict(
+              resource.listRoles ?? resource.getRoles ?? resource.roles,
+            ),
+          ];
+      router.get("/", ...listAccess, async (req, res) => {
+        let records;
         if (
-          resource.path === "sessions" &&
+          resource.path === "bookings" &&
           req.authenticatedUser.role === "trainer"
         ) {
-          records = records.filter(
-            (record) =>
-              Number(record.trainer_id) === Number(req.authenticatedUser.id),
+          const [bookings, sessions] = await Promise.all([
+            BookingsModel.getAll(),
+            SessionsModel.getAll(),
+          ]);
+          const sessionIds = new Set(
+            sessions
+              .filter(
+                (session) =>
+                  Number(session.trainer_id) ===
+                  Number(req.authenticatedUser.id),
+              )
+              .map((session) => Number(session.id)),
           );
+          records = bookings.filter((booking) =>
+            sessionIds.has(Number(booking.session_id)),
+          );
+        } else {
+          records =
+            resource.path === "bookings"
+              ? await BookingsModel.getByUserId(req.authenticatedUser.id)
+              : await resource.model.getAll();
         }
         res.json(records.map(serialize));
       });
@@ -370,48 +428,59 @@ export class APIResourcesController {
           Number(req.params.id),
         );
         if (!resource.publicRead) {
-          authorizeRecord(resource, req.authenticatedUser, record);
+          await authorizeRecord(
+            resource,
+            req.authenticatedUser,
+            record,
+            req.method,
+          );
         }
         res.json(serialize(record));
       });
       if (resource.publicRead) {
-        router.use(APIAuthenticationController.restrict("any"));
+        router.use(APIAuthenticationController.restrict(resource.roles));
       }
-      router.post("/", async (req, res) => {
-        const record = await prepareRecord(resource, req);
-        const result = await resource.model.create(record);
-        checkWrite(result);
-        const created = await activeRecord(
-          resource.model,
-          Number(result.insertId),
-        );
-        res
-          .location(`/api/v1/${resource.path}/${created.id}`)
-          .status(201)
-          .json(serialize(created));
-      });
-      router.put("/:id", async (req, res) => {
-        const existing = await activeRecord(
-          resource.model,
-          Number(req.params.id),
-        );
-        authorizeRecord(resource, req.authenticatedUser, existing);
-        const record = await prepareRecord(resource, req, existing);
-        checkWrite(await resource.model.update(record));
-        res.json(serialize(await activeRecord(resource.model, existing.id)));
-      });
-      router.delete("/:id", async (req, res) => {
-        const record = await activeRecord(
-          resource.model,
-          Number(req.params.id),
-        );
-        authorizeRecord(resource, req.authenticatedUser, record);
-        if (resource.path === "sessions") {
-          await BookingsModel.deleteBySessionId(record.id);
-        }
-        checkWrite(await resource.model.delete(record.id));
-        res.json({ message: `${resource.schema} deleted.` });
-      });
+      if (!resource.removedMethods?.includes("post")) {
+        router.post("/", async (req, res) => {
+          const record = await prepareRecord(resource, req);
+          const result = await resource.model.create(record);
+          checkWrite(result);
+          const created = await activeRecord(
+            resource.model,
+            Number(result.insertId),
+          );
+          res
+            .location(`/api/v1/${resource.path}/${created.id}`)
+            .status(201)
+            .json(serialize(created));
+        });
+      }
+      if (!resource.removedMethods?.includes("put")) {
+        router.put("/:id", async (req, res) => {
+          const existing = await activeRecord(
+            resource.model,
+            Number(req.params.id),
+          );
+          await authorizeRecord(resource, req.authenticatedUser, existing);
+          const record = await prepareRecord(resource, req, existing);
+          checkWrite(await resource.model.update(record));
+          res.json(serialize(await activeRecord(resource.model, existing.id)));
+        });
+      }
+      if (!resource.removedMethods?.includes("delete")) {
+        router.delete("/:id", async (req, res) => {
+          const record = await activeRecord(
+            resource.model,
+            Number(req.params.id),
+          );
+          await authorizeRecord(resource, req.authenticatedUser, record);
+          if (resource.path === "sessions") {
+            await BookingsModel.deleteBySessionId(record.id);
+          }
+          checkWrite(await resource.model.delete(record.id));
+          res.json({ message: `${resource.schema} deleted.` });
+        });
+      }
       this.routes.use(`/${resource.path}`, router);
     }
   }

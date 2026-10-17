@@ -33,6 +33,12 @@ const models = {
   bookings: BookingsModel,
   blogs: BlogModel,
 };
+const removedMethods = {
+  users: ["post", "delete"],
+  activities: ["post", "put", "delete"],
+  locations: ["post", "put", "delete"],
+  sessions: ["post", "put"],
+};
 const bodies = {
   users: {
     first_name: "New",
@@ -149,7 +155,7 @@ beforeEach(() => {
       if (!record) {
         throw "not found";
       }
-      return structuredClone(record);
+      return { ...record };
     });
     jest.spyOn(model, "create").mockImplementation(async (record) => {
       records[name].push({ ...record, id: 100 });
@@ -177,7 +183,7 @@ beforeEach(() => {
       if (!user) {
         throw "not found";
       }
-      return structuredClone(user);
+      return { ...user };
     });
   jest
     .spyOn(UsersModel, "getByUsername")
@@ -208,6 +214,27 @@ afterAll(async () => {
 });
 
 describe("OpenAPI contract", () => {
+  test.each(Object.entries(removedMethods))(
+    "removes unsupported %s writes from the contract and rejects direct requests",
+    async (resource, methods) => {
+      for (const method of methods) {
+        const path = `/${resource}${method === "post" ? "" : "/1"}`;
+        for (const user of [2, 3]) {
+          const result = await request(path, {
+            method: method.toUpperCase(),
+            user,
+            ...(method !== "delete" ? { body: bodies[resource] } : {}),
+          });
+          expect(result.status).toBe(405);
+          expect(result.body).toHaveProperty("message");
+        }
+      }
+      expect(models[resource].create).not.toHaveBeenCalled();
+      expect(models[resource].update).not.toHaveBeenCalled();
+      expect(models[resource].delete).not.toHaveBeenCalled();
+    },
+  );
+
   test.each(["authorizeOperationBtn"])(
     "reverses only the padlock presentation for %s",
     (component) => {
@@ -285,7 +312,7 @@ describe("OpenAPI contract", () => {
     expect(await response.json()).toHaveProperty("message");
     expect(UsersModel.getByUsername).not.toHaveBeenCalled();
   });
-  test("contains valid gym schemas and all CRUD operations", async () => {
+  test("contains valid gym schemas and only the retained operations", async () => {
     await SwaggerParser.validate(structuredClone(swaggerSpec));
     expect(
       Object.keys(swaggerSpec.paths).every((path) =>
@@ -294,11 +321,13 @@ describe("OpenAPI contract", () => {
     ).toBe(true);
     for (const resource of Object.keys(models)) {
       expect(swaggerSpec.paths[`/api/v1/${resource}`]).toHaveProperty("get");
-      expect(swaggerSpec.paths[`/api/v1/${resource}`]).toHaveProperty("post");
-      for (const method of ["get", "put", "delete"]) {
-        expect(swaggerSpec.paths[`/api/v1/${resource}/{id}`]).toHaveProperty(
-          method,
-        );
+      for (const method of ["get", "post", "put", "delete"]) {
+        const path = `/api/v1/${resource}${["get", "post"].includes(method) ? "" : "/{id}"}`;
+        if (removedMethods[resource]?.includes(method)) {
+          expect(swaggerSpec.paths[path]).not.toHaveProperty(method);
+        } else {
+          expect(swaggerSpec.paths[path]).toHaveProperty(method);
+        }
       }
     }
     expect(Object.keys(swaggerSpec.components.schemas)).not.toEqual(
@@ -310,61 +339,55 @@ describe("OpenAPI contract", () => {
   });
 
   test.each(Object.keys(models))(
-    "supports full admin CRUD for %s",
+    "denies every admin operation for %s, including public blog reads",
     async (resource) => {
-      const created = await request(`/${resource}`, {
-        method: "POST",
-        user: 1,
-        body: bodies[resource],
-      });
-      expect(created.status).toBe(201);
-      expect(created.body.id).toBe(100);
-      expect(created.location).toBe(`/api/v1/${resource}/100`);
-      expect((await request(`/${resource}`, { user: 1 })).status).toBe(200);
-      expect((await request(`/${resource}/100`, { user: 1 })).body.id).toBe(
-        100,
-      );
-      expect(
-        (
-          await request(`/${resource}/100`, {
-            method: "PUT",
-            user: 1,
-            body: bodies[resource],
-          })
-        ).status,
-      ).toBe(200);
-      const deleted = await request(`/${resource}/100`, {
-        method: "DELETE",
-        user: 1,
-      });
-      expect(deleted.status).toBe(200);
-      expect(deleted.body.message).toMatch(/deleted/);
-      expect((await request(`/${resource}/100`, { user: 1 })).status).toBe(404);
+      for (const [method, path] of [
+        ["GET", `/${resource}`],
+        ["GET", `/${resource}/1`],
+        ["POST", `/${resource}`],
+        ["PUT", `/${resource}/1`],
+        ["DELETE", `/${resource}/1`],
+      ]) {
+        expect(
+          (
+            await request(path, {
+              method,
+              user: 1,
+              ...(["POST", "PUT"].includes(method)
+                ? { body: bodies[resource] }
+                : {}),
+            })
+          ).status,
+        ).toBe(403);
+      }
+      expect(models[resource].getAll).not.toHaveBeenCalled();
+      expect(models[resource].getById).not.toHaveBeenCalled();
+      expect(models[resource].create).not.toHaveBeenCalled();
+      expect(models[resource].update).not.toHaveBeenCalled();
+      expect(models[resource].delete).not.toHaveBeenCalled();
     },
   );
 
   test.each(["0", "-1", "abc", "1.5", "2147483648"])(
     "rejects invalid resource ID %s",
     async (id) => {
-      expect((await request(`/activities/${id}`, { user: 1 })).status).toBe(
-        400,
-      );
-      expect(ActivitiesModel.getById).not.toHaveBeenCalled();
+      expect((await request(`/blogs/${id}`, { user: 3 })).status).toBe(400);
+      expect(BlogModel.getById).not.toHaveBeenCalled();
     },
   );
 
-  test.each(Object.keys(models))(
+  test.each(["bookings", "blogs"])(
     "rejects missing fields and unknown fields for %s",
     async (resource) => {
       expect(
-        (await request(`/${resource}`, { method: "POST", user: 1, body: {} }))
+        (await request(`/${resource}`, { method: "POST", user: 3, body: {} }))
           .status,
       ).toBe(400);
       expect(
         (
           await request(`/${resource}`, {
             method: "POST",
-            user: 1,
+            user: 3,
             body: { ...bodies[resource], unexpected: true },
           })
         ).status,
@@ -374,14 +397,6 @@ describe("OpenAPI contract", () => {
   );
 
   test.each([
-    ["activities", { name: " ".repeat(5) }],
-    ["activities", { name: "x".repeat(46) }],
-    ["locations", { email: "invalid" }],
-    ["locations", { postcode: -1 }],
-    ["locations", { manager: true }],
-    ["sessions", { date: "2026-02-30" }],
-    ["sessions", { time: "25:00" }],
-    ["sessions", { activity_id: "1" }],
     ["users", { role: "sales" }],
     ["users", { password: "short" }],
     ["users", { phone: "123" }],
@@ -389,17 +404,205 @@ describe("OpenAPI contract", () => {
     ["blogs", { content: "x".repeat(251) }],
     ["bookings", { user_id: 0 }],
   ])("validates %s fields: %j", async (resource, changes) => {
-    const result = await request(`/${resource}`, {
-      method: "POST",
-      user: 1,
-      body: { ...bodies[resource], ...changes },
-    });
+    const result = await request(
+      `/${resource}${resource === "users" ? "/3" : ""}`,
+      {
+        method: resource === "users" ? "PUT" : "POST",
+        user: 3,
+        body: { ...bodies[resource], ...changes },
+      },
+    );
     expect(result.status).toBe(400);
     expect(models[resource].create).not.toHaveBeenCalled();
+    expect(models[resource].update).not.toHaveBeenCalled();
   });
 });
 
 describe("API authentication and access", () => {
+  test("rejects admin login without issuing or rotating a key", async () => {
+    const result = await request("/authenticate", {
+      method: "POST",
+      body: { username: "user1@example.com", password: "testing123" },
+    });
+    expect(result.status).toBe(403);
+    expect(result.body.message).toBe("This role has no API access.");
+    expect(UsersModel.update).not.toHaveBeenCalled();
+    expect(records.users[0].authentication_key).toBe(key(1));
+    for (const path of ["/user/self", "/timetable", "/authenticate"]) {
+      expect(
+        (
+          await request(path, {
+            user: 1,
+            method: path === "/authenticate" ? "DELETE" : "GET",
+          })
+        ).status,
+      ).toBe(403);
+    }
+  });
+
+  test.each([3])(
+    "allows user %s to log in and read only their own bookings",
+    async (user) => {
+      records.bookings.push({ ...records.bookings[0], id: 2, user_id: 2 });
+      const list = await request("/bookings", { user });
+      expect(list.status).toBe(200);
+      expect(list.body.map((record) => record.user_id)).toEqual([user]);
+      const ownId = user === 2 ? 2 : 1;
+      const otherId = user === 2 ? 1 : 2;
+      expect((await request(`/bookings/${ownId}`, { user })).status).toBe(200);
+      expect((await request(`/bookings/${otherId}`, { user })).status).toBe(
+        403,
+      );
+      expect((await request("/sessions", { user })).status).toBe(200);
+      expect((await request("/sessions/1", { user })).status).toBe(200);
+      const login = await request("/authenticate", {
+        method: "POST",
+        body: { username: `user${user}@example.com`, password: "testing123" },
+      });
+      expect(login.status).toBe(200);
+      expect(
+        (
+          await request("/user/self", {
+            headers: { "x-auth-key": login.body.key },
+          })
+        ).status,
+      ).toBe(200);
+    },
+  );
+
+  test("trainers can only read bookings linked to sessions assigned to them", async () => {
+    records.sessions.push({ ...records.sessions[0], id: 2, trainer_id: 5 });
+    records.bookings.push(
+      { ...records.bookings[0], id: 2, session_id: 2, user_id: 2 },
+      { ...records.bookings[0], id: 3, session_id: 1, user_id: 4 },
+      { ...records.bookings[0], id: 4, session_id: 999, user_id: 2 },
+    );
+    const list = await request("/bookings", { user: 2 });
+    expect(list.status).toBe(200);
+    expect(list.body.map((booking) => booking.id)).toEqual([1, 3]);
+    expect(BookingsModel.getByUserId).not.toHaveBeenCalled();
+    expect((await request("/bookings/1", { user: 2 })).status).toBe(200);
+    expect((await request("/bookings/3", { user: 2 })).status).toBe(200);
+    expect((await request("/bookings/2", { user: 2 })).status).toBe(403);
+    expect((await request("/bookings/4", { user: 2 })).status).toBe(404);
+    const otherTrainer = await request("/bookings", { user: 5 });
+    expect(otherTrainer.body.map((booking) => booking.id)).toEqual([2]);
+    records.sessions[1].trainer_id = 2;
+    expect((await request("/bookings/2", { user: 2 })).status).toBe(200);
+    expect((await request("/bookings", { user: 5 })).body).toEqual([]);
+    expect((await request("/bookings/2", { user: 5 })).status).toBe(403);
+  });
+
+  test("blocks trainers from all booking writes, even for their own bookings", async () => {
+    records.bookings[0].user_id = 2;
+    for (const [method, path] of [
+      ["POST", "/bookings"],
+      ["PUT", "/bookings/1"],
+      ["DELETE", "/bookings/1"],
+    ]) {
+      expect(
+        (
+          await request(path, {
+            method,
+            user: 2,
+            ...(method !== "DELETE" ? { body: { session_id: 1 } } : {}),
+          })
+        ).status,
+      ).toBe(403);
+    }
+    expect(BookingsModel.create).not.toHaveBeenCalled();
+    expect(BookingsModel.update).not.toHaveBeenCalled();
+    expect(BookingsModel.delete).not.toHaveBeenCalled();
+  });
+
+  test.each([2, 3])(
+    "limits profile access and updates to user %s without role escalation",
+    async (user) => {
+      const { first_name, last_name, email, phone } = records.users[user - 1];
+      const body = { first_name, last_name, email, phone };
+      records.users[user - 1].dob = new Date(1990, 4, 12);
+      expect((await request(`/users/${user}`, { user })).status).toBe(200);
+      const updated = await request(`/users/${user}`, {
+        method: "PUT",
+        user,
+        body: { ...body, first_name: "Updated" },
+      });
+      expect(updated.status).toBe(200);
+      expect(updated.body.first_name).toBe("Updated");
+      expect(updated.body.dob).toBe("1990-05-12");
+      expect(records.users[user - 1].role).toBe(
+        user === 2 ? "trainer" : "member",
+      );
+      expect(records.users[user - 1].authentication_key).toBe(key(user));
+      UsersModel.update.mockClear();
+      for (const role of ["admin", user === 2 ? "member" : "trainer"]) {
+        expect(
+          (
+            await request(`/users/${user}`, {
+              method: "PUT",
+              user,
+              body: { ...body, role },
+            })
+          ).status,
+        ).toBe(403);
+      }
+      for (const method of ["GET", "PUT", "DELETE"]) {
+        expect(
+          (
+            await request("/users/4", {
+              method,
+              user,
+              ...(method === "PUT" ? { body } : {}),
+            })
+          ).status,
+        ).toBe(method === "DELETE" ? 405 : 403);
+      }
+      for (const [method, path] of [
+        ["GET", "/users"],
+        ["POST", "/users"],
+        ["DELETE", `/users/${user}`],
+      ]) {
+        expect(
+          (
+            await request(path, {
+              method,
+              user,
+              ...(method === "POST" ? { body: bodies.users } : {}),
+            })
+          ).status,
+        ).toBe(method === "GET" ? 403 : 405);
+      }
+      expect(UsersModel.create).not.toHaveBeenCalled();
+      expect(UsersModel.update).not.toHaveBeenCalled();
+      expect(UsersModel.delete).not.toHaveBeenCalled();
+    },
+  );
+
+  test.each([2, 3])(
+    "keeps user %s authenticated after invalid own-profile updates",
+    async (user) => {
+      const { first_name, last_name, email, phone } = records.users[user - 1];
+      const body = { first_name, last_name, email, phone };
+      for (const changes of [
+        { email: "invalid" },
+        { phone: "123" },
+        { password: "short" },
+      ]) {
+        expect(
+          (
+            await request(`/users/${user}`, {
+              method: "PUT",
+              user,
+              body: { ...body, ...changes },
+            })
+          ).status,
+        ).toBe(400);
+        expect((await request("/user/self", { user })).status).toBe(200);
+      }
+      expect(UsersModel.update).not.toHaveBeenCalled();
+    },
+  );
+
   test.each(Object.keys(models))(
     "requires authentication for every %s write",
     async (resource) => {
@@ -414,7 +617,9 @@ describe("API authentication and access", () => {
             ? { body: bodies[resource] }
             : {}),
         });
-        expect(result.status).toBe(401);
+        expect(result.status).toBe(
+          removedMethods[resource]?.includes(method.toLowerCase()) ? 405 : 401,
+        );
       }
       expect(models[resource].create).not.toHaveBeenCalled();
       expect(models[resource].update).not.toHaveBeenCalled();
@@ -422,14 +627,10 @@ describe("API authentication and access", () => {
     },
   );
   test.each([
-    ["users", 2],
-    ["users", 3],
     ["activities", 2],
     ["activities", 3],
     ["locations", 2],
     ["locations", 3],
-    ["sessions", 3],
-    ["bookings", 2],
   ])(
     "blocks unauthorized roles on every %s operation (user %s)",
     async (resource, user) => {
@@ -447,7 +648,9 @@ describe("API authentication and access", () => {
             ? { body: bodies[resource] }
             : {}),
         });
-        expect(result.status).toBe(403);
+        expect(result.status).toBe(
+          removedMethods[resource]?.includes(method.toLowerCase()) ? 405 : 403,
+        );
       }
       for (const method of [
         "getAll",
@@ -472,6 +675,25 @@ describe("API authentication and access", () => {
         .status,
     ).toBe(401);
     expect((await request("/user/self", { user: 99 })).status).toBe(401);
+  });
+
+  test("guests can only read blogs, not profiles, bookings or sessions", async () => {
+    for (const path of [
+      "/user/self",
+      "/users",
+      "/users/3",
+      "/bookings",
+      "/bookings/1",
+      "/sessions",
+      "/sessions/1",
+      "/timetable",
+      "/activities",
+      "/locations",
+    ]) {
+      expect((await request(path)).status).toBe(401);
+    }
+    expect((await request("/blogs")).status).toBe(200);
+    expect((await request("/blogs/1")).status).toBe(200);
   });
 
   test("logs in, rotates the key and logs out", async () => {
@@ -525,20 +747,20 @@ describe("ownership and gym rules", () => {
     async (phone) => {
       expect(
         (
-          await request("/users", {
-            method: "POST",
-            user: 1,
+          await request("/users/3", {
+            method: "PUT",
+            user: 3,
             body: { ...bodies.users, phone },
           })
         ).status,
-      ).toBe(201);
+      ).toBe(200);
     },
   );
 
   test("rejects invalid model responses instead of silently sending success", async () => {
     jest.spyOn(console, "error").mockImplementation(() => {});
-    ActivitiesModel.getAll.mockResolvedValue([{ id: 1 }]);
-    const result = await request("/activities", { user: 1 });
+    BlogModel.getAll.mockResolvedValue([{ id: 1 }]);
+    const result = await request("/blogs");
     expect(result.status).toBe(500);
     expect(result.body.message).toBe("Unable to process the API request.");
   });
@@ -549,7 +771,7 @@ describe("ownership and gym rules", () => {
     expect(result.body.created).toMatch(/^\d{4}-\d{2}-\d{2}T.*Z$/);
   });
 
-  test("allows trainers to create their own sessions and author blog posts", async () => {
+  test("blocks trainers from creating sessions but allows authoring blog posts", async () => {
     expect(
       (
         await request("/sessions", {
@@ -558,7 +780,8 @@ describe("ownership and gym rules", () => {
           body: bodies.sessions,
         })
       ).status,
-    ).toBe(201);
+    ).toBe(405);
+    expect(SessionsModel.create).not.toHaveBeenCalled();
     const blog = await request("/blogs", {
       method: "POST",
       user: 2,
@@ -567,96 +790,78 @@ describe("ownership and gym rules", () => {
     expect(blog.status).toBe(201);
     expect(blog.body.user_id).toBe(2);
   });
-  test("hashes new passwords, preserves omitted ones, and never returns hashes or keys", async () => {
-    const created = await request("/users", {
-      method: "POST",
-      user: 1,
-      body: bodies.users,
-    });
-    expect(created.status).toBe(201);
-    const stored = records.users.find((user) => user.id === 100);
-    expect(await bcrypt.compare("testing123", stored.password)).toBe(true);
-    expect(created.body).not.toHaveProperty("password");
-    expect(created.body).not.toHaveProperty("authentication_key");
+  test("hashes new passwords, preserves omitted or unchanged ones, and never returns hashes or keys", async () => {
     const body = { ...bodies.users };
     delete body.password;
-    const updated = await request("/users/100", {
+    const updated = await request("/users/3", {
       method: "PUT",
-      user: 1,
+      user: 3,
       body,
     });
     expect(updated.status).toBe(200);
-    expect(records.users.find((user) => user.id === 100).password).toBe(
-      stored.password,
-    );
-    const list = await request("/users", { user: 1 });
+    expect(records.users[2].password).toBe(passwordHash);
+    expect(records.users[2].authentication_key).toBe(key(3));
+    expect(updated.body).not.toHaveProperty("password");
+    expect(updated.body).not.toHaveProperty("authentication_key");
+    expect((await request("/user/self", { user: 3 })).status).toBe(200);
+    const unchanged = await request("/users/3", {
+      method: "PUT",
+      user: 3,
+      body: { ...body, first_name: "Updated", password: "testing123" },
+    });
+    expect(unchanged.status).toBe(200);
+    expect(unchanged.body.first_name).toBe("Updated");
+    expect(records.users[2].password).toBe(passwordHash);
+    expect(records.users[2].authentication_key).toBe(key(3));
+    expect((await request("/user/self", { user: 3 })).status).toBe(200);
+    const changed = await request("/users/3", {
+      method: "PUT",
+      user: 3,
+      body: { ...body, password: "newpassword123" },
+    });
+    expect(changed.status).toBe(200);
     expect(
-      list.body.every(
-        (user) => !("password" in user) && !("authentication_key" in user),
-      ),
+      await bcrypt.compare("newpassword123", records.users[2].password),
     ).toBe(true);
+    expect(records.users[2].authentication_key).toBeNull();
+    expect((await request("/user/self", { user: 3 })).status).toBe(401);
   });
 
   test("rejects overlong UTF-8 passwords before writing", async () => {
     expect(
       (
-        await request("/users", {
-          method: "POST",
-          user: 1,
+        await request("/users/3", {
+          method: "PUT",
+          user: 3,
           body: { ...bodies.users, password: "\u00e9".repeat(20) },
         })
       ).status,
     ).toBe(400);
-    expect(UsersModel.create).not.toHaveBeenCalled();
+    expect(UsersModel.update).not.toHaveBeenCalled();
   });
 
   test("hides soft-deleted records and validates active foreign keys", async () => {
-    records.activities[0].deleted = 1;
-    expect((await request("/activities/1", { user: 1 })).status).toBe(404);
-    expect((await request("/activities", { user: 1 })).body).toEqual([]);
+    records.users[3].deleted = 1;
+    expect((await request("/users/4", { user: 3 })).status).toBe(404);
     expect(
       (
-        await request("/sessions", {
+        await request("/bookings", {
           method: "POST",
-          user: 1,
-          body: bodies.sessions,
+          user: 3,
+          body: { session_id: 999 },
         })
       ).status,
     ).toBe(404);
-    expect(SessionsModel.create).not.toHaveBeenCalled();
+    expect(BookingsModel.create).not.toHaveBeenCalled();
   });
 
-  test("sets audit users server-side and rejects spoofed audit fields", async () => {
+  test("rejects spoofed server-managed fields", async () => {
     expect(
       (
-        await request("/activities", {
+        await request("/blogs", {
           method: "POST",
-          user: 1,
-          body: bodies.activities,
-        })
-      ).status,
-    ).toBe(201);
-    expect(ActivitiesModel.create).toHaveBeenCalledWith(
-      expect.objectContaining({ updated_by: 1, deleted: 0 }),
-    );
-    expect(
-      (
-        await request("/locations", {
-          method: "POST",
-          user: 1,
-          body: bodies.locations,
-        })
-      ).status,
-    ).toBe(201);
-    expect(LocationModel.create).toHaveBeenCalledWith(
-      expect.objectContaining({ updated_by: 1, deleted: 0 }),
-    );
-    expect(
-      (
-        await request("/activities", {
-          method: "POST",
-          user: 1,
-          body: { ...bodies.activities, updated_by: 5 },
+          user: 3,
+          body: { ...bodies.blogs, user_id: 5 },
         })
       ).status,
     ).toBe(400);
@@ -665,14 +870,15 @@ describe("ownership and gym rules", () => {
   test("scopes trainer sessions and prevents reassignment", async () => {
     records.sessions.push({ ...records.sessions[0], id: 2, trainer_id: 5 });
     const list = await request("/sessions", { user: 2 });
-    expect(list.body.map((item) => item.id)).toEqual([1]);
-    for (const method of ["GET", "PUT", "DELETE"]) {
+    expect(list.body.map((item) => item.id)).toEqual([1, 2]);
+    expect((await request("/sessions/2", { user: 2 })).status).toBe(200);
+    for (const method of ["PUT", "DELETE"]) {
       const result = await request("/sessions/2", {
         method,
         user: 2,
         ...(method === "PUT" ? { body: bodies.sessions } : {}),
       });
-      expect(result.status).toBe(403);
+      expect(result.status).toBe(method === "PUT" ? 405 : 403);
     }
     const otherTrainer = { ...bodies.sessions, trainer_id: 5 };
     expect(
@@ -683,7 +889,7 @@ describe("ownership and gym rules", () => {
           body: otherTrainer,
         })
       ).status,
-    ).toBe(403);
+    ).toBe(405);
     expect(
       (
         await request("/sessions/1", {
@@ -692,7 +898,7 @@ describe("ownership and gym rules", () => {
           body: otherTrainer,
         })
       ).status,
-    ).toBe(403);
+    ).toBe(405);
     expect(
       (
         await request("/sessions/1", {
@@ -701,31 +907,41 @@ describe("ownership and gym rules", () => {
           body: bodies.sessions,
         })
       ).status,
-    ).toBe(200);
-    expect(SessionsModel.update).toHaveBeenCalledWith(
-      expect.objectContaining({ time: "09:00:00" }),
-    );
+    ).toBe(405);
+    expect(SessionsModel.update).not.toHaveBeenCalled();
   });
 
-  test("rejects past session dates and non-trainers", async () => {
+  test("blocks members from creating, updating and deleting sessions", async () => {
     expect(
       (
         await request("/sessions", {
           method: "POST",
-          user: 1,
+          user: 3,
           body: { ...bodies.sessions, date: "2000-01-01" },
         })
       ).status,
-    ).toBe(400);
+    ).toBe(405);
     expect(
       (
         await request("/sessions", {
           method: "POST",
-          user: 1,
+          user: 3,
           body: { ...bodies.sessions, trainer_id: 3 },
         })
       ).status,
-    ).toBe(400);
+    ).toBe(405);
+    expect(
+      (await request("/sessions/1", { method: "DELETE", user: 3 })).status,
+    ).toBe(403);
+    expect(
+      (
+        await request("/sessions/1", {
+          method: "PUT",
+          user: 3,
+          body: bodies.sessions,
+        })
+      ).status,
+    ).toBe(405);
     expect(SessionsModel.create).not.toHaveBeenCalled();
   });
 
@@ -775,7 +991,7 @@ describe("ownership and gym rules", () => {
     expect(BookingsModel.update).not.toHaveBeenCalled();
   });
 
-  test("lets members create, update and delete their own bookings, defaulting user ID", async () => {
+  test("lets members create and cancel their own bookings, but not update them", async () => {
     expect(
       (
         await request("/bookings", {
@@ -793,8 +1009,8 @@ describe("ownership and gym rules", () => {
       user: 3,
       body: { session_id: 1 },
     });
-    expect(result.status).toBe(200);
-    expect(result.body.user_id).toBe(3);
+    expect(result.status).toBe(403);
+    expect(BookingsModel.update).not.toHaveBeenCalled();
     expect(
       (await request("/bookings/100", { method: "DELETE", user: 3 })).status,
     ).toBe(200);
@@ -805,11 +1021,11 @@ describe("ownership and gym rules", () => {
       (
         await request("/bookings", {
           method: "POST",
-          user: 1,
+          user: 3,
           body: { session_id: 1, user_id: 2 },
         })
       ).status,
-    ).toBe(400);
+    ).toBe(403);
     records.sessions[0].date = "2000-01-01";
     expect(
       (
@@ -824,11 +1040,10 @@ describe("ownership and gym rules", () => {
   });
 
   test.each([
-    ["sessions", { trainerConflict: true }],
     ["bookings", { duplicate: true }],
     ["bookings", { overlap: true }],
   ])(
-    "returns scheduling conflicts from %s create/update",
+    "returns scheduling conflicts from %s creation",
     async (resource, conflict) => {
       models[resource].create.mockResolvedValue({
         affectedRows: 0,
@@ -838,81 +1053,85 @@ describe("ownership and gym rules", () => {
         affectedRows: 0,
         ...conflict,
       });
-      for (const method of ["POST", "PUT"]) {
+      for (const method of ["POST"]) {
         const path = `/${resource}${method === "PUT" ? "/1" : ""}`;
         expect(
-          (await request(path, { method, user: 1, body: bodies[resource] }))
+          (await request(path, { method, user: 3, body: bodies[resource] }))
             .status,
         ).toBe(409);
       }
     },
   );
 
-  test("supports public blog reads and ownership-checked writes", async () => {
-    expect((await request("/blogs")).status).toBe(200);
-    expect((await request("/blogs/1")).status).toBe(200);
-    expect(
-      (await request("/blogs", { method: "POST", body: bodies.blogs })).status,
-    ).toBe(401);
-    for (const method of ["PUT", "DELETE"]) {
+  test.each([2, 3])(
+    "supports public blog reads and ownership-checked writes for user %s",
+    async (user) => {
+      expect((await request("/blogs")).status).toBe(200);
+      expect((await request("/blogs/1")).status).toBe(200);
+      expect(
+        (await request("/blogs", { method: "POST", body: bodies.blogs }))
+          .status,
+      ).toBe(401);
+      for (const method of ["PUT", "DELETE"]) {
+        expect(
+          (
+            await request("/blogs/1", {
+              method,
+              user: 4,
+              ...(method === "PUT" ? { body: bodies.blogs } : {}),
+            })
+          ).status,
+        ).toBe(403);
+      }
       expect(
         (
-          await request("/blogs/1", {
-            method,
-            user: 4,
-            ...(method === "PUT" ? { body: bodies.blogs } : {}),
+          await request("/blogs", {
+            method: "POST",
+            user,
+            body: { ...bodies.blogs, user_id: 4 },
           })
         ).status,
-      ).toBe(403);
-    }
+      ).toBe(400);
+      const created = await request("/blogs", {
+        method: "POST",
+        user,
+        body: bodies.blogs,
+      });
+      expect(created.status).toBe(201);
+      expect(created.body.user_id).toBe(user);
+      const updated = await request("/blogs/100", {
+        method: "PUT",
+        user,
+        body: bodies.blogs,
+      });
+      expect(updated.status).toBe(200);
+      expect(updated.body.created).toBe(created.body.created);
+      expect(
+        (await request("/blogs/100", { method: "DELETE", user })).status,
+      ).toBe(200);
+    },
+  );
+
+  test("maps database conflicts and returns JSON errors for missing routes", async () => {
+    BlogModel.create.mockRejectedValue(
+      Object.assign(new Error("SQL detail"), { code: "ER_DUP_ENTRY" }),
+    );
     expect(
       (
         await request("/blogs", {
           method: "POST",
           user: 3,
-          body: { ...bodies.blogs, user_id: 4 },
-        })
-      ).status,
-    ).toBe(400);
-    const created = await request("/blogs", {
-      method: "POST",
-      user: 3,
-      body: bodies.blogs,
-    });
-    expect(created.status).toBe(201);
-    expect(created.body.user_id).toBe(3);
-    const updated = await request("/blogs/100", {
-      method: "PUT",
-      user: 3,
-      body: bodies.blogs,
-    });
-    expect(updated.status).toBe(200);
-    expect(updated.body.created).toBe(created.body.created);
-    expect(
-      (await request("/blogs/100", { method: "DELETE", user: 3 })).status,
-    ).toBe(200);
-  });
-
-  test("maps database conflicts and returns JSON errors for missing routes", async () => {
-    ActivitiesModel.create.mockRejectedValue(
-      Object.assign(new Error("SQL detail"), { code: "ER_DUP_ENTRY" }),
-    );
-    expect(
-      (
-        await request("/activities", {
-          method: "POST",
-          user: 1,
-          body: bodies.activities,
+          body: bodies.blogs,
         })
       ).status,
     ).toBe(409);
-    expect((await request("/activities/999", { user: 1 })).status).toBe(404);
+    expect((await request("/blogs/999", { user: 3 })).status).toBe(404);
     const result = await request("/missing");
     expect(result.status).toBe(404);
     expect(result.body.message).toBeTruthy();
   });
 
-  test("timetable filters the next seven days for guests/members only", async () => {
+  test("timetable filters the next seven days for members and trainers only", async () => {
     const today = new Date();
     const end = new Date(today);
     end.setDate(end.getDate() + 7);
@@ -927,13 +1146,16 @@ describe("ownership and gym rules", () => {
       { ...records.sessions[0], id: 3, date: DatabaseModel.toMySqlDate(end) },
     ];
     expect(
-      (await request("/timetable?location_id=1&trainer_id=2")).body.map(
-        (item) => item.id,
-      ),
+      (
+        await request("/timetable?location_id=1&trainer_id=2", { user: 2 })
+      ).body.map((item) => item.id),
     ).toEqual([1]);
     expect((await request("/timetable", { user: 3 })).body).toHaveLength(2);
     expect((await request("/timetable", { user: 1 })).status).toBe(403);
-    expect((await request("/timetable", { user: 2 })).status).toBe(403);
-    expect((await request("/timetable?location_id=invalid")).status).toBe(400);
+    expect((await request("/timetable", { user: 2 })).body).toHaveLength(2);
+    expect((await request("/timetable")).status).toBe(401);
+    expect(
+      (await request("/timetable?location_id=invalid", { user: 2 })).status,
+    ).toBe(400);
   });
 });

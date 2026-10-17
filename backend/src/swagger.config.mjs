@@ -16,6 +16,7 @@ const options = {
       version: pkg.version,
       description:
         "JSON REST API for the High Street Gym Tafe assessment app.\n\n" +
+        "Guests can read blogs. Only members and trainers can authenticate; administrators have no API access.\n\n" +
         "### Getting started\n" +
         "1. POST your email (as `username`) and password to `/api/v1/authenticate`.\n" +
         "2. Copy the returned `key`, click **Authorize**, and paste it into the ApiKey field.\n" +
@@ -25,28 +26,31 @@ const options = {
     tags: [
       {
         name: "Authentication",
-        description: "Log in with an existing gym account and revoke API keys.",
+        description:
+          "Members and trainers can log in and revoke their API keys. Administrators have no API access.",
       },
       {
         name: "Users",
-        description: "Admin user management and your current profile.",
+        description:
+          "Members and trainers can read and update their own profile.",
       },
       {
         name: "Activities",
-        description: "Admin management of gym activity types.",
+        description: "Activity management is not available through the API.",
       },
       {
         name: "Locations",
-        description:
-          "Admin management of gym locations and their contact details.",
+        description: "Location management is not available through the API.",
       },
       {
         name: "Sessions",
-        description: "Staff session management and the public timetable.",
+        description:
+          "Member and trainer timetable reads and trainers' own session cancellations.",
       },
       {
         name: "Bookings",
-        description: "Admin booking management and members' own bookings.",
+        description:
+          "Members read, create and cancel their own bookings. Trainers can only read bookings for sessions assigned to them.",
       },
       {
         name: "Blogs",

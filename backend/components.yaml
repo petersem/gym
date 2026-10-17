@@ -91,7 +91,6 @@ components:
       required:
         - first_name
         - last_name
-        - role
         - email
         - phone
       properties:
@@ -140,8 +139,10 @@ components:
           nullable: true
           example: 1990-05-12
       description:
-        Replace editable user fields. Omit password to keep it unchanged;
-        changing it revokes the current API key.
+        Replace editable user fields. Members and trainers can update only their
+        own record and cannot change their role. Omit role to keep it unchanged.
+        Omitting password or supplying the current password preserves the API key.
+        Only changing the password revokes the current API key.
     User:
       type: object
       additionalProperties: false

@@ -43,6 +43,9 @@ export class APIAuthenticationController {
         }
         throw error;
       }
+      if (!["member", "trainer"].includes(req.authenticatedUser.role)) {
+        throw new APIError(403, "This role has no API access.");
+      }
     }
     next();
   }
@@ -53,7 +56,7 @@ export class APIAuthenticationController {
    * /api/v1/authenticate:
    *      post:
    *          summary: "Authenticate with username and password"
-   *          description: "Use your gym account email as username. Returns a new API key, replacing any previous key. Paste the key into Authorize to use protected endpoints."
+   *          description: "Members and trainers only; administrators have no API access. Use your gym account email as username. Returns a new API key, replacing any previous key. Paste the key into Authorize to use protected endpoints."
    *          operationId: login
    *          tags: [Authentication]
    *          requestBody:
@@ -68,6 +71,8 @@ export class APIAuthenticationController {
    *              '400':
    *                  $ref: "#/components/responses/Error"
    *              '401':
+   *                  $ref: "#/components/responses/Error"
+   *              '403':
    *                  $ref: "#/components/responses/Error"
    *              '500':
    *                  $ref: "#/components/responses/Error"
@@ -96,6 +101,11 @@ export class APIAuthenticationController {
         const user = await UsersModel.getByUsername(req.body.username);
 
         if (await bcrypt.compare(req.body.password, user.password)) {
+          if (!["member", "trainer"].includes(user.role)) {
+            return res.status(403).json({
+              message: "This role has no API access.",
+            });
+          }
           // Generate a cryptographically secure and random UUID for use as the authentication key
           const authenticationKey = randomUUID();
 
