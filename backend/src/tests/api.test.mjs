@@ -11,7 +11,10 @@ import {
 import express from "express";
 import bcrypt from "bcryptjs";
 import SwaggerParser from "@apidevtools/swagger-parser";
-import { APIController } from "../controllers/api/APIController.mjs";
+import {
+  APIController,
+  authorizationIconsPlugin,
+} from "../controllers/api/APIController.mjs";
 import { swaggerSpec } from "../swagger.config.mjs";
 import { UsersModel } from "../models/UsersModel.mjs";
 import { ActivitiesModel } from "../models/ActivitiesModel.mjs";
@@ -205,6 +208,36 @@ afterAll(async () => {
 });
 
 describe("OpenAPI contract", () => {
+  test.each(["authorizeBtn", "authorizeOperationBtn"])(
+    "reverses only the padlock presentation for %s",
+    (component) => {
+      const createElement = jest.fn((type, props) => ({ type, props }));
+      const original = () => null;
+      const wrapped = authorizationIconsPlugin().wrapComponents[component](
+        original,
+        { React: { createElement } },
+      );
+      const onClick = jest.fn();
+      for (const isAuthorized of [false, true, false]) {
+        const props = { isAuthorized, onClick, showPopup: true };
+        expect(wrapped(props)).toEqual({
+          type: original,
+          props: { ...props, isAuthorized: !isAuthorized },
+        });
+        expect(props.isAuthorized).toBe(isAuthorized);
+      }
+      expect(onClick).not.toHaveBeenCalled();
+    },
+  );
+
+  test("loads the padlock plugin in Swagger UI", async () => {
+    const response = await fetch(`${baseUrl}/api/v1/docs/swagger-ui-init.js`);
+    expect(response.status).toBe(200);
+    expect(await response.text()).toContain(
+      authorizationIconsPlugin.toString(),
+    );
+  });
+
   test("returns JSON errors for malformed JSON bodies", async () => {
     const response = await fetch(`${baseUrl}/api/v1/authenticate`, {
       method: "POST",

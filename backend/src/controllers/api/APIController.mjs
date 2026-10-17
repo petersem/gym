@@ -7,6 +7,22 @@ import { APIAuthenticationController } from "./APIAuthenticationController.mjs";
 import { APIResourcesController } from "./APIResourcesController.mjs";
 import { apiErrorHandler } from "./apiHelpers.mjs";
 
+export function authorizationIconsPlugin() {
+  // These presentation components do not manage the stored credentials.
+  const reversePadlock = (Original, system) => (props) =>
+    system.React.createElement(Original, {
+      ...props,
+      isAuthorized: !props.isAuthorized,
+    });
+
+  return {
+    wrapComponents: {
+      authorizeBtn: reversePadlock,
+      authorizeOperationBtn: reversePadlock,
+    },
+  };
+}
+
 export class APIController {
   static routes = express.Router();
 
@@ -42,7 +58,10 @@ export class APIController {
       swaggerUI.setup(swaggerSpec, {
         customCssUrl: "/css/swagger.css",
         customSiteTitle: "HSG App API",
-        swaggerOptions: { displayRequestDuration: true },
+        swaggerOptions: {
+          displayRequestDuration: true,
+          plugins: [authorizationIconsPlugin],
+        },
       }),
     );
     this.routes.get("/openapi.json", (_req, res) => res.json(swaggerSpec));

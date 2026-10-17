@@ -23,7 +23,7 @@ components:
           format: email
           maxLength: 100
           description: The user's login email address.
-          example: member@example.com
+          example: member@gym.com
         password:
           type: string
           minLength: 1
@@ -64,7 +64,7 @@ components:
           type: string
           format: email
           maxLength: 100
-          example: jane@example.com
+          example: jane@gym.com
         password:
           type: string
           format: password
@@ -118,7 +118,7 @@ components:
           type: string
           format: email
           maxLength: 100
-          example: jane@example.com
+          example: jane@gym.com
         password:
           type: string
           format: password
@@ -182,7 +182,7 @@ components:
           type: string
           format: email
           maxLength: 100
-          example: jane@example.com
+          example: jane@gym.com
         phone:
           type: string
           maxLength: 20
@@ -296,7 +296,7 @@ components:
           type: string
           format: email
           maxLength: 45
-          example: reception@example.com
+          example: reception@gym.com
         street:
           type: string
           minLength: 1
@@ -348,7 +348,7 @@ components:
           type: string
           format: email
           maxLength: 45
-          example: reception@example.com
+          example: reception@gym.com
         street:
           type: string
           minLength: 1
@@ -402,7 +402,7 @@ components:
           type: string
           format: email
           maxLength: 45
-          example: reception@example.com
+          example: reception@gym.com
         street:
           type: string
           minLength: 1
