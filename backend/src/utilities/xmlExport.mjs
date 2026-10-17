@@ -135,10 +135,10 @@ export function buildXmlDocument(root, content, dtd) {
 
 /**
  * Sends an XML document as a file download.
- * @param {import("express").Response} res Express response.
+ * @param {express.Response} res Express response.
  * @param {string} filename Download filename.
  * @param {string} document XML document.
- * @returns {import("express").Response} Express response.
+ * @returns {express.Response} Express response.
  */
 export function sendXmlDocument(res, filename, document) {
   res.set({
