@@ -295,7 +295,7 @@ const xmlExportPath = ({
     security: [{ ApiKey: [] }],
     responses: {
       200: {
-        description: `XML download (${filename}) with an internal DTD and a <${root}> root element.`,
+        description: `XML download (${filename}) with an internal DTD and a <${root}> root element. Dates use DD/MM/YYYY and times use h:mmam/pm in the server's local timezone.`,
         headers: {
           "Content-Disposition": {
             schema: { type: "string" },

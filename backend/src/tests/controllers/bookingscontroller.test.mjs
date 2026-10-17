@@ -79,7 +79,12 @@ describe("BookingsController", () => {
     afterSevenDays.setDate(afterSevenDays.getDate() + 7);
     const tooLateValue = dateValue(afterSevenDays);
     const bookings = [
-      { id: 101, session_id: 11, user_id: 7 },
+      {
+        id: 101,
+        session_id: 11,
+        user_id: 7,
+        created: "2026-10-16 13:05:00",
+      },
       { id: 102, session_id: 12, user_id: 7 },
       { id: 103, session_id: 99, user_id: 7 },
     ];
@@ -157,8 +162,13 @@ describe("BookingsController", () => {
     expect(res.send.mock.calls[0][0]).toContain(
       "<title>Spin &amp; Strength</title>",
     );
-    expect(res.send.mock.calls[0][0]).toContain(`<date>${todayValue}</date>`);
-    expect(res.send.mock.calls[0][0]).toContain("<time>10:30:00</time>");
+    expect(res.send.mock.calls[0][0]).toContain(
+      `<date>${todayValue.split("-").reverse().join("/")}</date>`,
+    );
+    expect(res.send.mock.calls[0][0]).toContain("<time>10:30am</time>");
+    expect(res.send.mock.calls[0][0]).toContain(
+      "<created>16/10/2026, 1:05pm</created>",
+    );
     expect(res.send.mock.calls[0][0]).toContain("<name>Central Gym</name>");
     expect(res.send.mock.calls[0][0]).toContain(
       "<street>1 Main Street</street>",

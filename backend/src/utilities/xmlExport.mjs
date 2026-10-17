@@ -38,6 +38,24 @@ ${sessionElements}
 const byId = (items, id) =>
   items.find((item) => Number(item.id) === Number(id)) ?? {};
 
+const dateOptions = {
+  day: "2-digit",
+  month: "2-digit",
+  year: "numeric",
+};
+const timeOptions = {
+  hour: "numeric",
+  minute: "2-digit",
+  hour12: true,
+};
+const localDate = new Intl.DateTimeFormat("en-AU", dateOptions);
+const localTime = new Intl.DateTimeFormat("en-AU", timeOptions);
+const localDateTime = new Intl.DateTimeFormat("en-AU", {
+  ...dateOptions,
+  ...timeOptions,
+});
+const compactMeridiem = (value) => value.replace(/\s+(am|pm)$/i, "$1");
+
 /**
  * Maps a session to its XML element content.
  * @param {Object} session Session record.
@@ -48,11 +66,16 @@ export function sessionXmlRecord(session, { activities, locations, users }) {
   const activity = byId(activities, session.activity_id);
   const trainer = byId(users, session.trainer_id);
   const location = byId(locations, session.location_id);
+  const date =
+    session.date instanceof Date
+      ? session.date
+      : new Date(`${String(session.date).slice(0, 10)}T00:00:00`);
+  const time = session.time ? new Date(`2000-01-01T${session.time}`) : null;
   return {
     id: String(session.id),
     title: String(session.title ?? ""),
-    date: String(session.date).slice(0, 10),
-    time: String(session.time ?? "").slice(0, 8),
+    date: localDate.format(date),
+    time: time ? compactMeridiem(localTime.format(time)) : "",
     activity: {
       name: String(activity.name ?? ""),
       description: String(activity.description ?? ""),
@@ -86,7 +109,10 @@ export function bookingXmlRecord(booking, session, lookups) {
       firstName: String(bookingUser.first_name ?? ""),
       lastName: String(bookingUser.last_name ?? ""),
     },
-    created: String(booking.created ?? ""),
+    created:
+      booking.created == null || booking.created === ""
+        ? ""
+        : compactMeridiem(localDateTime.format(new Date(booking.created))),
     session: sessionXmlRecord(session, lookups),
   };
 }

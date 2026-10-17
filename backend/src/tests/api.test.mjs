@@ -1575,7 +1575,11 @@ describe("XML exports", () => {
     expect(result.body).toContain("<firstName>Mia</firstName>");
     expect(result.body).toContain("<firstName>Tom</firstName>");
     expect(result.body).toContain("<name>City</name>");
-    expect(result.body).toMatch(/<created>\d{4}-\d{2}-\d{2}T[^<]+Z<\/created>/);
+    expect(result.body).toContain("<created>16/10/2026, 9:00am</created>");
+    expect(result.body).toContain(
+      `<date>${day(1).split("-").reverse().join("/")}</date>`,
+    );
+    expect(result.body).toContain("<time>7:00am</time>");
     expect(ids((await xml("/bookings/export.xml", 4)).body, "booking")).toEqual(
       [5],
     );
@@ -1589,6 +1593,10 @@ describe("XML exports", () => {
     expect(result.body).toContain("<!DOCTYPE gymSessions [");
     expect(ids(result.body, "session")).toEqual([2, 1]);
     expect(result.body).toContain("<firstName>Tom</firstName>");
+    expect(result.body).toContain(
+      `<date>${day(2).split("-").reverse().join("/")}</date>`,
+    );
+    expect(result.body).toContain("<time>9:00am</time>");
     expect(result.body).not.toContain("<booking>");
     expect(ids((await xml("/sessions/export.xml", 5)).body, "session")).toEqual(
       [3],

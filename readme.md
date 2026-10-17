@@ -46,7 +46,11 @@ can already see, and timetable search/sort also works with its `location_id` and
 Members can download their bookings for the next seven days as XML from
 `GET /api/v1/bookings/export.xml`. Trainers can download their own sessions for
 the next seven days from `GET /api/v1/sessions/export.xml`. Both files include a
-DTD and session, activity, trainer and location details.
+DTD and session, activity, trainer and location details. XML downloads (including
+the browser booking download) use Australian local formatting: `DD/MM/YYYY` dates
+and 12-hour times such as `1:05pm`, in the server's local timezone. Booking creation
+timestamps use the same format, for example `16/10/2026, 1:05pm`. JSON date/time
+formats are unchanged.
 
 The API uses API keys rather than browser cookie sessions, validates JSON against
 OpenAPI instead of the HTML form sanitiser, and does not require an
