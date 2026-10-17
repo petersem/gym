@@ -56,10 +56,6 @@ The API uses API keys rather than browser cookie sessions, validates JSON agains
 OpenAPI instead of the HTML form sanitiser, and does not require an
 `Idempotency-Key` header. Browser page routes keep their existing middleware.
 
-#### API access by role
-
-![API access matrix showing Guest, Member, Trainer and Admin permissions, including ownership and trainer-session restrictions](https://raw.githubusercontent.com/petersem/gym/main/gh-assets/api-role-sitemap.svg)
-
 ### Sitemap by Role
 
 ![Role sitemap with blue Guest, green Member, orange Trainer and purple Admin tick backgrounds](https://raw.githubusercontent.com/petersem/gym/main/gh-assets/role-sitemap.svg)
