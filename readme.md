@@ -8,11 +8,11 @@ Gym app for Tafe stage 2 assessment
 
 ## Backend Gym App
 
-![gym app](https://raw.githubusercontent.com/petersem/gym/main/gh-assets/gymapp.png)
+![gym app](/images/gymapp.png)
 
 ### Architecture
 
-![Architecture diagram](https://raw.githubusercontent.com/petersem/gym/main/gh-assets/diagram.png)
+![Architecture diagram](/images/diagram.png)
 
 ### Bookings
 
@@ -95,15 +95,15 @@ OpenAPI instead of the HTML form sanitiser, and does not require an
 
 #### API access by role
 
-![API access matrix showing Guest, Member, Trainer and Admin permissions, including ownership and trainer-session restrictions](backend/src/public/images/api-role-sitemap.svg)
+![API access matrix showing Guest, Member, Trainer and Admin permissions, including ownership and trainer-session restrictions](/images/api-role-sitemap.svg)
 
 ### Sitemap by Role
 
 **Role colors:**
 
-![Guest on blue, Member on green, Trainer on orange and Admin on purple backgrounds](gh-assets/role-legend.svg)
+![Guest on blue, Member on green, Trainer on orange and Admin on purple backgrounds](/images/role-legend.svg)
 
-![Role sitemap with blue Guest, green Member, orange Trainer and purple Admin tick backgrounds](gh-assets/role-sitemap.svg)
+![Role sitemap with blue Guest, green Member, orange Trainer and purple Admin tick backgrounds](/images/role-sitemap.svg)
 
 ¹ Trainers can manage only their own
 
@@ -114,7 +114,7 @@ OpenAPI instead of the HTML form sanitiser, and does not require an
 The Dashboard is the landing page for all roles. Its content changes for guests,
 members, trainers and admins; the dashboard views below are not separate pages.
 
-![Hierarchical gym sitemap with connected page boxes and colored access circles: blue Guest, green Member, orange Trainer and purple Admin](gh-assets/hierarchical-sitemap.svg)
+![Hierarchical gym sitemap with connected page boxes and colored access circles: blue Guest, green Member, orange Trainer and purple Admin](/images/hierarchical-sitemap.svg)
 
 ### Running the code
 
