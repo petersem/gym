@@ -1507,3 +1507,93 @@ describe("searching and sorting", () => {
     expect((await request("/bookings?search_term=yoga")).status).toBe(401);
   });
 });
+
+describe("XML exports", () => {
+  const day = (offset) => {
+    const date = new Date();
+    date.setDate(date.getDate() + offset);
+    return DatabaseModel.toMySqlDate(date);
+  };
+  const xml = async (path, user) => {
+    const response = await fetch(`${baseUrl}/api/v1${path}`, {
+      headers: user ? { "x-auth-key": key(user) } : {},
+    });
+    return {
+      status: response.status,
+      type: response.headers.get("content-type"),
+      disposition: response.headers.get("content-disposition"),
+      body: await response.text(),
+    };
+  };
+  const ids = (body, element) =>
+    [...body.matchAll(new RegExp(`<${element}>\\s*<id>(\\d+)</id>`, "g"))].map(
+      (match) => Number(match[1]),
+    );
+
+  beforeEach(() => {
+    records.users[2].first_name = "Mia";
+    records.users[1].first_name = "Tom";
+    records.sessions = [
+      { ...bodies.sessions, id: 1, date: day(2), time: "09:00:00" },
+      { ...bodies.sessions, id: 2, date: day(1), time: "07:00:00" },
+      { ...bodies.sessions, id: 3, trainer_id: 5, date: day(1) },
+      { ...bodies.sessions, id: 4, date: day(9), time: "07:00:00" },
+    ];
+    records.bookings = [1, 2, 3, 4].map((sessionId) => ({
+      id: sessionId,
+      session_id: sessionId,
+      user_id: 3,
+      created: "2026-10-16 09:00:00",
+    }));
+    records.bookings.push({ ...records.bookings[0], id: 5, user_id: 4 });
+  });
+
+  test("members download their upcoming bookings as XML", async () => {
+    const result = await xml("/bookings/export.xml", 3);
+    expect(result.status).toBe(200);
+    expect(result.type).toMatch(/^application\/xml/);
+    expect(result.disposition).toBe('attachment; filename="gym-bookings.xml"');
+    expect(result.body).toMatch(/^<\?xml version="1.0" encoding="UTF-8"\?>/);
+    expect(result.body).toContain("<!DOCTYPE gymBookings [");
+    expect(ids(result.body, "booking")).toEqual([2, 3, 1]);
+    expect(result.body).toContain("<firstName>Mia</firstName>");
+    expect(result.body).toContain("<firstName>Tom</firstName>");
+    expect(result.body).toContain("<name>City</name>");
+    expect(result.body).toMatch(/<created>\d{4}-\d{2}-\d{2}T[^<]+Z<\/created>/);
+    expect(ids((await xml("/bookings/export.xml", 4)).body, "booking")).toEqual(
+      [5],
+    );
+  });
+
+  test("trainers download their own upcoming sessions as XML", async () => {
+    const result = await xml("/sessions/export.xml", 2);
+    expect(result.status).toBe(200);
+    expect(result.type).toMatch(/^application\/xml/);
+    expect(result.disposition).toBe('attachment; filename="gym-sessions.xml"');
+    expect(result.body).toContain("<!DOCTYPE gymSessions [");
+    expect(ids(result.body, "session")).toEqual([2, 1]);
+    expect(result.body).toContain("<firstName>Tom</firstName>");
+    expect(result.body).not.toContain("<booking>");
+    expect(ids((await xml("/sessions/export.xml", 5)).body, "session")).toEqual(
+      [3],
+    );
+  });
+
+  test("restricts XML exports by role and documents them", async () => {
+    expect((await xml("/bookings/export.xml")).status).toBe(401);
+    expect((await xml("/bookings/export.xml", 2)).status).toBe(403);
+    expect((await xml("/bookings/export.xml", 1)).status).toBe(403);
+    expect((await xml("/sessions/export.xml")).status).toBe(401);
+    expect((await xml("/sessions/export.xml", 3)).status).toBe(403);
+    expect((await xml("/sessions/export.xml", 1)).status).toBe(403);
+    expect((await request("/bookings/1", { user: 3 })).status).toBe(200);
+    expect((await request("/sessions/1", { user: 2 })).status).toBe(405);
+    for (const path of ["bookings", "sessions"]) {
+      const operation = swaggerSpec.paths[`/api/v1/${path}/export.xml`].get;
+      expect(operation.security).toEqual([{ ApiKey: [] }]);
+      expect(operation.responses[200].content).toHaveProperty(
+        "application/xml",
+      );
+    }
+  });
+});

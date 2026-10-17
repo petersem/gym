@@ -10,6 +10,14 @@ import { BlogModel } from "../../models/BlogModel.mjs";
 import { DatabaseModel } from "../../models/DatabaseModel.mjs";
 import { APIAuthenticationController } from "./APIAuthenticationController.mjs";
 import {
+  bookingXmlRecord,
+  bookingsDtd,
+  buildXmlDocument,
+  sendXmlDocument,
+  sessionXmlRecord,
+  sessionsDtd,
+} from "../../utilities/xmlExport.mjs";
+import {
   APIError,
   activeRecord,
   publicRecord,
@@ -261,6 +269,54 @@ apiResourcePaths["/api/v1/timetable"] = {
   },
 };
 
+const xmlExportPath = ({
+  tag,
+  operationId,
+  summary,
+  description,
+  root,
+  filename,
+}) => ({
+  get: {
+    tags: [tag],
+    operationId,
+    summary,
+    description,
+    security: [{ ApiKey: [] }],
+    responses: {
+      200: {
+        description: `XML download (${filename}) with an internal DTD and a <${root}> root element.`,
+        headers: {
+          "Content-Disposition": {
+            schema: { type: "string" },
+            example: `attachment; filename="${filename}"`,
+          },
+        },
+        content: { "application/xml": { schema: { type: "string" } } },
+      },
+      ...errorResponses,
+    },
+  },
+});
+apiResourcePaths["/api/v1/bookings/export.xml"] = xmlExportPath({
+  tag: "Bookings",
+  operationId: "exportBookingsXml",
+  summary: "Download your bookings for the next seven days as XML",
+  description:
+    "Members download their own bookings for sessions in the next seven days, with session, activity, trainer and location details. Guests, trainers and administrators have no access.",
+  root: "gymBookings",
+  filename: "gym-bookings.xml",
+});
+apiResourcePaths["/api/v1/sessions/export.xml"] = xmlExportPath({
+  tag: "Sessions",
+  operationId: "exportSessionsXml",
+  summary: "Download your sessions for the next seven days as XML",
+  description:
+    "Trainers download their own sessions in the next seven days, with activity, trainer and location details. Bookings are not included. Guests, members and administrators have no access.",
+  root: "gymSessions",
+  filename: "gym-sessions.xml",
+});
+
 async function authorizeRecord(resource, user, record) {
   if (resource.path === "bookings" && user.role === "trainer") {
     const session = await activeRecord(SessionsModel, record.session_id);
@@ -508,32 +564,106 @@ function checkWrite(result) {
   }
 }
 
+async function upcomingSessions() {
+  const today = new Date();
+  const end = new Date(today);
+  end.setDate(end.getDate() + 7);
+  const startDate = DatabaseModel.toMySqlDate(today);
+  const endDate = DatabaseModel.toMySqlDate(end);
+  return (await SessionsModel.getAll())
+    .map(publicRecord)
+    .filter((session) => session.date >= startDate && session.date < endDate)
+    .sort(
+      (a, b) =>
+        `${a.date} ${a.time}`.localeCompare(`${b.date} ${b.time}`) ||
+        Number(a.id) - Number(b.id),
+    );
+}
+
+async function xmlLookups() {
+  const [activities, locations, users] = await Promise.all([
+    ActivitiesModel.getAll(),
+    LocationModel.getAll(),
+    UsersModel.getAll(),
+  ]);
+  return { activities, locations, users };
+}
+
 export class APIResourcesController {
   static routes = express.Router();
 
   static {
     this.routes.get("/timetable", async (req, res) => {
-      const today = new Date();
-      const end = new Date(today);
-      end.setDate(end.getDate() + 7);
-      const startDate = DatabaseModel.toMySqlDate(today);
-      const endDate = DatabaseModel.toMySqlDate(end);
-      const sessions = (await SessionsModel.getAll())
-        .map(publicRecord)
-        .filter(
-          (session) =>
-            session.date >= startDate &&
-            session.date < endDate &&
-            (!req.query.location_id ||
-              Number(session.location_id) === Number(req.query.location_id)) &&
-            (!req.query.trainer_id ||
-              Number(session.trainer_id) === Number(req.query.trainer_id)),
-        )
-        .sort((a, b) =>
-          `${a.date} ${a.time}`.localeCompare(`${b.date} ${b.time}`),
-        );
+      const sessions = (await upcomingSessions()).filter(
+        (session) =>
+          (!req.query.location_id ||
+            Number(session.location_id) === Number(req.query.location_id)) &&
+          (!req.query.trainer_id ||
+            Number(session.trainer_id) === Number(req.query.trainer_id)),
+      );
       res.json(await searchAndSort(timetable, sessions, req.query));
     });
+
+    this.routes.get(
+      "/bookings/export.xml",
+      APIAuthenticationController.restrict(["member"]),
+      async (req, res) => {
+        const [sessions, bookings, lookups] = await Promise.all([
+          upcomingSessions(),
+          BookingsModel.getByUserId(req.authenticatedUser.id),
+          xmlLookups(),
+        ]);
+        const sessionsById = new Map(
+          sessions.map((session) => [Number(session.id), session]),
+        );
+        const sessionOrder = new Map(
+          sessions.map((session, index) => [Number(session.id), index]),
+        );
+        const booking = bookings
+          .filter((item) => sessionsById.has(Number(item.session_id)))
+          .map(publicRecord)
+          .sort(
+            (a, b) =>
+              sessionOrder.get(Number(a.session_id)) -
+                sessionOrder.get(Number(b.session_id)) ||
+              Number(a.id) - Number(b.id),
+          )
+          .map((item) =>
+            bookingXmlRecord(
+              item,
+              sessionsById.get(Number(item.session_id)),
+              lookups,
+            ),
+          );
+        sendXmlDocument(
+          res,
+          "gym-bookings.xml",
+          buildXmlDocument("gymBookings", { booking }, bookingsDtd),
+        );
+      },
+    );
+
+    this.routes.get(
+      "/sessions/export.xml",
+      APIAuthenticationController.restrict(["trainer"]),
+      async (req, res) => {
+        const [sessions, lookups] = await Promise.all([
+          upcomingSessions(),
+          xmlLookups(),
+        ]);
+        const session = sessions
+          .filter(
+            (item) =>
+              Number(item.trainer_id) === Number(req.authenticatedUser.id),
+          )
+          .map((item) => sessionXmlRecord(item, lookups));
+        sendXmlDocument(
+          res,
+          "gym-sessions.xml",
+          buildXmlDocument("gymSessions", { session }, sessionsDtd),
+        );
+      },
+    );
 
     for (const resource of resources) {
       const router = express.Router();

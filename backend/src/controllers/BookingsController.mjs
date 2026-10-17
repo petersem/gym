@@ -4,38 +4,15 @@ import { UsersModel } from "../models/UsersModel.mjs";
 import { SessionsModel } from "../models/SessionsModel.mjs";
 import { LocationModel } from "../models/LocationModel.mjs";
 import { ActivitiesModel } from "../models/ActivitiesModel.mjs";
-import XMLBuilder from "fast-xml-builder";
+import {
+  bookingXmlRecord,
+  bookingsDtd,
+  buildXmlDocument,
+  sendXmlDocument,
+} from "../utilities/xmlExport.mjs";
 import { body } from "express-validator";
 import { management } from "../utilities/formValidation.mjs";
 import { AuthenticationController } from "./AuthenticationController.mjs";
-
-const xmlBuilder = new XMLBuilder({
-  ignoreAttributes: false,
-  format: true,
-});
-
-const bookingsDtd = `<!DOCTYPE gymBookings [
-<!ELEMENT gymBookings (booking*)>
-<!ELEMENT booking (id, userId, user, created, session)>
-<!ELEMENT id (#PCDATA)>
-<!ELEMENT userId (#PCDATA)>
-<!ELEMENT user (firstName, lastName)>
-<!ELEMENT created (#PCDATA)>
-<!ELEMENT session (id, title, date, time, activity, trainer, location)>
-<!ELEMENT title (#PCDATA)>
-<!ELEMENT date (#PCDATA)>
-<!ELEMENT time (#PCDATA)>
-<!ELEMENT activity (name, description)>
-<!ELEMENT name (#PCDATA)>
-<!ELEMENT description (#PCDATA)>
-<!ELEMENT trainer (firstName, lastName)>
-<!ELEMENT firstName (#PCDATA)>
-<!ELEMENT lastName (#PCDATA)>
-<!ELEMENT location (name, street, suburb, postcode)>
-<!ELEMENT street (#PCDATA)>
-<!ELEMENT suburb (#PCDATA)>
-<!ELEMENT postcode (#PCDATA)>
-]>`;
 
 /**
  * Builds the bookings page URL while preserving the active filters.
@@ -247,66 +224,23 @@ export class BookingsController {
             String(leftSession.time).localeCompare(String(rightSession.time))
           );
         });
-      const bookingRecords = selectedBookings.map((booking) => {
-        const session = sessionsById.get(Number(booking.session_id));
-        const location =
-          locations.find(
-            (item) => Number(item.id) === Number(session.location_id),
-          ) ?? {};
-        const activity =
-          activities.find(
-            (item) => Number(item.id) === Number(session.activity_id),
-          ) ?? {};
-        const trainer =
-          users.find(
-            (user) => Number(user.id) === Number(session.trainer_id),
-          ) ?? {};
-        const bookingUser =
-          users.find((user) => Number(user.id) === Number(booking.user_id)) ??
-          {};
-
-        return {
-          id: String(booking.id),
-          userId: String(booking.user_id),
-          user: {
-            firstName: String(bookingUser.first_name ?? ""),
-            lastName: String(bookingUser.last_name ?? ""),
-          },
-          created: String(booking.created ?? ""),
-          session: {
-            id: String(session.id),
-            title: String(session.title ?? ""),
-            date: String(session.date).slice(0, 10),
-            time: String(session.time ?? "").slice(0, 8),
-            activity: {
-              name: String(activity.name ?? ""),
-              description: String(activity.description ?? ""),
-            },
-            trainer: {
-              firstName: String(trainer.first_name ?? ""),
-              lastName: String(trainer.last_name ?? ""),
-            },
-            location: {
-              name: String(location.name ?? ""),
-              street: String(location.street ?? ""),
-              suburb: String(location.suburb ?? ""),
-              postcode: String(location.postcode ?? ""),
-            },
-          },
-        };
-      });
-      const xml = xmlBuilder.build({
-        "?xml": { "@_version": "1.0", "@_encoding": "UTF-8" },
-        gymBookings: { booking: bookingRecords },
-      });
-
-      res.set({
-        "Content-Type": "application/xml; charset=utf-8",
-        "Content-Disposition": 'attachment; filename="gym-bookings.xml"',
-      });
-      const declarationEnd = xml.indexOf("?>") + 2;
-      const document = `${xml.slice(0, declarationEnd)}\n${bookingsDtd}\n${xml.slice(declarationEnd).trimStart()}`;
-      return res.send(document);
+      const lookups = { activities, locations, users };
+      const bookingRecords = selectedBookings.map((booking) =>
+        bookingXmlRecord(
+          booking,
+          sessionsById.get(Number(booking.session_id)),
+          lookups,
+        ),
+      );
+      return sendXmlDocument(
+        res,
+        "gym-bookings.xml",
+        buildXmlDocument(
+          "gymBookings",
+          { booking: bookingRecords },
+          bookingsDtd,
+        ),
+      );
     } catch (error) {
       return next(error);
     }

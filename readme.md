@@ -36,12 +36,17 @@ field limits, response schemas, error codes, and role/ownership rules.
    the previous key.
 
 > Administrators cannot log in to the API or use existing API keys.
-Guests without a key can read blogs, locations, the trainer list and the timetable. 
+> Guests without a key can read blogs, locations, the trainer list and the timetable.
 
 `GET /api/v1/blogs`, `GET /api/v1/bookings` and `GET /api/v1/timetable` accept
 optional search and sort query parameters. Results stay limited to what your role
 can already see, and timetable search/sort also works with its `location_id` and
 `trainer_id` filters.
+
+Members can download their bookings for the next seven days as XML from
+`GET /api/v1/bookings/export.xml`. Trainers can download their own sessions for
+the next seven days from `GET /api/v1/sessions/export.xml`. Both files include a
+DTD and session, activity, trainer and location details.
 
 The API uses API keys rather than browser cookie sessions, validates JSON against
 OpenAPI instead of the HTML form sanitiser, and does not require an
