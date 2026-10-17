@@ -1,6 +1,6 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="960" height="686" viewBox="0 0 960 686" role="img" aria-labelledby="title description">
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="710" viewBox="0 0 960 710" role="img" aria-labelledby="title description">
   <title id="title">Gym API access by role</title>
-  <desc id="description">Guest, Member, Trainer and Admin API permissions. Guests can read blogs, locations, the trainer list and the timetable (members and trainers can too). Members and trainers can authenticate, read and update their own profile, and create blog posts or edit and delete their own posts. Members can read, create and cancel their own bookings. Trainers can read bookings for sessions assigned to them and delete their own sessions, but cannot make or cancel bookings. Administrators have no API access. Documentation remains public.</desc>
+  <desc id="description">Guest, Member, Trainer and Admin API permissions. Guests can read blogs, locations, the trainer list and the timetable (members and trainers can too). Members and trainers can authenticate, read and update their own profile, and create blog posts or edit and delete their own posts. Members can read, create and cancel their own bookings. Trainers can read bookings for sessions assigned to them and delete their own sessions, but cannot make or cancel bookings. The blog, timetable and booking lists can be searched and sorted within each role&#x2019;s access. Administrators have no API access. Documentation remains public.</desc>
   <style>
     text { font-family: Arial, Helvetica, sans-serif; font-size: 15px; fill: #17231d; }
     .heading { font-weight: 700; }
@@ -37,7 +37,7 @@
       <text class="tick" y="1">&#x2713;&#xB2;</text>
     </g>
   </defs>
-  <rect x="1" y="1" width="958" height="684" rx="10" fill="#ffffff" stroke="#dfe7e0"/>
+  <rect x="1" y="1" width="958" height="708" rx="10" fill="#ffffff" stroke="#dfe7e0"/>
   <text x="20" y="36" class="title">API Access by Role</text>
   <text x="20" y="61" class="note">Base path: /api/v1 &#x2022; Member and Trainer access requires an x-auth-key.</text>
   <path d="M1 80H959V126H1Z" fill="#f3f6f2"/>
@@ -54,13 +54,13 @@
   <g>
     <text x="20" y="150">Read locations &#x2014; GET /locations, /locations/{id}</text>
     <text x="20" y="186">List trainers &#x2014; GET /users</text>
-    <text x="20" y="222">Read blogs &#x2014; GET /blogs, /blogs/{id}</text>
+    <text x="20" y="222">Read blogs &#x2014; GET /blogs, /blogs/{id} &#xB3;</text>
     <text x="20" y="258">Create blog &#x2014; POST /blogs</text>
     <text x="20" y="294">Update / delete blog &#x2014; PUT / DELETE /blogs/{id}</text>
     <text x="20" y="330">Read profile &#x2014; GET /user/self, /users/{id}</text>
     <text x="20" y="366">Update profile &#x2014; PUT /users/{id}</text>
-    <text x="20" y="402">View timetable &#x2014; GET /timetable</text>
-    <text x="20" y="438">Read bookings &#x2014; GET /bookings, /bookings/{id}</text>
+    <text x="20" y="402">View timetable &#x2014; GET /timetable &#xB3;</text>
+    <text x="20" y="438">Read bookings &#x2014; GET /bookings, /bookings/{id} &#xB3;</text>
     <text x="20" y="474">Make booking &#x2014; POST /bookings</text>
     <text x="20" y="510">Cancel booking &#x2014; DELETE /bookings/{id}</text>
     <text x="20" y="546">Delete session &#x2014; DELETE /sessions/{id}</text>
@@ -130,5 +130,6 @@
   <g class="note">
     <text x="20" y="626">&#x2713; Allowed    &#x2014; No access    &#xB9; Own record / own post / assigned session only.</text>
     <text x="20" y="650">&#xB2; Trainers read bookings for sessions assigned to them, regardless of who made the booking.</text>
+    <text x="20" y="674">&#xB3; The /blogs, /timetable and /bookings lists accept search_term, sort_by and sort_dir; results stay within the role&#x2019;s access.</text>
   </g>
 </svg>
