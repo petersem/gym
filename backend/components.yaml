@@ -191,6 +191,33 @@ components:
           format: date
           nullable: true
           example: 1990-05-12
+    UserSummary:
+      type: object
+      additionalProperties: false
+      description: Public trainer details. Contact details and date of birth are never included.
+      required:
+        - id
+        - first_name
+        - last_name
+        - role
+      properties:
+        id:
+          type: integer
+          minimum: 1
+          maximum: 2147483647
+          example: 1
+        first_name:
+          type: string
+          example: Jane
+        last_name:
+          type: string
+          example: Doe
+        role:
+          type: string
+          enum:
+            - trainer
+          readOnly: true
+          example: trainer
     ActivityCreate:
       type: object
       additionalProperties: false
@@ -733,6 +760,19 @@ components:
           format: date-time
           readOnly: true
           example: 2026-10-16T05:00:00.000Z
+    BlogSummary:
+      allOf:
+        - $ref: "#/components/schemas/Blog"
+        - type: object
+          required:
+            - first_name
+          properties:
+            first_name:
+              type: string
+              nullable: true
+              readOnly: true
+              example: Jane
+              description: The author's first name, or null if the author no longer exists.
     Message:
       type: object
       required:

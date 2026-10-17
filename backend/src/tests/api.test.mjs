@@ -35,9 +35,10 @@ const models = {
 };
 const removedMethods = {
   users: ["post", "delete"],
+  locations: ["post", "put", "delete"],
   sessions: ["post", "get", "put"],
 };
-const removedBasePaths = ["users", "sessions"];
+const removedBasePaths = ["sessions"];
 const bodies = {
   users: {
     first_name: "New",
@@ -212,17 +213,69 @@ afterAll(async () => {
 });
 
 describe("OpenAPI contract", () => {
-  test("removes List all users from the API and Swagger documentation", async () => {
-    expect(swaggerSpec.paths).not.toHaveProperty("/api/v1/users");
-    expect(swaggerSpec.paths["/api/v1/users/{id}"]).toHaveProperty("get");
-    expect(swaggerSpec.paths["/api/v1/users/{id}"]).toHaveProperty("put");
+  test("lists only trainer summaries publicly while keeping user detail private", async () => {
+    expect(swaggerSpec.paths["/api/v1/users"].get.security).toEqual([]);
+    expect(swaggerSpec.paths["/api/v1/users/{id}"].get.security).toEqual([
+      { ApiKey: [] },
+    ]);
     for (const user of [undefined, 2, 3]) {
       const response = await request("/users", { user });
-      expect(response.status).toBe(404);
-      expect(response.body).toHaveProperty("message");
+      expect(response.status).toBe(200);
+      expect(response.body).toEqual([
+        { id: 2, first_name: "New", last_name: "Member", role: "trainer" },
+        { id: 5, first_name: "New", last_name: "Member", role: "trainer" },
+      ]);
     }
-    expect(UsersModel.getAll).not.toHaveBeenCalled();
+    expect((await request("/users/3")).status).toBe(401);
+    expect((await request("/users", { user: 1 })).status).toBe(403);
+    const own = await request("/users/3", { user: 3 });
+    expect(own.status).toBe(200);
+    expect(own.body.email).toBe("user3@example.com");
+    expect((await request("/users/2", { user: 3 })).status).toBe(403);
   });
+
+  test("lets guests, members and trainers read locations", async () => {
+    for (const user of [undefined, 2, 3]) {
+      const list = await request("/locations", { user });
+      expect(list.status).toBe(200);
+      expect(list.body.map((record) => record.id)).toEqual([1]);
+      expect((await request("/locations/1", { user })).status).toBe(200);
+    }
+    expect((await request("/locations", { user: 1 })).status).toBe(403);
+  });
+
+  test.each([undefined, 2, 3])(
+    "removes every activities operation (user %s)",
+    async (user) => {
+      expect(swaggerSpec.paths).not.toHaveProperty("/api/v1/activities");
+      expect(swaggerSpec.paths).not.toHaveProperty("/api/v1/activities/{id}");
+      for (const [method, path] of [
+        ["GET", "/activities"],
+        ["GET", "/activities/1"],
+        ["POST", "/activities"],
+        ["PUT", "/activities/1"],
+        ["DELETE", "/activities/1"],
+      ]) {
+        const result = await request(path, {
+          method,
+          user,
+          ...(["POST", "PUT"].includes(method)
+            ? { body: bodies.activities }
+            : {}),
+        });
+        expect(result.status).toBe(404);
+      }
+      for (const method of [
+        "getAll",
+        "getById",
+        "create",
+        "update",
+        "delete",
+      ]) {
+        expect(ActivitiesModel[method]).not.toHaveBeenCalled();
+      }
+    },
+  );
 
   test.each(Object.entries(removedMethods))(
     "removes unsupported %s operations from the contract and rejects direct requests",
@@ -345,26 +398,15 @@ describe("OpenAPI contract", () => {
   });
   test("contains valid gym schemas and only the retained operations", async () => {
     await SwaggerParser.validate(structuredClone(swaggerSpec));
-    expect(swaggerSpec.tags.map((tag) => tag.name)).not.toEqual(
-      expect.arrayContaining(["Activities", "Locations"]),
-    );
+    expect(swaggerSpec.tags.map((tag) => tag.name)).toContain("Locations");
+    expect(swaggerSpec.tags.map((tag) => tag.name)).not.toContain("Activities");
     expect(
       Object.keys(swaggerSpec.paths).every((path) =>
         path.startsWith("/api/v1/"),
       ),
     ).toBe(true);
     for (const resource of Object.keys(models)) {
-      if (["activities", "locations"].includes(resource)) {
-        expect(swaggerSpec.paths).not.toHaveProperty(`/api/v1/${resource}`);
-        expect(swaggerSpec.paths).not.toHaveProperty(
-          `/api/v1/${resource}/{id}`,
-        );
-        continue;
-      }
-      if (resource === "users") {
-        expect(swaggerSpec.paths).not.toHaveProperty("/api/v1/users");
-        expect(swaggerSpec.paths["/api/v1/users/{id}"]).toHaveProperty("get");
-        expect(swaggerSpec.paths["/api/v1/users/{id}"]).toHaveProperty("put");
+      if (resource === "activities") {
         continue;
       }
       if (resource === "sessions") {
@@ -635,7 +677,6 @@ describe("API authentication and access", () => {
         ).toBe(method === "DELETE" ? 405 : 403);
       }
       for (const [method, path] of [
-        ["GET", "/users"],
         ["POST", "/users"],
         ["DELETE", `/users/${user}`],
       ]) {
@@ -647,7 +688,7 @@ describe("API authentication and access", () => {
               ...(method === "POST" ? { body: bodies.users } : {}),
             })
           ).status,
-        ).toBe(method === "DELETE" ? 405 : 404);
+        ).toBe(405);
       }
       expect(UsersModel.create).not.toHaveBeenCalled();
       expect(UsersModel.update).not.toHaveBeenCalled();
@@ -697,7 +738,7 @@ describe("API authentication and access", () => {
           ...(["POST", "PUT"].includes(method) ? { body } : {}),
         });
         expect(result.status).toBe(
-          ["activities", "locations"].includes(resource) ||
+          resource === "activities" ||
             (removedBasePaths.includes(resource) && method === "POST")
             ? 404
             : removedMethods[resource]?.includes(method.toLowerCase())
@@ -710,37 +751,16 @@ describe("API authentication and access", () => {
       expect(models[resource].delete).not.toHaveBeenCalled();
     },
   );
-  test.each([
-    ["activities", 2],
-    ["activities", 3],
-    ["locations", 2],
-    ["locations", 3],
-  ])("removes every %s operation (user %s)", async (resource, user) => {
-    for (const [method, path] of [
-      ["GET", `/${resource}`],
-      ["GET", `/${resource}/1`],
-      ["POST", `/${resource}`],
-      ["PUT", `/${resource}/1`],
-      ["DELETE", `/${resource}/1`],
-    ]) {
-      const result = await request(path, {
-        method,
-        user,
-        ...(["POST", "PUT"].includes(method) ? { body: bodies[resource] } : {}),
-      });
-      expect(result.status).toBe(404);
-    }
-    for (const method of ["getAll", "getById", "create", "update", "delete"]) {
-      expect(models[resource][method]).not.toHaveBeenCalled();
-    }
-  });
 
   test("rejects missing/invalid API keys and does not reuse browser sessions", async () => {
-    expect((await request("/users")).status).toBe(404);
+    expect((await request("/users/3")).status).toBe(401);
     expect(
-      (await request("/users", { headers: { "x-test-cookie-session": "yes" } }))
-        .status,
-    ).toBe(404);
+      (
+        await request("/users/3", {
+          headers: { "x-test-cookie-session": "yes" },
+        })
+      ).status,
+    ).toBe(401);
     expect(
       (await request("/user/self", { headers: { "x-auth-key": "invalid" } }))
         .status,
@@ -748,29 +768,35 @@ describe("API authentication and access", () => {
     expect((await request("/user/self", { user: 99 })).status).toBe(401);
   });
 
-  test("guests can only read blogs, not profiles, bookings or sessions", async () => {
+  test("guests can read blogs, locations, trainers and the timetable only", async () => {
     for (const path of [
       "/user/self",
-      "/users",
       "/users/3",
       "/bookings",
       "/bookings/1",
       "/sessions",
       "/sessions/1",
-      "/timetable",
       "/activities",
-      "/locations",
+      "/activities/1",
     ]) {
       expect((await request(path)).status).toBe(
-        ["/users", "/sessions", "/activities", "/locations"].includes(path)
+        ["/sessions", "/activities", "/activities/1"].includes(path)
           ? 404
           : path === "/sessions/1"
             ? 405
             : 401,
       );
     }
-    expect((await request("/blogs")).status).toBe(200);
-    expect((await request("/blogs/1")).status).toBe(200);
+    for (const path of [
+      "/blogs",
+      "/blogs/1",
+      "/locations",
+      "/locations/1",
+      "/users",
+      "/timetable",
+    ]) {
+      expect((await request(path)).status).toBe(200);
+    }
   });
 
   test("logs in, rotates the key and logs out", async () => {
@@ -840,6 +866,29 @@ describe("ownership and gym rules", () => {
     const result = await request("/blogs");
     expect(result.status).toBe(500);
     expect(result.body.message).toBe("Unable to process the API request.");
+  });
+
+  test("blog lists include the author's first name only", async () => {
+    records.users[2].first_name = "Jane";
+    records.blogs.push({ ...records.blogs[0], id: 2, user_id: 99 });
+    for (const user of [undefined, 2, 3]) {
+      const result = await request("/blogs", { user });
+      expect(result.status).toBe(200);
+      expect(result.body.map(({ id, first_name }) => [id, first_name])).toEqual(
+        expect.arrayContaining([
+          [1, "Jane"],
+          [2, null],
+        ]),
+      );
+      expect(result.body[0]).not.toHaveProperty("last_name");
+      expect(result.body[0]).not.toHaveProperty("email");
+    }
+    expect((await request("/blogs/1")).body).not.toHaveProperty("first_name");
+    expect(
+      swaggerSpec.paths["/api/v1/blogs"].get.responses[200].content[
+        "application/json"
+      ].schema.items.$ref,
+    ).toBe("#/components/schemas/BlogSummary");
   });
 
   test("serializes database timestamps as RFC 3339", async () => {
@@ -1217,7 +1266,7 @@ describe("ownership and gym rules", () => {
     expect(result.body.message).toBeTruthy();
   });
 
-  test("timetable filters the next seven days for members and trainers only", async () => {
+  test("timetable filters the next seven days for guests, members and trainers", async () => {
     const today = new Date();
     const end = new Date(today);
     end.setDate(end.getDate() + 7);
@@ -1239,9 +1288,222 @@ describe("ownership and gym rules", () => {
     expect((await request("/timetable", { user: 3 })).body).toHaveLength(2);
     expect((await request("/timetable", { user: 1 })).status).toBe(403);
     expect((await request("/timetable", { user: 2 })).body).toHaveLength(2);
-    expect((await request("/timetable")).status).toBe(401);
+    expect((await request("/timetable")).body).toHaveLength(2);
     expect(
       (await request("/timetable?location_id=invalid", { user: 2 })).status,
     ).toBe(400);
+  });
+});
+
+describe("searching and sorting", () => {
+  beforeEach(() => {
+    records.blogs.push(
+      {
+        id: 2,
+        title: "Yoga tips",
+        content: "Breathe deeply.",
+        user_id: 2,
+        created: "2026-10-14 09:00:00",
+      },
+      {
+        id: 3,
+        title: "Annual meeting",
+        content: "Members discuss YOGA classes.",
+        user_id: 3,
+        created: "2026-10-18 09:00:00",
+      },
+    );
+    records.sessions.push(
+      {
+        ...bodies.sessions,
+        id: 2,
+        title: "Boxing",
+        date: "2099-11-01",
+        time: "07:00:00",
+      },
+      {
+        ...bodies.sessions,
+        id: 3,
+        title: "Pilates",
+        trainer_id: 5,
+        date: "2099-10-01",
+        time: "08:00:00",
+      },
+    );
+    records.users[3].first_name = "Zara";
+    records.users[3].last_name = "Adams";
+    records.bookings.push(
+      { id: 2, session_id: 2, user_id: 3, created: "2026-10-17 09:00:00" },
+      { id: 3, session_id: 1, user_id: 4, created: "2026-10-15 09:00:00" },
+      { id: 4, session_id: 3, user_id: 3, created: "2026-10-14 09:00:00" },
+    );
+  });
+
+  test("documents search and sort parameters for blogs and bookings", () => {
+    for (const [resource, sorts] of [
+      ["blogs", ["created", "title"]],
+      ["bookings", ["session_date", "session", "member", "created"]],
+    ]) {
+      const parameters =
+        swaggerSpec.paths[`/api/v1/${resource}`].get.parameters;
+      expect(parameters.map((parameter) => parameter.name)).toEqual([
+        "search_term",
+        "sort_by",
+        "sort_dir",
+      ]);
+      expect(parameters[1].schema.enum).toEqual(sorts);
+    }
+  });
+
+  test("lets guests search blog titles and content case-insensitively", async () => {
+    const result = await request("/blogs?search_term=yoga");
+    expect(result.status).toBe(200);
+    expect(result.body.map((blog) => blog.id)).toEqual([3, 2]);
+    expect((await request("/blogs?search_term=nothing-matches")).body).toEqual(
+      [],
+    );
+  });
+
+  test("sorts blogs by title or created date", async () => {
+    const ids = async (query) =>
+      (await request(`/blogs?${query}`, { user: 3 })).body.map(
+        (blog) => blog.id,
+      );
+    expect(await ids("sort_by=title")).toEqual([2, 1, 3]);
+    expect(await ids("sort_by=title&sort_dir=asc")).toEqual([3, 1, 2]);
+    expect(await ids("sort_by=created")).toEqual([3, 1, 2]);
+    expect(await ids("sort_dir=asc")).toEqual([2, 1, 3]);
+    expect(await ids("search_term=yoga&sort_by=title&sort_dir=asc")).toEqual([
+      3, 2,
+    ]);
+  });
+
+  test("sorts and searches only a member's own bookings", async () => {
+    const ids = async (query) =>
+      (await request(`/bookings?${query}`, { user: 3 })).body.map(
+        (booking) => booking.id,
+      );
+    expect(await ids("sort_by=session_date")).toEqual([4, 2, 1]);
+    expect(await ids("sort_by=session_date&sort_dir=desc")).toEqual([1, 2, 4]);
+    expect(await ids("sort_by=session")).toEqual([2, 1, 4]);
+    expect(await ids("sort_by=created&sort_dir=desc")).toEqual([2, 1, 4]);
+    expect(await ids("search_term=PILATES")).toEqual([4]);
+    expect(await ids("search_term=Morning")).toEqual([1]);
+  });
+
+  test("searches trainer bookings by member name without widening access", async () => {
+    const ids = async (query) =>
+      (await request(`/bookings?${query}`, { user: 2 })).body.map(
+        (booking) => booking.id,
+      );
+    expect(await ids("sort_by=member")).toEqual([3, 1, 2]);
+    expect(await ids("search_term=zara")).toEqual([3]);
+    expect(await ids("search_term=pilates")).toEqual([]);
+  });
+
+  test("searches and sorts the timetable for guests, members and trainers", async () => {
+    const day = (offset) => {
+      const date = new Date();
+      date.setDate(date.getDate() + offset);
+      return DatabaseModel.toMySqlDate(date);
+    };
+    records.locations.push({
+      ...records.locations[0],
+      id: 2,
+      name: "Annex",
+    });
+    records.users[4].first_name = "Alex";
+    records.users[4].last_name = "Brown";
+    records.users[1].last_name = "Young";
+    records.sessions = [
+      {
+        ...bodies.sessions,
+        id: 1,
+        title: "Yoga",
+        date: day(2),
+        time: "09:00:00",
+      },
+      {
+        ...bodies.sessions,
+        id: 2,
+        title: "Boxing",
+        trainer_id: 5,
+        location_id: 2,
+        date: day(1),
+        time: "18:00:00",
+      },
+      {
+        ...bodies.sessions,
+        id: 3,
+        title: "Cycle",
+        date: day(1),
+        time: "07:00:00",
+      },
+      {
+        ...bodies.sessions,
+        id: 4,
+        title: "Later",
+        date: day(9),
+        time: "07:00:00",
+      },
+    ];
+    const ids = async (query, user = 3) =>
+      (await request(`/timetable?${query}`, { user })).body.map(
+        (session) => session.id,
+      );
+    expect(await ids("")).toEqual([3, 2, 1]);
+    expect(await ids("sort_dir=desc")).toEqual([1, 2, 3]);
+    expect(await ids("sort_by=title")).toEqual([2, 3, 1]);
+    expect(await ids("sort_by=trainer", 2)).toEqual([2, 1, 3]);
+    expect(await ids("sort_by=location&sort_dir=asc")).toEqual([2, 1, 3]);
+    expect(await ids("search_term=YOGA")).toEqual([1]);
+    expect(await ids("search_term=alex")).toEqual([2]);
+    expect(await ids("search_term=annex")).toEqual([2]);
+    expect(await ids("search_term=later")).toEqual([]);
+    expect(await ids("trainer_id=2&sort_by=title&sort_dir=desc")).toEqual([
+      1, 3,
+    ]);
+    const parameters = swaggerSpec.paths["/api/v1/timetable"].get.parameters;
+    expect(parameters.map((parameter) => parameter.name)).toEqual([
+      "location_id",
+      "trainer_id",
+      "search_term",
+      "sort_by",
+      "sort_dir",
+    ]);
+    expect(parameters[3].schema.enum).toEqual([
+      "date",
+      "title",
+      "trainer",
+      "location",
+    ]);
+    const guestIds = async (query) =>
+      (await request(`/timetable?${query}`)).body.map((session) => session.id);
+    expect(await guestIds("search_term=annex&sort_by=title")).toEqual([2]);
+    expect(await guestIds("sort_by=location")).toEqual([2, 1, 3]);
+    expect(swaggerSpec.paths["/api/v1/timetable"].get.security).toEqual([]);
+    expect(
+      (await request("/timetable?sort_by=title", { user: 1 })).status,
+    ).toBe(403);
+    expect(
+      (await request("/timetable?sort_by=created", { user: 3 })).status,
+    ).toBe(400);
+  });
+
+  test("rejects invalid sort fields and directions", async () => {
+    for (const query of [
+      "sort_by=user_id",
+      "sort_dir=up",
+      `search_term=${"x".repeat(101)}`,
+    ]) {
+      expect((await request(`/blogs?${query}`)).status).toBe(400);
+      expect((await request(`/bookings?${query}`, { user: 3 })).status).toBe(
+        400,
+      );
+    }
+    expect((await request("/bookings?sort_by=title", { user: 3 })).status).toBe(
+      400,
+    );
+    expect((await request("/bookings?search_term=yoga")).status).toBe(401);
   });
 });

@@ -21,15 +21,33 @@ const resources = [
     path: "users",
     removedMethods: ["post", "delete"],
     schema: "User",
+    listSchema: "UserSummary",
     tag: "Users",
     model: UsersModel,
     roles: [],
-    list: false,
+    publicList: true,
     getRoles: ["trainer", "member"],
     putRoles: ["trainer", "member"],
     description:
-      "Members and trainers can read and update only their own record, without changing their role. User listing, creation and deletion are not available through the API. Passwords and authentication keys are never returned.",
+      "Guests, members and trainers can list trainers, which returns only ID, name and role. Members and trainers can read and update only their own record, without changing their role. User creation and deletion are not available through the API. Passwords and authentication keys are never returned.",
     serialize: publicUser,
+    listSerialize: ({ id, first_name, last_name, role }) => ({
+      id,
+      first_name,
+      last_name,
+      role,
+    }),
+  },
+  {
+    path: "locations",
+    removedMethods: ["post", "put", "delete"],
+    schema: "Location",
+    tag: "Locations",
+    model: LocationModel,
+    roles: [],
+    publicRead: true,
+    description:
+      "Guests, members and trainers can list and read locations. Locations cannot be created, updated or deleted through the API.",
   },
   {
     path: "sessions",
@@ -41,7 +59,7 @@ const resources = [
     roles: [],
     deleteRoles: ["trainer"],
     description:
-      "Trainers can delete only their own sessions; sessions cannot be listed, read, created or updated through this resource. Members and trainers use the timetable to browse sessions. Deleting a session also removes its bookings.",
+      "Trainers can delete only their own sessions; sessions cannot be listed, read, created or updated through this resource. Guests, members and trainers use the timetable to browse sessions. Deleting a session also removes its bookings.",
   },
   {
     path: "bookings",
@@ -51,18 +69,31 @@ const resources = [
     roles: ["member"],
     getRoles: ["trainer", "member"],
     putRoles: [],
+    query: {
+      searchDescription: "session title or member name",
+      sorts: ["session_date", "session", "member", "created"],
+      defaultSort: "session_date",
+      defaultDir: "asc",
+    },
     description:
       "Members can read, create and cancel only their own bookings, but cannot update bookings. Trainers can read bookings only for sessions assigned to them; they cannot create, update or cancel bookings. Duplicate and overlapping bookings return 409.",
   },
   {
     path: "blogs",
     schema: "Blog",
+    listSchema: "BlogSummary",
     tag: "Blogs",
     model: BlogModel,
     roles: ["trainer", "member"],
     publicRead: true,
+    query: {
+      searchDescription: "title or content",
+      sorts: ["created", "title"],
+      defaultSort: "created",
+      defaultDir: "desc",
+    },
     description:
-      "Guests, members and trainers can read posts. Members and trainers create posts as themselves and edit or delete only their own posts. Authors and creation timestamps are immutable. Administrators have no API access.",
+      "Guests, members and trainers can read posts; blog lists include the author's first name. Members and trainers create posts as themselves and edit or delete only their own posts. Authors and creation timestamps are immutable. Administrators have no API access.",
   },
 ];
 
@@ -86,6 +117,45 @@ const idParameter = {
 };
 
 export const apiResourcePaths = {};
+function queryParameters(options) {
+  return [
+    {
+      name: "search_term",
+      in: "query",
+      schema: { type: "string", maxLength: 100 },
+      description: `Case-insensitive match on ${options.searchDescription}.`,
+    },
+    {
+      name: "sort_by",
+      in: "query",
+      schema: {
+        type: "string",
+        enum: options.sorts,
+        default: options.defaultSort,
+      },
+      description: "Field to sort by.",
+    },
+    {
+      name: "sort_dir",
+      in: "query",
+      schema: {
+        type: "string",
+        enum: ["asc", "desc"],
+        default: options.defaultDir,
+      },
+      description: "Sort direction.",
+    },
+  ];
+}
+const timetable = {
+  path: "timetable",
+  query: {
+    searchDescription: "session title, trainer name or location name",
+    sorts: ["date", "title", "trainer", "location"],
+    defaultSort: "date",
+    defaultDir: "asc",
+  },
+};
 for (const resource of resources) {
   const basePath = `/api/v1/${resource.path}`;
   const operation = (method, summary, schema, status = 200) => ({
@@ -94,7 +164,8 @@ for (const resource of resources) {
     summary,
     description: resource.description,
     security:
-      resource.publicRead && ["list", "get"].includes(method)
+      (resource.publicRead && ["list", "get"].includes(method)) ||
+      (resource.publicList && method === "list")
         ? []
         : [{ ApiKey: [] }],
     responses: {
@@ -107,10 +178,18 @@ for (const resource of resources) {
     content: { "application/json": { schema: ref(schema) } },
   });
   apiResourcePaths[basePath] = {
-    get: operation("list", `List ${resource.path}`, {
-      type: "array",
-      items: ref(resource.schema),
-    }),
+    get: {
+      ...operation("list", `List ${resource.path}`, {
+        type: "array",
+        items: ref(resource.listSchema ?? resource.schema),
+      }),
+      ...(resource.query
+        ? {
+            summary: `List, search and sort ${resource.path}`,
+            parameters: queryParameters(resource.query),
+          }
+        : {}),
+    },
     post: {
       ...operation(
         "create",
@@ -159,20 +238,23 @@ apiResourcePaths["/api/v1/timetable"] = {
   get: {
     tags: ["Sessions"],
     operationId: "getTimetable",
-    summary: "Browse the next seven days of sessions",
+    summary: "Browse, search and sort the next seven days of sessions",
     description:
-      "Members and trainers can browse the next seven days of sessions. Guests and administrators have no timetable access.",
-    security: [{ ApiKey: [] }],
-    parameters: ["location_id", "trainer_id"].map((name) => ({
-      name,
-      in: "query",
-      schema: { type: "integer", minimum: 1, maximum: 2147483647 },
-      description: `Filter by ${name.replace("_id", "")}.`,
-    })),
+      "Guests, members and trainers can browse, search and sort the next seven days of sessions. Administrators have no timetable access.",
+    security: [],
+    parameters: [
+      ...["location_id", "trainer_id"].map((name) => ({
+        name,
+        in: "query",
+        schema: { type: "integer", minimum: 1, maximum: 2147483647 },
+        description: `Filter by ${name.replace("_id", "")}.`,
+      })),
+      ...queryParameters(timetable.query),
+    ],
     responses: {
       200: response(
         { type: "array", items: ref("Session") },
-        "Upcoming sessions ordered by date and time.",
+        "Upcoming sessions, ordered by date and time unless sort_by is given.",
       ),
       ...errorResponses,
     },
@@ -312,6 +394,102 @@ async function prepareRecord(resource, req, existing) {
   return record;
 }
 
+const asText = (value) =>
+  value instanceof Date ? value.toISOString() : String(value ?? "");
+
+async function searchAndSort(resource, records, query) {
+  const options = resource.query;
+  const term = String(query.search_term ?? "")
+    .trim()
+    .toLowerCase();
+  if (!options || (!term && !query.sort_by && !query.sort_dir)) {
+    return records;
+  }
+  let fields;
+  if (resource.path === "timetable") {
+    const [users, locations] = await Promise.all([
+      UsersModel.getAll(),
+      LocationModel.getAll(),
+    ]);
+    const userById = new Map(users.map((u) => [Number(u.id), u]));
+    const locationById = new Map(locations.map((l) => [Number(l.id), l]));
+    fields = (session) => {
+      const trainer = userById.get(Number(session.trainer_id));
+      const location = locationById.get(Number(session.location_id));
+      const trainerName = trainer
+        ? `${trainer.last_name}, ${trainer.first_name}`
+        : "";
+      return {
+        search: [
+          session.title,
+          trainer?.first_name,
+          trainer?.last_name,
+          location?.name,
+        ],
+        date: `${session.date} ${session.time}`,
+        title: session.title,
+        trainer: trainerName,
+        location: location?.name ?? "",
+      };
+    };
+  } else if (resource.path === "bookings") {
+    const [sessions, users] = await Promise.all([
+      SessionsModel.getAll(),
+      UsersModel.getAll(),
+    ]);
+    const sessionById = new Map(sessions.map((s) => [Number(s.id), s]));
+    const userById = new Map(users.map((u) => [Number(u.id), u]));
+    fields = (booking) => {
+      const session = sessionById.get(Number(booking.session_id)) ?? {};
+      const member = userById.get(Number(booking.user_id));
+      const date =
+        session.date instanceof Date
+          ? DatabaseModel.toMySqlDate(session.date)
+          : String(session.date ?? "").slice(0, 10);
+      return {
+        search: [session.title, member?.first_name, member?.last_name],
+        session_date: `${date} ${session.time ?? ""}`,
+        session: session.title,
+        member: member ? `${member.last_name}, ${member.first_name}` : "",
+        created: new Date(booking.created).toISOString(),
+      };
+    };
+  } else {
+    fields = (blog) => ({
+      search: [blog.title, blog.content],
+      title: blog.title,
+      created: new Date(blog.created).toISOString(),
+    });
+  }
+  const sortBy = options.sorts.includes(query.sort_by)
+    ? query.sort_by
+    : options.defaultSort;
+  const direction =
+    (["asc", "desc"].includes(query.sort_dir)
+      ? query.sort_dir
+      : options.defaultDir) === "asc"
+      ? 1
+      : -1;
+  return records
+    .map((record) => ({ record, fields: fields(record) }))
+    .filter(
+      ({ fields }) =>
+        !term ||
+        fields.search.some((value) =>
+          asText(value).toLowerCase().includes(term),
+        ),
+    )
+    .sort(
+      (left, right) =>
+        (asText(left.fields[sortBy]).localeCompare(
+          asText(right.fields[sortBy]),
+          undefined,
+          { sensitivity: "base" },
+        ) || Number(left.record.id) - Number(right.record.id)) * direction,
+    )
+    .map(({ record }) => record);
+}
+
 function checkWrite(result) {
   if (result.trainerConflict) {
     throw new APIError(
@@ -334,52 +512,53 @@ export class APIResourcesController {
   static routes = express.Router();
 
   static {
-    this.routes.get(
-      "/timetable",
-      APIAuthenticationController.restrict(["member", "trainer"]),
-      async (req, res) => {
-        const today = new Date();
-        const end = new Date(today);
-        end.setDate(end.getDate() + 7);
-        const startDate = DatabaseModel.toMySqlDate(today);
-        const endDate = DatabaseModel.toMySqlDate(end);
-        const sessions = (await SessionsModel.getAll())
-          .map(publicRecord)
-          .filter(
-            (session) =>
-              session.date >= startDate &&
-              session.date < endDate &&
-              (!req.query.location_id ||
-                Number(session.location_id) ===
-                  Number(req.query.location_id)) &&
-              (!req.query.trainer_id ||
-                Number(session.trainer_id) === Number(req.query.trainer_id)),
-          )
-          .sort((a, b) =>
-            `${a.date} ${a.time}`.localeCompare(`${b.date} ${b.time}`),
-          );
-        res.json(sessions);
-      },
-    );
+    this.routes.get("/timetable", async (req, res) => {
+      const today = new Date();
+      const end = new Date(today);
+      end.setDate(end.getDate() + 7);
+      const startDate = DatabaseModel.toMySqlDate(today);
+      const endDate = DatabaseModel.toMySqlDate(end);
+      const sessions = (await SessionsModel.getAll())
+        .map(publicRecord)
+        .filter(
+          (session) =>
+            session.date >= startDate &&
+            session.date < endDate &&
+            (!req.query.location_id ||
+              Number(session.location_id) === Number(req.query.location_id)) &&
+            (!req.query.trainer_id ||
+              Number(session.trainer_id) === Number(req.query.trainer_id)),
+        )
+        .sort((a, b) =>
+          `${a.date} ${a.time}`.localeCompare(`${b.date} ${b.time}`),
+        );
+      res.json(await searchAndSort(timetable, sessions, req.query));
+    });
 
     for (const resource of resources) {
       const router = express.Router();
       const serialize = resource.serialize ?? publicRecord;
+      const listSerialize = resource.listSerialize ?? serialize;
+      const methodAccess = (req, res, next) => {
+        if (resource.publicList && req.method === "GET" && req.path === "/") {
+          return next();
+        }
+        const roles =
+          resource[`${req.method.toLowerCase()}Roles`] ?? resource.roles;
+        return APIAuthenticationController.restrict(roles)(req, res, next);
+      };
       if (!resource.publicRead) {
-        router.use((req, res, next) => {
-          const roles =
-            resource[`${req.method.toLowerCase()}Roles`] ?? resource.roles;
-          return APIAuthenticationController.restrict(roles)(req, res, next);
-        });
+        router.use(methodAccess);
       }
       if (resource.list !== false) {
-        const listAccess = resource.publicRead
-          ? []
-          : [
-              APIAuthenticationController.restrict(
-                resource.listRoles ?? resource.getRoles ?? resource.roles,
-              ),
-            ];
+        const listAccess =
+          resource.publicRead || resource.publicList
+            ? []
+            : [
+                APIAuthenticationController.restrict(
+                  resource.listRoles ?? resource.getRoles ?? resource.roles,
+                ),
+              ];
         router.get("/", ...listAccess, async (req, res) => {
           let records;
           if (
@@ -402,13 +581,33 @@ export class APIResourcesController {
             records = bookings.filter((booking) =>
               sessionIds.has(Number(booking.session_id)),
             );
+          } else if (resource.path === "users") {
+            records = (await UsersModel.getAll()).filter(
+              (user) => user.role === "trainer",
+            );
+          } else if (resource.path === "blogs") {
+            const [blogs, users] = await Promise.all([
+              BlogModel.getAll(),
+              UsersModel.getAll(),
+            ]);
+            const firstNames = new Map(
+              users.map((user) => [Number(user.id), user.first_name]),
+            );
+            records = blogs.map((blog) => ({
+              ...blog,
+              first_name: firstNames.get(Number(blog.user_id)) ?? null,
+            }));
           } else {
             records =
               resource.path === "bookings"
                 ? await BookingsModel.getByUserId(req.authenticatedUser.id)
                 : await resource.model.getAll();
           }
-          res.json(records.map(serialize));
+          res.json(
+            (await searchAndSort(resource, records, req.query)).map(
+              listSerialize,
+            ),
+          );
         });
       }
       if (!resource.removedMethods?.includes("get")) {
@@ -424,7 +623,7 @@ export class APIResourcesController {
         });
       }
       if (resource.publicRead) {
-        router.use(APIAuthenticationController.restrict(resource.roles));
+        router.use(methodAccess);
       }
       if (!resource.removedMethods?.includes("post")) {
         router.post("/", async (req, res) => {

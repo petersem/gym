@@ -35,21 +35,38 @@ field limits, response schemas, error codes, and role/ownership rules.
 3. Send `DELETE /api/v1/authenticate` to revoke the key. Logging in again replaces
    the previous key.
 
-| Resource        | Endpoints                                   | Access                                                                                                                |
-| --------------- | ------------------------------------------- | --------------------------------------------------------------------------------------------------------------------- |
-| Current profile | `GET /api/v1/user/self`                     | Any authenticated user                                                                                                |
-| Users           | `GET/PUT /api/v1/users/{id}`                | Members/trainers can read and update only their own record, without changing role                                     |
-| Sessions        | `DELETE /api/v1/sessions/{id}`              | Trainers can delete only their own sessions; session list/detail reads are not available                              |
-| Timetable       | `GET /api/v1/timetable`                     | Members and trainers; next seven days, optional `location_id` and `trainer_id` filters                                |
-| Bookings        | `/api/v1/bookings`, `/api/v1/bookings/{id}` | Members read/create/cancel their own bookings (no updates); trainers only read bookings for sessions assigned to them |
-| Blogs           | `/api/v1/blogs`, `/api/v1/blogs/{id}`       | Guest/member/trainer reads; member/trainer writes restricted to the creator                                           |
+| Resource        | Endpoints                                     | Access                                                                                                                |
+| --------------- | --------------------------------------------- | --------------------------------------------------------------------------------------------------------------------- |
+| Current profile | `GET /api/v1/user/self`                       | Any authenticated user                                                                                                |
+| Trainers        | `GET /api/v1/users`                           | Guests, members and trainers; lists trainers only, with ID, name and role                                             |
+| Users           | `GET/PUT /api/v1/users/{id}`                  | Members/trainers can read and update only their own record, without changing role                                     |
+| Locations       | `/api/v1/locations`, `/api/v1/locations/{id}` | Guests, members and trainers can list and read locations                                                              |
+| Sessions        | `DELETE /api/v1/sessions/{id}`                | Trainers can delete only their own sessions; session list/detail reads are not available                              |
+| Timetable       | `GET /api/v1/timetable`                       | Guests, members and trainers; next seven days, optional `location_id` and `trainer_id` filters                        |
+| Bookings        | `/api/v1/bookings`, `/api/v1/bookings/{id}`   | Members read/create/cancel their own bookings (no updates); trainers only read bookings for sessions assigned to them |
+| Blogs           | `/api/v1/blogs`, `/api/v1/blogs/{id}`         | Guest/member/trainer reads (lists include the author's `first_name`); member/trainer writes restricted to the creator |
 
 Administrators cannot log in to the API or use existing API keys (returns `403`).
-User listing/creation/deletion, all activity/location endpoints and session
-list/detail reads, creation and updates are removed from the API and Swagger
-documentation; use the timetable to browse sessions.
+User creation/deletion, all activity endpoints, location creation, updates and
+deletion, and session list/detail reads, creation and updates are removed from
+the API and Swagger documentation; use the timetable to browse sessions.
 Booking updates remain access-restricted.
-Guests without a key can only read blogs; documentation and login remain public.
+Guests without a key can read blogs, locations, the trainer list and the
+timetable; documentation and login remain public.
+
+`GET /api/v1/blogs`, `GET /api/v1/bookings` and `GET /api/v1/timetable` accept
+optional search and sort query parameters. Results stay limited to what your role
+can already see, and timetable search/sort also works with its `location_id` and
+`trainer_id` filters.
+
+| Resource  | `search_term` matches                        | `sort_by` values                                                | Default `sort_dir` |
+| --------- | -------------------------------------------- | --------------------------------------------------------------- | ------------------ |
+| Blogs     | Title or content                             | `created` (default), `title`                                    | `desc`             |
+| Bookings  | Session title or member name                 | `session_date` (default), `session`, `member`, `created`        | `asc`              |
+| Timetable | Session title, trainer name or location name | `date` (default, date and time), `title`, `trainer`, `location` | `asc`              |
+
+Searches are case-insensitive; `sort_dir` is `asc` or `desc`. For example,
+`GET /api/v1/blogs?search_term=yoga&sort_by=title&sort_dir=asc`.
 
 Create/update bodies use JSON with snake_case field names. `PUT`
 requires all editable fields, except user passwords and dates of birth may be
@@ -78,7 +95,7 @@ OpenAPI instead of the HTML form sanitiser, and does not require an
 
 #### API access by role
 
-![API access matrix showing Guest, Member, Trainer and Admin permissions, including ownership and trainer-session restrictions](gh-assets/api-role-sitemap.svg)
+![API access matrix showing Guest, Member, Trainer and Admin permissions, including ownership and trainer-session restrictions](backend/src/public/images/api-role-sitemap.svg)
 
 ### Sitemap by Role
 
