@@ -55,8 +55,6 @@ OpenAPI instead of the HTML form sanitiser, and does not require an
 
 **Role colors:**
 
-![Guest on blue, Member on green, Trainer on orange and Admin on purple backgrounds](https://raw.githubusercontent.com/petersem/gym/main/gh-assets/role-legend.svg)
-
 ![Role sitemap with blue Guest, green Member, orange Trainer and purple Admin tick backgrounds](https://raw.githubusercontent.com/petersem/gym/main/gh-assets/role-sitemap.svg)
 
 ¹ Trainers can manage only their own
