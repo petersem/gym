@@ -35,63 +35,17 @@ field limits, response schemas, error codes, and role/ownership rules.
 3. Send `DELETE /api/v1/authenticate` to revoke the key. Logging in again replaces
    the previous key.
 
-| Resource        | Endpoints                                     | Access                                                                                                                |
-| --------------- | --------------------------------------------- | --------------------------------------------------------------------------------------------------------------------- |
-| Current profile | `GET /api/v1/user/self`                       | Any authenticated user                                                                                                |
-| Trainers        | `GET /api/v1/users`                           | Guests, members and trainers; lists trainers only, with ID, name and role                                             |
-| Users           | `GET/PUT /api/v1/users/{id}`                  | Members/trainers can read and update only their own record, without changing role                                     |
-| Locations       | `/api/v1/locations`, `/api/v1/locations/{id}` | Guests, members and trainers can list and read locations                                                              |
-| Sessions        | `DELETE /api/v1/sessions/{id}`                | Trainers can delete only their own sessions; session list/detail reads are not available                              |
-| Timetable       | `GET /api/v1/timetable`                       | Guests, members and trainers; next seven days, optional `location_id` and `trainer_id` filters                        |
-| Bookings        | `/api/v1/bookings`, `/api/v1/bookings/{id}`   | Members read/create/cancel their own bookings (no updates); trainers only read bookings for sessions assigned to them |
-| Blogs           | `/api/v1/blogs`, `/api/v1/blogs/{id}`         | Guest/member/trainer reads (lists include the author's `first_name`); member/trainer writes restricted to the creator |
-
-Administrators cannot log in to the API or use existing API keys (returns `403`).
-User creation/deletion, all activity endpoints, location creation, updates and
-deletion, and session list/detail reads, creation and updates are removed from
-the API and Swagger documentation; use the timetable to browse sessions.
-Booking updates remain access-restricted.
-Guests without a key can read blogs, locations, the trainer list and the
-timetable; documentation and login remain public.
+> Administrators cannot log in to the API or use existing API keys.
+Guests without a key can read blogs, locations, the trainer list and the timetable. 
 
 `GET /api/v1/blogs`, `GET /api/v1/bookings` and `GET /api/v1/timetable` accept
 optional search and sort query parameters. Results stay limited to what your role
 can already see, and timetable search/sort also works with its `location_id` and
 `trainer_id` filters.
 
-| Resource  | `search_term` matches                        | `sort_by` values                                                | Default `sort_dir` |
-| --------- | -------------------------------------------- | --------------------------------------------------------------- | ------------------ |
-| Blogs     | Title or content                             | `created` (default), `title`                                    | `desc`             |
-| Bookings  | Session title or member name                 | `session_date` (default), `session`, `member`, `created`        | `asc`              |
-| Timetable | Session title, trainer name or location name | `date` (default, date and time), `title`, `trainer`, `location` | `asc`              |
-
-Searches are case-insensitive; `sort_dir` is `asc` or `desc`. For example,
-`GET /api/v1/blogs?search_term=yoga&sort_by=title&sort_dir=asc`.
-
-Create/update bodies use JSON with snake_case field names. `PUT`
-requires all editable fields, except user passwords and dates of birth may be
-omitted to preserve their current values. Omit `user_id` when creating a booking
-to use your own user ID. Blog authors and creation timestamps
-are server-managed. User responses include the assigned role as a read-only field;
-do not include it in updates. Passwords are bcrypt-hashed, and user responses never include
-passwords or authentication keys. Changing your password revokes your API key;
-omitting the password, leaving it empty (`"password": ""`) or supplying the
-current password preserves it.
-Use `GET /api/v1/user/self` to find your user ID,
-then `PUT /api/v1/users/{id}` to update your details.
-
-Creation returns `201`, the created record, and its `Location` header. Updates
-return the updated record; deletion returns a message. Deleting a session also
-deletes its bookings. Duplicate/overlapping bookings return `409`.
-
 The API uses API keys rather than browser cookie sessions, validates JSON against
 OpenAPI instead of the HTML form sanitiser, and does not require an
 `Idempotency-Key` header. Browser page routes keep their existing middleware.
-
-#### Auth keys for testing purposes
-
-- Trainer: 7625c5aa-716e-4f9e-b70e-7c40078a9f4d
-- Member: e8331a60-3567-4ea4-aafc-62cee5a05aa3
 
 #### API access by role
 
