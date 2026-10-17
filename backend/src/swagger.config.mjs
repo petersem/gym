@@ -33,7 +33,7 @@ const options = {
       {
         name: "Users",
         description:
-          "Guests, members and trainers can list trainers (ID, name and role only). Members and trainers can read and update their own profile.",
+          "Guests, members and trainers can list trainers at GET /trainers (ID, name and role only). Members and trainers can read and update their own profile.",
       },
       {
         name: "Locations",

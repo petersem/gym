@@ -28,23 +28,16 @@ const resources = [
   {
     path: "users",
     removedMethods: ["post", "delete"],
+    list: false,
     schema: "User",
-    listSchema: "UserSummary",
     tag: "Users",
     model: UsersModel,
     roles: [],
-    publicList: true,
     getRoles: ["trainer", "member"],
     putRoles: ["trainer", "member"],
     description:
-      "Guests, members and trainers can list trainers, which returns only ID, name and role. Members and trainers can read and update only their own record, without changing their role. User creation and deletion are not available through the API. Passwords and authentication keys are never returned.",
+      "Members and trainers can read and update only their own record, without changing their role. Users cannot be listed, created or deleted through this resource; use GET /trainers to list trainers. Passwords and authentication keys are never returned.",
     serialize: publicUser,
-    listSerialize: ({ id, first_name, last_name, role }) => ({
-      id,
-      first_name,
-      last_name,
-      role,
-    }),
   },
   {
     path: "locations",
@@ -172,8 +165,7 @@ for (const resource of resources) {
     summary,
     description: resource.description,
     security:
-      (resource.publicRead && ["list", "get"].includes(method)) ||
-      (resource.publicList && method === "list")
+      resource.publicRead && ["list", "get"].includes(method)
         ? []
         : [{ ApiKey: [] }],
     responses: {
@@ -241,6 +233,24 @@ for (const resource of resources) {
     }
   }
 }
+
+apiResourcePaths["/api/v1/trainers"] = {
+  get: {
+    tags: ["Users"],
+    operationId: "listTrainers",
+    summary: "List trainers",
+    description:
+      "Guests, members and trainers can list trainers, which returns only ID, name and role. Administrators have no access.",
+    security: [],
+    responses: {
+      200: response(
+        { type: "array", items: ref("UserSummary") },
+        "Trainers, ordered by ID.",
+      ),
+      ...errorResponses,
+    },
+  },
+};
 
 apiResourcePaths["/api/v1/timetable"] = {
   get: {
@@ -604,6 +614,19 @@ export class APIResourcesController {
       res.json(await searchAndSort(timetable, sessions, req.query));
     });
 
+    this.routes.get("/trainers", async (req, res) => {
+      res.json(
+        (await UsersModel.getAll())
+          .filter((user) => user.role === "trainer")
+          .map(({ id, first_name, last_name, role }) => ({
+            id,
+            first_name,
+            last_name,
+            role,
+          })),
+      );
+    });
+
     this.routes.get(
       "/bookings/export.xml",
       APIAuthenticationController.restrict(["member"]),
@@ -670,9 +693,6 @@ export class APIResourcesController {
       const serialize = resource.serialize ?? publicRecord;
       const listSerialize = resource.listSerialize ?? serialize;
       const methodAccess = (req, res, next) => {
-        if (resource.publicList && req.method === "GET" && req.path === "/") {
-          return next();
-        }
         const roles =
           resource[`${req.method.toLowerCase()}Roles`] ?? resource.roles;
         return APIAuthenticationController.restrict(roles)(req, res, next);
@@ -681,14 +701,13 @@ export class APIResourcesController {
         router.use(methodAccess);
       }
       if (resource.list !== false) {
-        const listAccess =
-          resource.publicRead || resource.publicList
-            ? []
-            : [
-                APIAuthenticationController.restrict(
-                  resource.listRoles ?? resource.getRoles ?? resource.roles,
-                ),
-              ];
+        const listAccess = resource.publicRead
+          ? []
+          : [
+              APIAuthenticationController.restrict(
+                resource.listRoles ?? resource.getRoles ?? resource.roles,
+              ),
+            ];
         router.get("/", ...listAccess, async (req, res) => {
           let records;
           if (
@@ -710,10 +729,6 @@ export class APIResourcesController {
             );
             records = bookings.filter((booking) =>
               sessionIds.has(Number(booking.session_id)),
-            );
-          } else if (resource.path === "users") {
-            records = (await UsersModel.getAll()).filter(
-              (user) => user.role === "trainer",
             );
           } else if (resource.path === "blogs") {
             const [blogs, users] = await Promise.all([

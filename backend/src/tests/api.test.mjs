@@ -38,7 +38,7 @@ const removedMethods = {
   locations: ["post", "put", "delete"],
   sessions: ["post", "get", "put"],
 };
-const removedBasePaths = ["sessions"];
+const removedBasePaths = ["users", "sessions"];
 const bodies = {
   users: {
     first_name: "New",
@@ -213,21 +213,28 @@ afterAll(async () => {
 });
 
 describe("OpenAPI contract", () => {
-  test("lists only trainer summaries publicly while keeping user detail private", async () => {
-    expect(swaggerSpec.paths["/api/v1/users"].get.security).toEqual([]);
+  test("lists only trainer summaries publicly at /trainers while keeping user detail private", async () => {
+    expect(swaggerSpec.paths["/api/v1/trainers"].get.security).toEqual([]);
+    expect(
+      swaggerSpec.paths["/api/v1/trainers"].get.responses[200].content[
+        "application/json"
+      ].schema.items.$ref,
+    ).toBe("#/components/schemas/UserSummary");
+    expect(swaggerSpec.paths).not.toHaveProperty("/api/v1/users");
     expect(swaggerSpec.paths["/api/v1/users/{id}"].get.security).toEqual([
       { ApiKey: [] },
     ]);
     for (const user of [undefined, 2, 3]) {
-      const response = await request("/users", { user });
+      const response = await request("/trainers", { user });
       expect(response.status).toBe(200);
       expect(response.body).toEqual([
         { id: 2, first_name: "New", last_name: "Member", role: "trainer" },
         { id: 5, first_name: "New", last_name: "Member", role: "trainer" },
       ]);
+      expect((await request("/users", { user })).status).toBe(404);
     }
     expect((await request("/users/3")).status).toBe(401);
-    expect((await request("/users", { user: 1 })).status).toBe(403);
+    expect((await request("/trainers", { user: 1 })).status).toBe(403);
     const own = await request("/users/3", { user: 3 });
     expect(own.status).toBe(200);
     expect(own.body.email).toBe("user3@example.com");
@@ -414,6 +421,14 @@ describe("OpenAPI contract", () => {
         expect(
           Object.keys(swaggerSpec.paths["/api/v1/sessions/{id}"]).sort(),
         ).toEqual(["delete", "parameters"]);
+        continue;
+      }
+      if (resource === "users") {
+        expect(swaggerSpec.paths).not.toHaveProperty("/api/v1/users");
+        expect(
+          Object.keys(swaggerSpec.paths["/api/v1/users/{id}"]).sort(),
+        ).toEqual(["get", "parameters", "put"]);
+        expect(swaggerSpec.paths["/api/v1/trainers"]).toHaveProperty("get");
         continue;
       }
       for (const method of ["get", "post", "put", "delete"]) {
@@ -688,7 +703,7 @@ describe("API authentication and access", () => {
               ...(method === "POST" ? { body: bodies.users } : {}),
             })
           ).status,
-        ).toBe(405);
+        ).toBe(method === "POST" ? 404 : 405);
       }
       expect(UsersModel.create).not.toHaveBeenCalled();
       expect(UsersModel.update).not.toHaveBeenCalled();
@@ -776,11 +791,12 @@ describe("API authentication and access", () => {
       "/bookings/1",
       "/sessions",
       "/sessions/1",
+      "/users",
       "/activities",
       "/activities/1",
     ]) {
       expect((await request(path)).status).toBe(
-        ["/sessions", "/activities", "/activities/1"].includes(path)
+        ["/sessions", "/users", "/activities", "/activities/1"].includes(path)
           ? 404
           : path === "/sessions/1"
             ? 405
@@ -792,7 +808,7 @@ describe("API authentication and access", () => {
       "/blogs/1",
       "/locations",
       "/locations/1",
-      "/users",
+      "/trainers",
       "/timetable",
     ]) {
       expect((await request(path)).status).toBe(200);
@@ -837,7 +853,7 @@ describe("API authentication and access", () => {
     UsersModel.getByAuthenticationKey.mockRejectedValue(
       new Error("private database details"),
     );
-    const result = await request("/users", { user: 1 });
+    const result = await request("/user/self", { user: 1 });
     expect(result.status).toBe(500);
     expect(result.body.message).not.toContain("private");
     expect(log).toHaveBeenCalled();

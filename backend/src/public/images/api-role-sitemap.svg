@@ -53,7 +53,7 @@
   </g>
   <g>
     <text x="20" y="150">Read locations &#x2014; GET /locations, /locations/{id}</text>
-    <text x="20" y="186">List trainers &#x2014; GET /users</text>
+    <text x="20" y="186">List trainers &#x2014; GET /trainers</text>
     <text x="20" y="222">Read blogs &#x2014; GET /blogs, /blogs/{id} &#xB3;</text>
     <text x="20" y="258">Create blog &#x2014; POST /blogs</text>
     <text x="20" y="294">Update / delete blog &#x2014; PUT / DELETE /blogs/{id}</text>
