@@ -117,7 +117,19 @@ const idParameter = {
   description: "Positive record identifier.",
 };
 
+/**
+ * OpenAPI path definitions for the resource, timetable, trainer, and XML export endpoints.
+ *
+ * @type {Record<string, object>}
+ */
 export const apiResourcePaths = {};
+
+/**
+ * Create query parameter definitions for a searchable and sortable collection.
+ *
+ * @param {{searchDescription: string, sorts: string[], defaultSort: string, defaultDir: string}} options
+ * @returns {object[]} OpenAPI query parameter definitions.
+ */
 function queryParameters(options) {
   return [
     {
@@ -279,6 +291,18 @@ apiResourcePaths["/api/v1/timetable"] = {
   },
 };
 
+/**
+ * Create the OpenAPI path item for an authenticated XML download endpoint.
+ *
+ * @param {object} options
+ * @param {string} options.tag OpenAPI tag for the endpoint.
+ * @param {string} options.operationId Unique OpenAPI operation identifier.
+ * @param {string} options.summary Short endpoint summary.
+ * @param {string} options.description Endpoint access and behavior description.
+ * @param {string} options.root XML document root element.
+ * @param {string} options.filename Download filename.
+ * @returns {object} OpenAPI path item describing the XML response.
+ */
 const xmlExportPath = ({
   tag,
   operationId,
@@ -327,6 +351,15 @@ apiResourcePaths["/api/v1/sessions/export.xml"] = xmlExportPath({
   filename: "gym-sessions.xml",
 });
 
+/**
+ * Ensure the authenticated user is allowed to access or manage a record.
+ *
+ * @param {object} resource Resource configuration.
+ * @param {{id: number|string, role: string}} user Authenticated user.
+ * @param {object} record Resource record.
+ * @returns {Promise<void>}
+ * @throws {APIError} If the record is outside the user's permitted scope.
+ */
 async function authorizeRecord(resource, user, record) {
   if (resource.path === "bookings" && user.role === "trainer") {
     const session = await activeRecord(SessionsModel, record.session_id);
@@ -352,6 +385,15 @@ async function authorizeRecord(resource, user, record) {
   }
 }
 
+/**
+ * Apply resource-specific validation and server-managed fields before a write.
+ *
+ * @param {object} resource Resource configuration.
+ * @param {express.Request} req Request containing the authenticated user and input body.
+ * @param {object} [existing] Existing record for an update.
+ * @returns {Promise<object>} Record ready to be written by its model.
+ * @throws {APIError} If validation or resource-specific authorization fails.
+ */
 async function prepareRecord(resource, req, existing) {
   const user = req.authenticatedUser;
   const record = { ...existing, ...req.body, id: existing?.id ?? null };
@@ -460,9 +502,23 @@ async function prepareRecord(resource, req, existing) {
   return record;
 }
 
+/**
+ * Convert values to comparable text, including dates and nullish values.
+ *
+ * @param {*} value Value to convert.
+ * @returns {string}
+ */
 const asText = (value) =>
   value instanceof Date ? value.toISOString() : String(value ?? "");
 
+/**
+ * Filter and sort resource records according to the supported query options.
+ *
+ * @param {object} resource Resource configuration, including path and query options.
+ * @param {object[]} records Records to filter and sort.
+ * @param {object} query Request query parameters.
+ * @returns {Promise<object[]>} Filtered and sorted records.
+ */
 async function searchAndSort(resource, records, query) {
   const options = resource.query;
   const term = String(query.search_term ?? "")
@@ -556,6 +612,13 @@ async function searchAndSort(resource, records, query) {
     .map(({ record }) => record);
 }
 
+/**
+ * Convert model write conflicts and missing records into API errors.
+ *
+ * @param {{trainerConflict: (boolean|undefined), duplicate: (boolean|undefined), overlap: (boolean|undefined), affectedRows: (number|undefined)}} result Model write result.
+ * @returns {void}
+ * @throws {APIError} If the write conflicts or did not affect a record.
+ */
 function checkWrite(result) {
   if (result.trainerConflict) {
     throw new APIError(
@@ -574,6 +637,11 @@ function checkWrite(result) {
   }
 }
 
+/**
+ * Get public session records scheduled during the next seven days.
+ *
+ * @returns {Promise<object[]>} Upcoming sessions ordered by date and time.
+ */
 async function upcomingSessions() {
   const today = new Date();
   const end = new Date(today);
@@ -590,6 +658,11 @@ async function upcomingSessions() {
     );
 }
 
+/**
+ * Load lookup records required to add related details to XML exports.
+ *
+ * @returns {Promise<{activities: object[], locations: object[], users: object[]}>}
+ */
 async function xmlLookups() {
   const [activities, locations, users] = await Promise.all([
     ActivitiesModel.getAll(),
@@ -599,6 +672,9 @@ async function xmlLookups() {
   return { activities, locations, users };
 }
 
+/**
+ * Registers API routes for timetable browsing, resource CRUD, and XML exports.
+ */
 export class APIResourcesController {
   static routes = express.Router();
 
