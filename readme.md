@@ -8,7 +8,7 @@ Gym app for Tafe stage 2 assessment
 
 ## Backend Gym App
 
-![gym app](https://raw.githubusercontent.com/petersem/gym/main/gh-assets/ymapp.png)
+![gym app](https://raw.githubusercontent.com/petersem/gym/main/gh-assets/gymapp.png)
 
 ### Architecture
 
