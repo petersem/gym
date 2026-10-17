@@ -136,7 +136,7 @@ components:
           example: 1990-05-12
       description:
         Replace editable user fields. Members and trainers can update only their
-        own record and cannot change their role. Omit role to keep it unchanged.
+        own record. Role is read-only and must not be included in updates.
         Omitting password, leaving it empty or supplying the current password preserves the API key.
         Only changing the password revokes the current API key.
     User:
@@ -146,6 +146,7 @@ components:
         - id
         - first_name
         - last_name
+        - role
         - email
         - phone
         - dob
@@ -167,6 +168,15 @@ components:
           maxLength: 45
           pattern: \S
           example: Doe
+        role:
+          type: string
+          enum:
+            - admin
+            - trainer
+            - member
+          readOnly: true
+          description: The user's assigned role; it cannot be changed through the API.
+          example: member
         email:
           type: string
           format: email

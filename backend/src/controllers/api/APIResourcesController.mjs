@@ -24,30 +24,12 @@ const resources = [
     tag: "Users",
     model: UsersModel,
     roles: [],
-    listRoles: [],
+    list: false,
     getRoles: ["trainer", "member"],
     putRoles: ["trainer", "member"],
     description:
       "Members and trainers can read and update only their own record, without changing their role. User listing, creation and deletion are not available through the API. Passwords and authentication keys are never returned.",
     serialize: publicUser,
-  },
-  {
-    path: "activities",
-    removedMethods: ["post", "put", "delete"],
-    schema: "Activity",
-    tag: "Activities",
-    model: ActivitiesModel,
-    roles: [],
-    description: "Activity management is not available through the API.",
-  },
-  {
-    path: "locations",
-    removedMethods: ["post", "put", "delete"],
-    schema: "Location",
-    tag: "Locations",
-    model: LocationModel,
-    roles: [],
-    description: "Location management is not available through the API.",
   },
   {
     path: "sessions",
@@ -164,6 +146,12 @@ for (const resource of resources) {
     delete apiResourcePaths[method === "post" ? basePath : `${basePath}/{id}`][
       method
     ];
+  }
+  if (resource.list === false) {
+    delete apiResourcePaths[basePath].get;
+    if (Object.keys(apiResourcePaths[basePath]).length === 0) {
+      delete apiResourcePaths[basePath];
+    }
   }
 }
 
@@ -387,43 +375,45 @@ export class APIResourcesController {
           return APIAuthenticationController.restrict(roles)(req, res, next);
         });
       }
-      const listAccess = resource.publicRead
-        ? []
-        : [
-            APIAuthenticationController.restrict(
-              resource.listRoles ?? resource.getRoles ?? resource.roles,
-            ),
-          ];
-      router.get("/", ...listAccess, async (req, res) => {
-        let records;
-        if (
-          resource.path === "bookings" &&
-          req.authenticatedUser.role === "trainer"
-        ) {
-          const [bookings, sessions] = await Promise.all([
-            BookingsModel.getAll(),
-            SessionsModel.getAll(),
-          ]);
-          const sessionIds = new Set(
-            sessions
-              .filter(
-                (session) =>
-                  Number(session.trainer_id) ===
-                  Number(req.authenticatedUser.id),
-              )
-              .map((session) => Number(session.id)),
-          );
-          records = bookings.filter((booking) =>
-            sessionIds.has(Number(booking.session_id)),
-          );
-        } else {
-          records =
-            resource.path === "bookings"
-              ? await BookingsModel.getByUserId(req.authenticatedUser.id)
-              : await resource.model.getAll();
-        }
-        res.json(records.map(serialize));
-      });
+      if (resource.list !== false) {
+        const listAccess = resource.publicRead
+          ? []
+          : [
+              APIAuthenticationController.restrict(
+                resource.listRoles ?? resource.getRoles ?? resource.roles,
+              ),
+            ];
+        router.get("/", ...listAccess, async (req, res) => {
+          let records;
+          if (
+            resource.path === "bookings" &&
+            req.authenticatedUser.role === "trainer"
+          ) {
+            const [bookings, sessions] = await Promise.all([
+              BookingsModel.getAll(),
+              SessionsModel.getAll(),
+            ]);
+            const sessionIds = new Set(
+              sessions
+                .filter(
+                  (session) =>
+                    Number(session.trainer_id) ===
+                    Number(req.authenticatedUser.id),
+                )
+                .map((session) => Number(session.id)),
+            );
+            records = bookings.filter((booking) =>
+              sessionIds.has(Number(booking.session_id)),
+            );
+          } else {
+            records =
+              resource.path === "bookings"
+                ? await BookingsModel.getByUserId(req.authenticatedUser.id)
+                : await resource.model.getAll();
+          }
+          res.json(records.map(serialize));
+        });
+      }
       router.get("/:id", async (req, res) => {
         const record = await activeRecord(
           resource.model,

@@ -45,16 +45,17 @@ field limits, response schemas, error codes, and role/ownership rules.
 | Blogs           | `/api/v1/blogs`, `/api/v1/blogs/{id}`       | Guest/member/trainer reads; member/trainer writes restricted to the creator                                           |
 
 Administrators cannot log in to the API or use existing API keys (returns `403`).
-User creation/deletion, activity/location creation/updates/deletion and session
+User listing/creation/deletion, all activity/location endpoints and session
 creation/updates are removed from the API and Swagger documentation.
-User listing, activity/location reads and booking updates remain access-restricted.
+Booking updates remain access-restricted.
 Guests without a key can only read blogs; documentation and login remain public.
 
 Create/update bodies use JSON with snake_case field names. `PUT`
-requires all editable fields, except user roles, passwords and dates of birth may be
+requires all editable fields, except user passwords and dates of birth may be
 omitted to preserve their current values. Omit `user_id` when creating a booking
 to use your own user ID. Blog authors and creation timestamps
-are server-managed. Passwords are bcrypt-hashed, and user responses never include
+are server-managed. User responses include the assigned role as a read-only field;
+do not include it in updates. Passwords are bcrypt-hashed, and user responses never include
 passwords or authentication keys. Changing your password revokes your API key;
 omitting the password, leaving it empty (`"password": ""`) or supplying the
 current password preserves it.

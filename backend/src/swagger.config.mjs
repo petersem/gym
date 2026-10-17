@@ -35,14 +35,6 @@ const options = {
           "Members and trainers can read and update their own profile.",
       },
       {
-        name: "Activities",
-        description: "Activity management is not available through the API.",
-      },
-      {
-        name: "Locations",
-        description: "Location management is not available through the API.",
-      },
-      {
         name: "Sessions",
         description:
           "Member and trainer timetable reads and trainers' own session cancellations.",

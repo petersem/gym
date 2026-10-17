@@ -35,15 +35,12 @@ const models = {
 };
 const removedMethods = {
   users: ["post", "delete"],
-  activities: ["post", "put", "delete"],
-  locations: ["post", "put", "delete"],
   sessions: ["post", "put"],
 };
 const bodies = {
   users: {
     first_name: "New",
     last_name: "Member",
-    role: "member",
     email: "new@example.com",
     password: "testing123",
     phone: "0412345678",
@@ -214,6 +211,18 @@ afterAll(async () => {
 });
 
 describe("OpenAPI contract", () => {
+  test("removes List all users from the API and Swagger documentation", async () => {
+    expect(swaggerSpec.paths).not.toHaveProperty("/api/v1/users");
+    expect(swaggerSpec.paths["/api/v1/users/{id}"]).toHaveProperty("get");
+    expect(swaggerSpec.paths["/api/v1/users/{id}"]).toHaveProperty("put");
+    for (const user of [undefined, 2, 3]) {
+      const response = await request("/users", { user });
+      expect(response.status).toBe(404);
+      expect(response.body).toHaveProperty("message");
+    }
+    expect(UsersModel.getAll).not.toHaveBeenCalled();
+  });
+
   test.each(Object.entries(removedMethods))(
     "removes unsupported %s writes from the contract and rejects direct requests",
     async (resource, methods) => {
@@ -225,7 +234,9 @@ describe("OpenAPI contract", () => {
             user,
             ...(method !== "delete" ? { body: bodies[resource] } : {}),
           });
-          expect(result.status).toBe(405);
+          expect(result.status).toBe(
+            resource === "users" && method === "post" ? 404 : 405,
+          );
           expect(result.body).toHaveProperty("message");
         }
       }
@@ -314,13 +325,28 @@ describe("OpenAPI contract", () => {
   });
   test("contains valid gym schemas and only the retained operations", async () => {
     await SwaggerParser.validate(structuredClone(swaggerSpec));
+    expect(swaggerSpec.tags.map((tag) => tag.name)).not.toEqual(
+      expect.arrayContaining(["Activities", "Locations"]),
+    );
     expect(
       Object.keys(swaggerSpec.paths).every((path) =>
         path.startsWith("/api/v1/"),
       ),
     ).toBe(true);
     for (const resource of Object.keys(models)) {
-      expect(swaggerSpec.paths[`/api/v1/${resource}`]).toHaveProperty("get");
+      if (["activities", "locations"].includes(resource)) {
+        expect(swaggerSpec.paths).not.toHaveProperty(`/api/v1/${resource}`);
+        expect(swaggerSpec.paths).not.toHaveProperty(
+          `/api/v1/${resource}/{id}`,
+        );
+        continue;
+      }
+      if (resource === "users") {
+        expect(swaggerSpec.paths).not.toHaveProperty("/api/v1/users");
+        expect(swaggerSpec.paths["/api/v1/users/{id}"]).toHaveProperty("get");
+        expect(swaggerSpec.paths["/api/v1/users/{id}"]).toHaveProperty("put");
+        continue;
+      }
       for (const method of ["get", "post", "put", "delete"]) {
         const path = `/api/v1/${resource}${["get", "post"].includes(method) ? "" : "/{id}"}`;
         if (removedMethods[resource]?.includes(method)) {
@@ -419,6 +445,31 @@ describe("OpenAPI contract", () => {
 });
 
 describe("API authentication and access", () => {
+  test.each([2, 3])(
+    "returns a schema-valid own profile by ID and key for user %s",
+    async (user) => {
+      for (const path of [`/users/${user}`, "/user/self"]) {
+        const result = await request(path, { user });
+        expect(result.status).toBe(200);
+        expect(result.body).toEqual({
+          id: user,
+          first_name: records.users[user - 1].first_name,
+          last_name: records.users[user - 1].last_name,
+          role: user === 2 ? "trainer" : "member",
+          email: records.users[user - 1].email,
+          phone: records.users[user - 1].phone,
+          dob: null,
+        });
+      }
+      expect(swaggerSpec.components.schemas.User.properties.role.readOnly).toBe(
+        true,
+      );
+      expect(
+        swaggerSpec.components.schemas.UserUpdate.properties,
+      ).not.toHaveProperty("role");
+    },
+  );
+
   test("rejects admin login without issuing or rotating a key", async () => {
     const result = await request("/authenticate", {
       method: "POST",
@@ -544,7 +595,7 @@ describe("API authentication and access", () => {
               body: { ...body, role },
             })
           ).status,
-        ).toBe(403);
+        ).toBe(400);
       }
       for (const method of ["GET", "PUT", "DELETE"]) {
         expect(
@@ -570,7 +621,7 @@ describe("API authentication and access", () => {
               ...(method === "POST" ? { body: bodies.users } : {}),
             })
           ).status,
-        ).toBe(method === "GET" ? 403 : 405);
+        ).toBe(method === "DELETE" ? 405 : 404);
       }
       expect(UsersModel.create).not.toHaveBeenCalled();
       expect(UsersModel.update).not.toHaveBeenCalled();
@@ -606,6 +657,10 @@ describe("API authentication and access", () => {
   test.each(Object.keys(models))(
     "requires authentication for every %s write",
     async (resource) => {
+      const body = { ...bodies[resource] };
+      if (resource === "users") {
+        delete body.role;
+      }
       for (const [method, path] of [
         ["POST", `/${resource}`],
         ["PUT", `/${resource}/1`],
@@ -613,12 +668,15 @@ describe("API authentication and access", () => {
       ]) {
         const result = await request(path, {
           method,
-          ...(["POST", "PUT"].includes(method)
-            ? { body: bodies[resource] }
-            : {}),
+          ...(["POST", "PUT"].includes(method) ? { body } : {}),
         });
         expect(result.status).toBe(
-          removedMethods[resource]?.includes(method.toLowerCase()) ? 405 : 401,
+          ["activities", "locations"].includes(resource) ||
+            (resource === "users" && method === "POST")
+            ? 404
+            : removedMethods[resource]?.includes(method.toLowerCase())
+              ? 405
+              : 401,
         );
       }
       expect(models[resource].create).not.toHaveBeenCalled();
@@ -631,45 +689,32 @@ describe("API authentication and access", () => {
     ["activities", 3],
     ["locations", 2],
     ["locations", 3],
-  ])(
-    "blocks unauthorized roles on every %s operation (user %s)",
-    async (resource, user) => {
-      for (const [method, path] of [
-        ["GET", `/${resource}`],
-        ["GET", `/${resource}/1`],
-        ["POST", `/${resource}`],
-        ["PUT", `/${resource}/1`],
-        ["DELETE", `/${resource}/1`],
-      ]) {
-        const result = await request(path, {
-          method,
-          user,
-          ...(["POST", "PUT"].includes(method)
-            ? { body: bodies[resource] }
-            : {}),
-        });
-        expect(result.status).toBe(
-          removedMethods[resource]?.includes(method.toLowerCase()) ? 405 : 403,
-        );
-      }
-      for (const method of [
-        "getAll",
-        "getById",
-        "create",
-        "update",
-        "delete",
-      ]) {
-        expect(models[resource][method]).not.toHaveBeenCalled();
-      }
-    },
-  );
+  ])("removes every %s operation (user %s)", async (resource, user) => {
+    for (const [method, path] of [
+      ["GET", `/${resource}`],
+      ["GET", `/${resource}/1`],
+      ["POST", `/${resource}`],
+      ["PUT", `/${resource}/1`],
+      ["DELETE", `/${resource}/1`],
+    ]) {
+      const result = await request(path, {
+        method,
+        user,
+        ...(["POST", "PUT"].includes(method) ? { body: bodies[resource] } : {}),
+      });
+      expect(result.status).toBe(404);
+    }
+    for (const method of ["getAll", "getById", "create", "update", "delete"]) {
+      expect(models[resource][method]).not.toHaveBeenCalled();
+    }
+  });
 
   test("rejects missing/invalid API keys and does not reuse browser sessions", async () => {
-    expect((await request("/users")).status).toBe(401);
+    expect((await request("/users")).status).toBe(404);
     expect(
       (await request("/users", { headers: { "x-test-cookie-session": "yes" } }))
         .status,
-    ).toBe(401);
+    ).toBe(404);
     expect(
       (await request("/user/self", { headers: { "x-auth-key": "invalid" } }))
         .status,
@@ -690,7 +735,9 @@ describe("API authentication and access", () => {
       "/activities",
       "/locations",
     ]) {
-      expect((await request(path)).status).toBe(401);
+      expect((await request(path)).status).toBe(
+        ["/users", "/activities", "/locations"].includes(path) ? 404 : 401,
+      );
     }
     expect((await request("/blogs")).status).toBe(200);
     expect((await request("/blogs/1")).status).toBe(200);
