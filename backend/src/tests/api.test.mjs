@@ -208,7 +208,7 @@ afterAll(async () => {
 });
 
 describe("OpenAPI contract", () => {
-  test.each(["authorizeBtn", "authorizeOperationBtn"])(
+  test.each(["authorizeOperationBtn"])(
     "reverses only the padlock presentation for %s",
     (component) => {
       const createElement = jest.fn((type, props) => ({ type, props }));
@@ -229,6 +229,42 @@ describe("OpenAPI contract", () => {
       expect(onClick).not.toHaveBeenCalled();
     },
   );
+
+  test("labels the main button Log Out only while authorized", () => {
+    const createElement = (type, props, ...children) => ({
+      type,
+      props,
+      children,
+    });
+    const getComponent = (name) => name;
+    const onClick = jest.fn();
+    const wrapped = authorizationIconsPlugin().wrapComponents.authorizeBtn(
+      () => null,
+      { React: { createElement } },
+    );
+    for (const isAuthorized of [false, true, false]) {
+      const rendered = wrapped({
+        isAuthorized,
+        getComponent,
+        onClick,
+        showPopup: true,
+      });
+      const [button, popup] = rendered.children;
+      expect(button.children[0].children).toEqual([
+        isAuthorized ? "Log Out" : "Authorize",
+      ]);
+      expect(button.children[1].type).toBe(
+        isAuthorized ? "UnlockAuthIcon" : "LockAuthIcon",
+      );
+      expect(button.props.onClick).toBe(onClick);
+      expect(popup.type).toBe("authorizationPopup");
+    }
+    expect(
+      wrapped({ isAuthorized: false, getComponent, onClick, showPopup: false })
+        .children[1],
+    ).toBeNull();
+    expect(onClick).not.toHaveBeenCalled();
+  });
 
   test("loads the padlock plugin in Swagger UI", async () => {
     const response = await fetch(`${baseUrl}/api/v1/docs/swagger-ui-init.js`);

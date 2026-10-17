@@ -17,7 +17,29 @@ export function authorizationIconsPlugin() {
 
   return {
     wrapComponents: {
-      authorizeBtn: reversePadlock,
+      authorizeBtn: (_Original, system) => (props) => {
+        const { isAuthorized, showPopup, onClick, getComponent } = props;
+        const createElement = system.React.createElement;
+        const Icon = getComponent(
+          isAuthorized ? "UnlockAuthIcon" : "LockAuthIcon",
+          true,
+        );
+        const Popup = getComponent("authorizationPopup", true);
+        return createElement(
+          "div",
+          { className: "auth-wrapper" },
+          createElement(
+            "button",
+            {
+              className: `btn authorize ${isAuthorized ? "unlocked" : "locked"}`,
+              onClick,
+            },
+            createElement("span", null, isAuthorized ? "Log Out" : "Authorize"),
+            createElement(Icon),
+          ),
+          showPopup ? createElement(Popup) : null,
+        );
+      },
       authorizeOperationBtn: reversePadlock,
     },
   };
