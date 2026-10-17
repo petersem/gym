@@ -8,7 +8,9 @@ import { APIResourcesController } from "./APIResourcesController.mjs";
 import { apiErrorHandler } from "./apiHelpers.mjs";
 
 export function authorizationIconsPlugin() {
-  // These presentation components do not manage the stored credentials.
+  // The plugin customizes the button label for the authorization/log out button in the Swagger UI
+  // This plugin reverses the padlock icon to indicate the authorization state.
+  // The plugin specifically targets the padlock icon, reversing its state to visually indicate whether the user is authorized or not.
   const reversePadlock = (Original, system) => (props) =>
     system.React.createElement(Original, {
       ...props,
