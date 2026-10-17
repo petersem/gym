@@ -630,27 +630,27 @@ components:
             Active member ID. Members may only use their own ID. Defaults to
             the authenticated user's ID on create; remains unchanged on update
             if omitted.
-    # BookingUpdate:
-    #   type: object
-    #   additionalProperties: false
-    #   required:
-    #     - session_id
-    #   properties:
-    #     session_id:
-    #       type: integer
-    #       minimum: 1
-    #       maximum: 2147483647
-    #       example: 1
-    #       description: ID of an existing session, today or later.
-    #     user_id:
-    #       type: integer
-    #       minimum: 1
-    #       maximum: 2147483647
-    #       example: 1
-    #       description:
-    #         Active member ID. Members may only use their own ID. Defaults to
-    #         the authenticated user's ID on create; remains unchanged on update
-    #         if omitted.
+    BookingUpdate:
+      type: object
+      additionalProperties: false
+      required:
+        - session_id
+      properties:
+        session_id:
+          type: integer
+          minimum: 1
+          maximum: 2147483647
+          example: 1
+          description: ID of an existing session, today or later.
+        user_id:
+          type: integer
+          minimum: 1
+          maximum: 2147483647
+          example: 1
+          description:
+            Active member ID. Members may only use their own ID. Defaults to
+            the authenticated user's ID on create; remains unchanged on update
+            if omitted.
     Booking:
       type: object
       required:
