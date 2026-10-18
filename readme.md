@@ -77,7 +77,9 @@ docker run -d -p 8080:8080 -e API_URL=http://your-backend-host:3000 gym-frontend
 `API_URL` is the backend origin with no trailing slash (default `http://gym-app:3000`).
 To run the database, API and frontend together, use
 `docker compose -f backend/docker-compose.yml up --build` and open
-http://localhost:8080 (set `WEB_PORT` to change the port). Browsers only allow the
+http://localhost:8080 (set `WEB_PORT` to change the port). To pull the published
+images instead (`petersem/gym` and `petersem/gympwa`, pushed by the CI/CD workflow on
+`main` and `v*` tags), use `docker compose -f backend/compose.yml up -d`. Browsers only allow the
 app to be installed as a PWA over HTTPS (or on localhost), so put a TLS-terminating
 proxy in front of it in production.
 

@@ -109,7 +109,7 @@ jobs:
           if-no-files-found: warn
 
   publish:
-    name: Publish Docker Hub image
+    name: Publish Docker Hub images
     needs: [unit-tests]
     # needs: [style-check, unit-tests]
     if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v'))
@@ -147,6 +147,25 @@ jobs:
           push: true
           tags: ${{ steps.metadata.outputs.tags }}
           labels: ${{ steps.metadata.outputs.labels }}
+
+      - name: Generate frontend image tags
+        id: pwa-metadata
+        uses: docker/metadata-action@v5
+        with:
+          images: docker.io/${{ env.IMAGE_NAME }}pwa
+          tags: |
+            type=raw,value=latest
+            type=semver,pattern={{version}}
+
+      - name: Build and push frontend image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: frontend/Dockerfile
+          platforms: linux/amd64
+          push: true
+          tags: ${{ steps.pwa-metadata.outputs.tags }}
+          labels: ${{ steps.pwa-metadata.outputs.labels }}
 
       - name: Update Docker Hub README
         uses: peter-evans/dockerhub-description@v5
