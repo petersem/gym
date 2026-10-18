@@ -4,7 +4,82 @@ Gym app for Tafe stage 2 assessment
 
 - Backend MVC app
 - Backend JSON API with interactive Swagger documentation
-- Frontend React app (coming soon)
+- Frontend React app (daisyUI + Tailwind) using the JSON API
+
+## Frontend React App
+
+A mobile-first React app in [`frontend/`](frontend) built with Vite, React Router,
+daisyUI and Tailwind CSS. It talks only to the `/api/v1` JSON API and follows the
+[API access by role](gh-assets/api-role-sitemap.svg) rules:
+
+| Role    | Timetable                                      | Blog                    | Bookings                         | Profile              |
+| ------- | ---------------------------------------------- | ----------------------- | -------------------------------- | -------------------- |
+| Guest   | Browse, search, sort, filter                   | Read, search, sort      | —                                | Register as a member |
+| Member  | Book sessions (shows "Booked")                 | Create; edit/delete own | Own bookings, cancel, XML export | View / edit          |
+| Trainer | Booking counts and delete on own sessions, XML | Create; edit/delete own | Read bookings for own sessions   | View / edit          |
+| Admin   | Rejected at login (no API access)              |                         |                                  |                      |
+
+The `/locations` and `/trainers` endpoints are used only to populate form controls
+(timetable filters) and resolve names. Changing your password revokes the API key,
+so the app logs you out. The login page links to a registration form that creates
+a member account and logs straight in.
+
+Structure (feature folders, `*View.jsx` route components):
+
+- `src/api.mjs` – `fetchAPI(method, route, body, authKey)` returning `{ status, body }`
+- `src/authentication/` – `useAuthenticate(restrictToRoles)` context hook, `LoginView` and `RegisterView`
+- `src/common/` – role permissions, XML download button, search/sort bar, dialogs
+- `src/sessions/`, `src/bookings/`, `src/blogs/`, `src/users/` – feature views
+
+The frontend needs the backend running on port 3000 (otherwise Vite logs
+`http proxy error ... ECONNREFUSED`). Start both together from the repo root:
+
+```bash
+npm run dev                        # backend :3000 + frontend http://localhost:5173
+```
+
+Or run each in its own terminal:
+
+```bash
+npm run dev --workspace backend    # http://localhost:3000
+npm run dev --workspace frontend   # http://localhost:5173 (proxies /api to :3000)
+npm run build --workspace frontend # production build in frontend/dist
+npm run lint --workspace frontend
+```
+
+Set `VITE_API_TARGET` in `frontend/.env` to proxy to a different backend URL.
+
+The frontend is an installable Progressive Web App (via `vite-plugin-pwa`): it has a
+web manifest, HSG icons in `frontend/public/`, and a service worker that precaches the
+app shell. Guest (keyless) API reads such as the timetable and blog use a
+network-first cache so they still show offline. Signed-in API responses are never
+cached, so one user's bookings or profile can't appear for someone else on a shared
+device. When a new version is deployed, a toast offers to reload. The service worker
+is only built for production, so test it with:
+
+```bash
+npm run build --workspace frontend
+npm run preview --workspace frontend   # http://localhost:4173 (proxies /api to :3000)
+```
+
+#### Docker
+
+[`frontend/Dockerfile`](frontend/Dockerfile) builds the app with Node and serves it from
+an unprivileged nginx container on port 8080. nginx also proxies `/api` to the backend,
+so the browser only ever talks to one origin (the backend's CORS doesn't need changing).
+Build from the repository root so the workspace lockfile is included:
+
+```bash
+docker build -f frontend/Dockerfile -t gym-frontend .
+docker run -d -p 8080:8080 -e API_URL=http://your-backend-host:3000 gym-frontend
+```
+
+`API_URL` is the backend origin with no trailing slash (default `http://gym-app:3000`).
+To run the database, API and frontend together, use
+`docker compose -f backend/docker-compose.yml up --build` and open
+http://localhost:8080 (set `WEB_PORT` to change the port). Browsers only allow the
+app to be installed as a PWA over HTTPS (or on localhost), so put a TLS-terminating
+proxy in front of it in production.
 
 ## Backend Gym App
 
@@ -37,6 +112,10 @@ field limits, response schemas, error codes, and role/ownership rules.
 
 > Administrators cannot log in to the API or use existing API keys.
 > Guests without a key can read blogs, locations, the trainer list and the timetable.
+> Guests can also create a member account with `POST /api/v1/register`
+> (`first_name`, `last_name`, `email`, `phone`, `password`, optional `dob`), then
+> log in with `POST /api/v1/authenticate`. Requests that send an `x-auth-key` are
+> rejected, and the role is always `member`.
 
 `GET /api/v1/blogs`, `GET /api/v1/bookings` and `GET /api/v1/timetable` accept
 optional search and sort query parameters. Results stay limited to what your role

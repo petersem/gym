@@ -2,7 +2,7 @@ import express from "express";
 import { UsersModel } from "../../models/UsersModel.mjs";
 import bcrypt from "bcryptjs";
 import { randomUUID } from "node:crypto";
-import { APIError } from "./apiHelpers.mjs";
+import { APIError, publicUser, validateUserDetails } from "./apiHelpers.mjs";
 
 export class APIAuthenticationController {
   static middleware = express.Router();
@@ -13,6 +13,7 @@ export class APIAuthenticationController {
     this.middleware.use(this.#APIAuthenticationProvider);
     this.routes.post("/authenticate", this.handleAuthenticate);
     this.routes.delete("/authenticate", this.handleAuthenticate);
+    this.routes.post("/register", this.handleRegister);
   }
 
   /**
@@ -152,6 +153,70 @@ export class APIAuthenticationController {
         });
       }
     }
+  }
+
+  /**
+   * Register a new member account for a guest.
+   *
+   * @type {express.RequestHandler}
+   * @openapi
+   * /api/v1/register:
+   *      post:
+   *          summary: "Register a new member account"
+   *          description: "Guests only; requests with an x-auth-key are rejected. Creates an account with the member role. Log in with POST /authenticate afterwards to get an API key."
+   *          operationId: register
+   *          tags: [Authentication]
+   *          requestBody:
+   *              required: true
+   *              content:
+   *                  application/json:
+   *                      schema:
+   *                          $ref: "#/components/schemas/UserRegistration"
+   *          responses:
+   *              '201':
+   *                  description: 'Member account created, excluding password and authentication key'
+   *                  content:
+   *                      application/json:
+   *                          schema:
+   *                              $ref: "#/components/schemas/User"
+   *              '400':
+   *                  $ref: "#/components/responses/Error"
+   *              '403':
+   *                  $ref: "#/components/responses/Error"
+   *              '409':
+   *                  $ref: "#/components/responses/Error"
+   *              '500':
+   *                  $ref: "#/components/responses/Error"
+   */
+  static async handleRegister(req, res) {
+    if (req.authenticatedUser) {
+      throw new APIError(403, "Log out before registering a new account.");
+    }
+    const { first_name, last_name, email, password, phone } = req.body;
+    const dob = req.body.dob ?? null;
+    validateUserDetails({ phone, dob, password });
+    const existing = await UsersModel.getByUsername(email).catch((error) => {
+      if (error === "not found") return null;
+      throw error;
+    });
+    if (existing) {
+      throw new APIError(409, "An account with this email already exists.");
+    }
+    const user = new UsersModel(
+      null,
+      first_name.trim(),
+      last_name.trim(),
+      "member",
+      email,
+      await bcrypt.hash(password, 10),
+      phone,
+      dob,
+      0,
+      null,
+    );
+    const result = await UsersModel.create(user);
+    user.id = result.insertId;
+    res.status(201).json(publicUser(user));
   }
 
   /**

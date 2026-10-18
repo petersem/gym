@@ -848,6 +848,55 @@ describe("API authentication and access", () => {
     expect(UsersModel.update).not.toHaveBeenCalled();
   });
 
+  test("lets guests register as members only", async () => {
+    const created = await request("/register", {
+      method: "POST",
+      body: { ...bodies.users, email: "joiner@example.com", dob: "1990-05-12" },
+    });
+    expect(created.status).toBe(201);
+    expect(created.body).toMatchObject({
+      id: 100,
+      role: "member",
+      email: "joiner@example.com",
+      dob: "1990-05-12",
+    });
+    expect(created.body).not.toHaveProperty("password");
+    const stored = records.users.at(-1);
+    expect(stored.role).toBe("member");
+    expect(await bcrypt.compare("testing123", stored.password)).toBe(true);
+    expect(stored.authentication_key).toBeNull();
+  });
+
+  test.each([
+    [{ email: "user3@example.com" }, 409],
+    [{ phone: "12345" }, 400],
+    [{ dob: "2001-02-30" }, 400],
+    [{ password: "short" }, 400],
+    [{ password: "é".repeat(30) }, 400],
+    [{ role: "trainer" }, 400],
+    [{ first_name: " " }, 400],
+  ])("rejects registration with %j", async (change, status) => {
+    const result = await request("/register", {
+      method: "POST",
+      body: { ...bodies.users, ...change },
+    });
+    expect(result.status).toBe(status);
+    expect(UsersModel.create).not.toHaveBeenCalled();
+  });
+
+  test.each([1, 2, 3])(
+    "rejects registration from authenticated user %s",
+    async (user) => {
+      const result = await request("/register", {
+        method: "POST",
+        user,
+        body: bodies.users,
+      });
+      expect(result.status).toBe(403);
+      expect(UsersModel.create).not.toHaveBeenCalled();
+    },
+  );
+
   test("reports and logs database failures without leaking details", async () => {
     const log = jest.spyOn(console, "error").mockImplementation(() => {});
     UsersModel.getByAuthenticationKey.mockRejectedValue(

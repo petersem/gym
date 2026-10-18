@@ -47,5 +47,16 @@ services:
       gymdb:
         condition: service_healthy
 
+  gympwa:
+    image: petersem/gympwa:latest
+    container_name: gympwa
+    restart: unless-stopped
+    ports:
+      - "${WEB_PORT:-8080}:8080"
+    environment:
+      API_URL: http://app:3000
+    depends_on:
+      - app
+
 volumes:
   gymdb-data:

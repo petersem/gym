@@ -4,6 +4,9 @@
   "description": "",
   "main": "index.js",
   "scripts": {
+    "dev": "npm-run-all --parallel dev:backend dev:frontend",
+    "dev:backend": "npm run dev --workspace backend",
+    "dev:frontend": "npm run dev --workspace frontend",
     "test": "node --experimental-vm-modules ./node_modules/jest/bin/jest.js --reporters=default",
     "test:coverage": "npm test -- --coverage --verbose",
     "testfile": "npm run test -- --verbose --coverage > test_results.txt 2>&1",

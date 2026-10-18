@@ -22,6 +22,7 @@ import {
   activeRecord,
   publicRecord,
   publicUser,
+  validateUserDetails,
 } from "./apiHelpers.mjs";
 
 const resources = [
@@ -405,31 +406,10 @@ async function prepareRecord(resource, req, existing) {
       if (record.dob instanceof Date) {
         record.dob = DatabaseModel.toMySqlDate(record.dob);
       }
-      if (
-        !/^(?:0[23478]\d{8}|\+61[23478]\d{8}|13\d{4}|(?:1300|1800)\d{6})$/.test(
-          record.phone.replace(/[ ().-]/g, ""),
-        )
-      ) {
-        throw new APIError(
-          400,
-          "Phone must be a valid Australian phone number.",
-        );
-      }
-      if (
-        record.dob != null &&
-        !validator.isISO8601(record.dob, {
-          strict: true,
-          strictSeparator: true,
-        })
-      ) {
-        throw new APIError(400, "Date of birth must be a real calendar date.");
-      }
+      validateUserDetails({ ...record, password: req.body.password });
       if (existing && req.body.password === "") {
         record.password = existing.password;
       } else if (req.body.password !== undefined) {
-        if (Buffer.byteLength(req.body.password, "utf8") > 36) {
-          throw new APIError(400, "Password must be at most 36 UTF-8 bytes.");
-        }
         if (
           existing &&
           (await bcrypt.compare(req.body.password, existing.password))

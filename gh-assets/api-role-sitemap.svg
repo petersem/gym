@@ -1,6 +1,6 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="960" height="782" viewBox="0 0 960 782" role="img" aria-labelledby="title description">
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="842" viewBox="0 0 960 842" role="img" aria-labelledby="title description">
   <title id="title">Gym API access by role</title>
-  <desc id="description">Guest, Member, Trainer and Admin API permissions. Guests can read blogs, locations, the trainer list and the timetable (members and trainers can too). Members and trainers can authenticate, read and update their own profile, and create blog posts or edit and delete their own posts. Members can read, create and cancel their own bookings and download them as XML. Trainers can read bookings for sessions assigned to them and delete and download their own upcoming sessions as XML, but cannot make or cancel bookings. The blog, timetable and booking lists can be searched and sorted within each role&#x2019;s access. Administrators have no API access. Documentation remains public.</desc>
+  <desc id="description">Guest, Member, Trainer and Admin API permissions. Guests can read blogs, locations, the trainer list and the timetable (members and trainers can too), and register a new member account. Members and trainers can authenticate, read and update their own profile, and create blog posts or edit and delete their own posts. Members can read, create and cancel their own bookings and download them as XML. Trainers can read bookings for sessions assigned to them and delete and download their own upcoming sessions as XML, but cannot make or cancel bookings. The blog, timetable and booking lists can be searched and sorted within each role&#x2019;s access. Administrators have no API access. Documentation remains public.</desc>
   <style>
     text { font-family: Arial, Helvetica, sans-serif; font-size: 15px; fill: #17231d; }
     .heading { font-weight: 700; }
@@ -37,7 +37,7 @@
       <text class="tick" y="1">&#x2713;&#xB2;</text>
     </g>
   </defs>
-  <rect x="1" y="1" width="958" height="780" rx="10" fill="#ffffff" stroke="#dfe7e0"/>
+  <rect x="1" y="1" width="958" height="840" rx="10" fill="#ffffff" stroke="#dfe7e0"/>
   <text x="20" y="36" class="title">API Access by Role</text>
   <text x="20" y="61" class="note">Base path: /api/v1 &#x2022; Member and Trainer access requires an x-auth-key.</text>
   <path d="M1 80H959V126H1Z" fill="#f3f6f2"/>
@@ -49,7 +49,7 @@
     <g class="admin"><rect x="856" y="88" width="88" height="30" rx="5"/><text x="900" y="109">Admin</text></g>
   </g>
   <g stroke="#edf0ed">
-    <path d="M1 162H959M1 198H959M1 234H959M1 270H959M1 306H959M1 342H959M1 378H959M1 414H959M1 450H959M1 486H959M1 522H959M1 558H959M1 594H959M1 630H959"/>
+    <path d="M1 162H959M1 198H959M1 234H959M1 270H959M1 306H959M1 342H959M1 378H959M1 414H959M1 450H959M1 486H959M1 522H959M1 558H959M1 594H959M1 630H959M1 666H959"/>
   </g>
   <g>
     <text x="20" y="150">Read locations &#x2014; GET /locations, /locations/{id}</text>
@@ -67,12 +67,14 @@
     <text x="20" y="582">Delete session &#x2014; DELETE /sessions/{id}</text>
     <text x="20" y="618">Export sessions XML &#x2014; GET /sessions/export.xml</text>
     <text x="20" y="654">Log in / out &#x2014; POST / DELETE /authenticate</text>
+    <text x="20" y="690">Register member &#x2014; POST /register &#x2074;</text>
   </g>
   <g class="guest">
     <use href="#allowed" x="570" y="150"/>
     <use href="#allowed" x="570" y="186"/>
     <use href="#allowed" x="570" y="222"/>
     <use href="#allowed" x="570" y="402"/>
+    <use href="#allowed" x="570" y="690"/>
   </g>
   <g class="member">
     <use href="#allowed" x="680" y="150"/>
@@ -135,11 +137,15 @@
     <text x="900" y="618">&#x2014;</text>
     <text x="570" y="654">&#x2014;</text>
     <text x="900" y="654">&#x2014;</text>
+    <text x="680" y="690">&#x2014;</text>
+    <text x="790" y="690">&#x2014;</text>
+    <text x="900" y="690">&#x2014;</text>
   </g>
-  <path d="M20 674H940" stroke="#dfe7e0"/>
+  <path d="M20 710H940" stroke="#dfe7e0"/>
   <g class="note">
-    <text x="20" y="698">&#x2713; Allowed    &#x2014; No access    &#xB9; Own record / own post / assigned session only.</text>
-    <text x="20" y="722">&#xB2; Trainers read bookings for sessions assigned to them, regardless of who made the booking.</text>
-    <text x="20" y="746">&#xB3; The /blogs, /timetable and /bookings lists accept search_term, sort_by and sort_dir; results stay within the role&#x2019;s access.</text>
-  </g>
+    <text x="20" y="734">&#x2713; Allowed    &#x2014; No access    &#xB9; Own record / own post / assigned session only.</text>
+    <text x="20" y="758">&#xB2; Trainers read bookings for sessions assigned to them, regardless of who made the booking.</text>
+    <text x="20" y="782">&#xB3; The /blogs, /timetable and /bookings lists accept search_term, sort_by and sort_dir; results stay within the role&#x2019;s access.</text>
+        <text x="20" y="806">&#x2074; Guests only (no x-auth-key); new accounts always get the member role.</text>
+      </g>
 </svg>

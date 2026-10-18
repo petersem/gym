@@ -1,3 +1,4 @@
+import validator from "validator";
 import { DatabaseModel } from "../../models/DatabaseModel.mjs";
 
 export class APIError extends Error {
@@ -35,6 +36,34 @@ export function publicUser(user) {
         ? DatabaseModel.toMySqlDate(user.dob)
         : user.dob || null,
   };
+}
+
+/**
+ * Validate user details that the OpenAPI schema cannot fully express.
+ *
+ * @param {{phone: string, dob?: string|null, password?: string}} user
+ * @throws {APIError} 400 when the phone, date of birth or password is invalid.
+ */
+export function validateUserDetails(user) {
+  if (
+    !/^(?:0[23478]\d{8}|\+61[23478]\d{8}|13\d{4}|(?:1300|1800)\d{6})$/.test(
+      user.phone.replace(/[ ().-]/g, ""),
+    )
+  ) {
+    throw new APIError(400, "Phone must be a valid Australian phone number.");
+  }
+  if (
+    user.dob != null &&
+    !validator.isISO8601(user.dob, { strict: true, strictSeparator: true })
+  ) {
+    throw new APIError(400, "Date of birth must be a real calendar date.");
+  }
+  if (
+    user.password !== undefined &&
+    Buffer.byteLength(user.password, "utf8") > 36
+  ) {
+    throw new APIError(400, "Password must be at most 36 UTF-8 bytes.");
+  }
 }
 
 export function publicRecord(record) {
