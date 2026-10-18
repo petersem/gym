@@ -41,7 +41,10 @@ export function publicUser(user) {
 /**
  * Validate user details that the OpenAPI schema cannot fully express.
  *
- * @param {{phone: string, dob?: string|null, password?: string}} user
+ * @param {Object} user User details to check.
+ * @param {string} user.phone Phone number.
+ * @param {?string} [user.dob] Date of birth (YYYY-MM-DD) or null.
+ * @param {string} [user.password] Plain-text password, when one is being set.
  * @throws {APIError} 400 when the phone, date of birth or password is invalid.
  */
 export function validateUserDetails(user) {
