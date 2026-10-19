@@ -1,5 +1,5 @@
 /**
- * Client-side mirror of the "API Access by Role" matrix (gh-assets/api-role-sitemap.svg).
+ * Client-side Role access
  * The API remains the source of truth; this only decides what the UI offers.
  * Admins are rejected by POST /authenticate, so they never hold a session here.
  */
@@ -15,7 +15,7 @@ export const PERMISSIONS = {
   manageOwnBlog: AUTHENTICATED,
   readProfile: AUTHENTICATED,
   updateProfile: AUTHENTICATED,
-  readBookings: AUTHENTICATED, // members: own; trainers: bookings on their sessions
+  readBookings: AUTHENTICATED, // members: own; trainers: grouped bookings on their sessions
   makeBooking: ["member"],
   cancelBooking: ["member"],
   exportBookings: ["member"],
