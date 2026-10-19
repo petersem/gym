@@ -1523,8 +1523,13 @@ describe("searching and sorting", () => {
     expect(await ids("sort_by=trainer", 2)).toEqual([2, 1, 3]);
     expect(await ids("sort_by=location&sort_dir=asc")).toEqual([2, 1, 3]);
     expect(await ids("search_term=YOGA")).toEqual([1]);
-    expect(await ids("search_term=alex")).toEqual([2]);
-    expect(await ids("search_term=annex")).toEqual([2]);
+    expect(await ids("search_term=alex")).toEqual([]);
+    expect(await ids("search_term=annex")).toEqual([]);
+    expect(await ids("search_term=ox")).toEqual([2]);
+    expect(await ids("search_term=YOGA&location_id=2")).toEqual([]);
+    expect(await ids("search_term=YOGA&trainer_id=2")).toEqual([1]);
+    expect(await ids("search_term=YOGA", 2)).toEqual([1]);
+    expect(await ids("search_term=alex", 2)).toEqual([]);
     expect(await ids("search_term=later")).toEqual([]);
     expect(await ids("trainer_id=2&sort_by=title&sort_dir=desc")).toEqual([
       1, 3,
@@ -1543,9 +1548,14 @@ describe("searching and sorting", () => {
       "trainer",
       "location",
     ]);
+    expect(parameters[2].description).toBe(
+      "Case-insensitive match on session title only.",
+    );
     const guestIds = async (query) =>
       (await request(`/timetable?${query}`)).body.map((session) => session.id);
-    expect(await guestIds("search_term=annex&sort_by=title")).toEqual([2]);
+    expect(await guestIds("search_term=annex&sort_by=title")).toEqual([]);
+    expect(await guestIds("search_term=alex")).toEqual([]);
+    expect(await guestIds("search_term=BOX&sort_by=title")).toEqual([2]);
     expect(await guestIds("sort_by=location")).toEqual([2, 1, 3]);
     expect(swaggerSpec.paths["/api/v1/timetable"].get.security).toEqual([]);
     expect(

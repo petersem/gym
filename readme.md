@@ -122,7 +122,8 @@ field limits, response schemas, error codes, and role/ownership rules.
 `GET /api/v1/blogs`, `GET /api/v1/bookings` and `GET /api/v1/timetable` accept
 optional search and sort query parameters. Results stay limited to what your role
 can already see, and timetable search/sort also works with its `location_id` and
-`trainer_id` filters.
+`trainer_id` filters. Timetable text search matches session names only
+(case-insensitive); use the separate filters to narrow by trainer or location.
 
 Members can download their bookings for the next seven days as XML from
 `GET /api/v1/bookings/export.xml`. Trainers can download their own sessions for

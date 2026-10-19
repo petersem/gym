@@ -195,7 +195,7 @@ function TimetableView() {
       </div>
 
       <SearchSortBar
-        placeholder="search title, trainer or location"
+        placeholder="search session name"
         sorts={SORTS}
         sortBy={sortBy}
         sortDir={sortDir}

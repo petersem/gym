@@ -164,7 +164,7 @@ function queryParameters(options) {
 const timetable = {
   path: "timetable",
   query: {
-    searchDescription: "session title, trainer name or location name",
+    searchDescription: "session title only",
     sorts: ["date", "title", "trainer", "location"],
     defaultSort: "date",
     defaultDir: "asc",
@@ -522,12 +522,7 @@ async function searchAndSort(resource, records, query) {
         ? `${trainer.last_name}, ${trainer.first_name}`
         : "";
       return {
-        search: [
-          session.title,
-          trainer?.first_name,
-          trainer?.last_name,
-          location?.name,
-        ],
+        search: [session.title],
         date: `${session.date} ${session.time}`,
         title: session.title,
         trainer: trainerName,
