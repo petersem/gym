@@ -24,7 +24,7 @@ export default defineConfig(({ mode }) => {
           short_name: "HSG",
           description:
             "Book gym sessions, manage your bookings and read the High Street Gym blog.",
-          theme_color: "#d3ee78",
+          theme_color: "#ffffff",
           background_color: "#ffffff",
           display: "standalone",
           start_url: "/",

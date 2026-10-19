@@ -23,6 +23,12 @@ function useTheme() {
   useEffect(() => {
     document.documentElement.dataset.theme = theme;
     localStorage.setItem("theme", theme);
+    const backgroundColor = getComputedStyle(
+      document.documentElement,
+    ).getPropertyValue("--color-base-100");
+    document
+      .querySelector('meta[name="theme-color"]')
+      ?.setAttribute("content", backgroundColor.trim());
   }, [theme]);
   return [theme, setTheme];
 }
