@@ -18,8 +18,8 @@ import UserBadge from "./common/UserBadge.jsx";
 import PWAStatus from "./common/PWAStatus.jsx";
 
 function useTheme() {
-  const [theme, setTheme] = useState(
-    () => localStorage.getItem("theme") === "dim" ? "dim" : "autumn",
+  const [theme, setTheme] = useState(() =>
+    localStorage.getItem("theme") === "dim" ? "dim" : "autumn",
   );
   useEffect(() => {
     document.documentElement.dataset.theme = theme;
@@ -95,7 +95,9 @@ function Layout() {
             </span>
             <span className="flex flex-col items-start leading-tight">
               <span>High Street Gym</span>
-              <span className="text-xs opacity-60">© 2026 v{packageJson.version}</span>
+              <span className="text-xs opacity-60">
+                © 2026 v{packageJson.version}
+              </span>
             </span>
           </button>
           <div className="flex min-w-0 flex-1 items-center justify-end gap-1">

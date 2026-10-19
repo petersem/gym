@@ -84,7 +84,11 @@ function RegisterView() {
     <form onSubmit={register} className="flex flex-col gap-4 p-4">
       <h1 className="text-3xl">Become a member</h1>
 
-      <StatusAlert message={error} onClose={() => setError(null)} autoHideMs={3000} />
+      <StatusAlert
+        message={error}
+        onClose={() => setError(null)}
+        autoHideMs={3000}
+      />
       {loginFailed && (
         <StatusAlert
           type="warning"

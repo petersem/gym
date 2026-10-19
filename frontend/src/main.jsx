@@ -4,7 +4,7 @@ import { createBrowserRouter, Navigate, RouterProvider } from "react-router";
 
 import "./index.css";
 import Layout from "./Layout.jsx";
-import { AuthenticationProvider } from "./authentication/useAuthenticate.jsx";
+import { AuthenticationProvider } from "./authentication/AuthenticationProvider.jsx";
 import LoginView from "./authentication/LoginView.jsx";
 import RegisterView from "./authentication/RegisterView.jsx";
 import TimetableView from "./sessions/TimetableView.jsx";

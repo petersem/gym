@@ -63,7 +63,11 @@ function BlogEditView() {
   return (
     <form onSubmit={save} className="flex flex-col gap-4 p-4">
       <h1 className="text-3xl">{blogId ? "Edit post" : "New post"}</h1>
-      <StatusAlert message={error} onClose={() => setError(null)} autoHideMs={3000} />
+      <StatusAlert
+        message={error}
+        onClose={() => setError(null)}
+        autoHideMs={3000}
+      />
       <label className="floating-label">
         <span>Title</span>
         <input

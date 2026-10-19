@@ -107,10 +107,7 @@ function BlogListView() {
   };
 
   const pagination = pageCount > 1 && (
-    <nav
-      className="flex flex-col items-center gap-1"
-      aria-label="Blog pages"
-    >
+    <nav className="flex flex-col items-center gap-1" aria-label="Blog pages">
       <div className="join">
         <button
           className="btn btn-sm join-item"
@@ -180,7 +177,11 @@ function BlogListView() {
         onClose={() => setSuccess(null)}
         autoHideMs={3000}
       />
-      <StatusAlert message={error} onClose={() => setError(null)} autoHideMs={3000} />
+      <StatusAlert
+        message={error}
+        onClose={() => setError(null)}
+        autoHideMs={3000}
+      />
 
       {pagination}
 
