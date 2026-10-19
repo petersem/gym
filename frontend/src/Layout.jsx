@@ -21,7 +21,7 @@ function useTheme() {
   const [theme, setTheme] = useState(() => {
     const savedTheme = localStorage.getItem("theme");
     return ["luxury", "business", "coffee", "dim"].includes(savedTheme)
-      ? "luxury"
+      ? "business"
       : "corporate";
   });
   useEffect(() => {
@@ -107,12 +107,12 @@ function Layout() {
             <UserBadge user={user} />
             <button
               onClick={() =>
-                setTheme(theme === "luxury" ? "corporate" : "luxury")
+                setTheme(theme === "business" ? "corporate" : "business")
               }
               className="btn btn-ghost btn-circle text-lg"
               aria-label="Toggle theme"
             >
-              {theme === "luxury" ? <FaSun /> : <FaMoon />}
+              {theme === "business" ? <FaSun /> : <FaMoon />}
             </button>
             {user ? (
               <button
