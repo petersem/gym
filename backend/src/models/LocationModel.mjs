@@ -90,7 +90,7 @@ export class LocationModel extends DatabaseModel {
     ).then((result) => result.map((row) => this.tableToModel(row.locations)));
   }
 
-  /** Columns that may be used to sort location listings. */
+  // Columns that may be used to sort location listings.
   static SORTABLE_COLUMNS = {
     name: "name",
     suburb: "suburb",

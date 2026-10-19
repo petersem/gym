@@ -5,9 +5,9 @@ import { AuthenticationController } from "./AuthenticationController.mjs";
 import { body } from "express-validator";
 import { management } from "../utilities/formValidation.mjs";
 
-/** HTTP handlers for locations. */
+// HTTP handlers for locations.
 export class LocationController {
-  /** @type {express.Router} */
+  // @type {express.Router}
   static routes = express.Router();
 
   /**
@@ -199,7 +199,7 @@ export class LocationController {
       });
   }
 
-  /** @type {express.RequestHandler} */
+  // @type {express.RequestHandler}
   static viewLocationList(req, res) {
     const selectedSearchTerm = String(req.query.search_term ?? "").trim();
     const selectedSortBy = Object.keys(LocationModel.SORTABLE_COLUMNS).includes(
@@ -239,7 +239,7 @@ export class LocationController {
       });
   }
 
-  /** @type {express.RequestHandler} */
+  // @type {express.RequestHandler}
   static viewLocationDetails(req, res) {
     LocationModel.getById(req.params.id)
       .then((location) => {

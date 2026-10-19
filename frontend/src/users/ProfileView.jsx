@@ -126,7 +126,7 @@ function ProfileView() {
       <StatusAlert message={error} onClose={() => setError(null)} />
 
       <fieldset className="fieldset gap-2 rounded-box border border-base-300 bg-base-200 p-4">
-        <legend className="fieldset-legend">Details</legend>
+        <legend className="fieldset-legend text-lg">Details</legend>
         {field("first_name", "First name", { required: true, maxLength: 45 })}
         {field("last_name", "Last name", { required: true, maxLength: 45 })}
         {field("email", "Email", {
@@ -143,7 +143,7 @@ function ProfileView() {
       </fieldset>
 
       <fieldset className="fieldset gap-2 rounded-box border border-base-300 bg-base-200 p-4">
-        <legend className="fieldset-legend">Change password</legend>
+        <legend className="fieldset-legend text-lg">Change password</legend>
         {field("password", "New password (leave blank to keep)", {
           type: "password",
           autoComplete: "new-password",

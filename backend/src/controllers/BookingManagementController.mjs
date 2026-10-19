@@ -17,7 +17,7 @@ const status = (res, code, message) =>
     message,
   });
 
-/** Staff booking management, scoped to trainers' own sessions. */
+// Staff booking management, scoped to trainers' own sessions.
 export class BookingManagementController {
   static routes = express.Router();
   static formValidation = management(
@@ -35,7 +35,7 @@ export class BookingManagementController {
     this.routes.post("/:id", this.formValidation, this.save);
   }
 
-  /** Render searchable booking rows and the editor, using only authorised sessions. */
+  // Render searchable booking rows and the editor, using only authorised sessions.
   static async view(req, res) {
     try {
       const [allBookings, allSessions, users, locations] = await Promise.all([
@@ -158,7 +158,7 @@ export class BookingManagementController {
     }
   }
 
-  /** Validate existing and destination session ownership before any write. */
+  // Validate existing and destination session ownership before any write.
   static async save(req, res) {
     try {
       const [sessions, users, bookings] = await Promise.all([

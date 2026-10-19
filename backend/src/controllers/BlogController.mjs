@@ -10,12 +10,12 @@ const canManageBlog = (user, blog) =>
     user && (user.role === "admin" || Number(user.id) === Number(blog.user_id)),
   );
 
-/** HTTP handlers for blog posts. */
+// HTTP handlers for blog posts.
 export class BlogController {
-  /** Public blog routes, unavailable to admins who use management instead. @type {express.Router} */
+  // Public blog routes, unavailable to admins who use management instead. @type {express.Router}
   static routes = express.Router();
 
-  /** @type {express.Router} */
+  // @type {express.Router}
   static managementRoutes = express.Router();
 
   /**
@@ -294,7 +294,7 @@ export class BlogController {
     }
   }
 
-  /** @type {express.RequestHandler} */
+  // @type {express.RequestHandler}
   static async list(req, res, next) {
     try {
       const blogs = req.query.search_term
@@ -306,7 +306,7 @@ export class BlogController {
     }
   }
 
-  /** @type {express.RequestHandler} */
+  // @type {express.RequestHandler}
   static async getById(req, res, next) {
     try {
       res.json(await BlogModel.getById(Number(req.params.id)));
@@ -315,7 +315,7 @@ export class BlogController {
     }
   }
 
-  /** @type {express.RequestHandler} */
+  // @type {express.RequestHandler}
   static async create(req, res, next) {
     try {
       res.status(201).json(await BlogModel.create(req.body));
@@ -324,7 +324,7 @@ export class BlogController {
     }
   }
 
-  /** @type {express.RequestHandler} */
+  // @type {express.RequestHandler}
   static async update(req, res, next) {
     try {
       if (!req.authenticatedUser) {
@@ -348,7 +348,7 @@ export class BlogController {
     }
   }
 
-  /** @type {express.RequestHandler} */
+  // @type {express.RequestHandler}
   static async delete(req, res, next) {
     try {
       if (!req.authenticatedUser) {

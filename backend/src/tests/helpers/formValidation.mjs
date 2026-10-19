@@ -6,7 +6,7 @@ import { BlogController } from "../../controllers/BlogController.mjs";
 import { SessionsController } from "../../controllers/SessionsController.mjs";
 import { BookingsController } from "../../controllers/BookingsController.mjs";
 
-/** Validation middleware for each form, keyed by the name used in tests. */
+// Validation middleware for each form, keyed by the name used in tests.
 export const formValidation = {
   login: AuthenticationController.loginValidation,
   register: AuthenticationController.registerValidation,

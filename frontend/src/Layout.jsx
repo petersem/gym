@@ -19,7 +19,7 @@ import PWAStatus from "./common/PWAStatus.jsx";
 
 function useTheme() {
   const [theme, setTheme] = useState(
-    () => localStorage.getItem("theme") ?? "emerald",
+    () => localStorage.getItem("theme") === "dim" ? "dim" : "autumn",
   );
   useEffect(() => {
     document.documentElement.dataset.theme = theme;
@@ -101,7 +101,7 @@ function Layout() {
           <div className="flex min-w-0 flex-1 items-center justify-end gap-1">
             <UserBadge user={user} />
             <button
-              onClick={() => setTheme(theme === "dim" ? "emerald" : "dim")}
+              onClick={() => setTheme(theme === "dim" ? "autumn" : "dim")}
               className="btn btn-ghost btn-circle text-lg"
               aria-label="Toggle theme"
             >

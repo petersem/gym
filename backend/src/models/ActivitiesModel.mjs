@@ -61,7 +61,7 @@ export class ActivitiesModel extends DatabaseModel {
     ).then((result) => result.map((row) => this.tableToModel(row.activities)));
   }
 
-  /** Columns that may be used to sort activity listings. */
+  // Columns that may be used to sort activity listings.
   static SORTABLE_COLUMNS = { name: "name", description: "description" };
 
   /**

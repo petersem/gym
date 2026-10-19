@@ -66,10 +66,10 @@ const trainerCanDeleteBooking = (trainerId, booking, session) =>
  * BookingsController handles the management, viewing, and exporting of gym bookings.
  */
 export class BookingsController {
-  /** Member-only booking pages, submissions and XML export. @type {express.Router} */
+  // Member-only booking pages, submissions and XML export. @type {express.Router}
   static routes = express.Router();
 
-  /** Timetable browsing for members and guests; booking submissions for members only. @type {express.Router} */
+  // Timetable browsing for members and guests; booking submissions for members only. @type {express.Router}
   static timetableRoutes = express.Router();
 
   static bookingFields = [
@@ -138,7 +138,7 @@ export class BookingsController {
     );
   }
 
-  /** @type {express.RequestHandler} */
+  // @type {express.RequestHandler}
   static async exportBookingsXml(req, res, next) {
     const authenticatedUser = req.authenticatedUser;
     if (!authenticatedUser) {
@@ -555,7 +555,7 @@ export class BookingsController {
     }
   }
 
-  /** @type {express.RequestHandler} */
+  // @type {express.RequestHandler}
   static async list(req, res, next) {
     try {
       res.json(await BookingsModel.getAll());
@@ -564,7 +564,7 @@ export class BookingsController {
     }
   }
 
-  /** @type {express.RequestHandler} */
+  // @type {express.RequestHandler}
   static async getById(req, res, next) {
     try {
       res.json(await BookingsModel.getById(Number(req.params.id)));
@@ -573,7 +573,7 @@ export class BookingsController {
     }
   }
 
-  /** @type {express.RequestHandler} */
+  // @type {express.RequestHandler}
   static async create(req, res, next) {
     try {
       const result = await BookingsModel.create(req.body);
@@ -583,7 +583,7 @@ export class BookingsController {
     }
   }
 
-  /** @type {express.RequestHandler} */
+  // @type {express.RequestHandler}
   static async update(req, res, next) {
     try {
       const result = await BookingsModel.update({
@@ -596,7 +596,7 @@ export class BookingsController {
     }
   }
 
-  /** @type {express.RequestHandler} */
+  // @type {express.RequestHandler}
   static async delete(req, res, next) {
     try {
       res.json(await BookingsModel.delete(Number(req.params.id)));

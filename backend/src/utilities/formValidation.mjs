@@ -35,7 +35,7 @@ const isWrite = (req) => ["create", "update"].includes(req.body?.action);
 const isScalar = (value) =>
   typeof value === "string" || Number.isSafeInteger(value);
 
-/** Largest value for a signed MySQL INT ID column. */
+// Largest value for a signed MySQL INT ID column.
 const maxId = 2147483647;
 
 /**

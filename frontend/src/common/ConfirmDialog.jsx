@@ -1,6 +1,6 @@
 import { useEffect, useRef } from "react";
 
-/** daisyUI modal confirmation driven by the `open` prop. */
+// daisyUI modal confirmation driven by the `open` prop.
 function ConfirmDialog({
   open,
   title,

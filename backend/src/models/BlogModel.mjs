@@ -64,7 +64,7 @@ export class BlogModel extends DatabaseModel {
     ).then((result) => result.map((row) => this.tableToModel(row.blog)));
   }
 
-  /** Columns that may be used to sort blog listings. */
+  // Columns that may be used to sort blog listings.
   static SORTABLE_COLUMNS = { title: "subject", created: "create_date" };
 
   /**

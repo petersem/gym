@@ -10,9 +10,9 @@ import { AuthenticationController } from "./AuthenticationController.mjs";
 import { body } from "express-validator";
 import { management } from "../utilities/formValidation.mjs";
 
-/** HTTP handlers for users. */
+// HTTP handlers for users.
 export class UsersController {
-  /** @type {express.Router} */
+  // @type {express.Router}
   static routes = express.Router();
 
   /**

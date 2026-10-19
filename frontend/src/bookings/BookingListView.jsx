@@ -119,6 +119,12 @@ function BookingListView() {
     [bookings, sessions, sessionById, pastBookingIds],
   );
 
+  const now = new Date();
+  const nextBooking = bookingsByDate.find((booking) => {
+    const session = sessionById.get(booking.session_id);
+    return session && sessionStart(session) > now;
+  });
+
   const cancelBooking = () => {
     setBusy(true);
     setError(null);
@@ -249,8 +255,13 @@ function BookingListView() {
             return (
               <li key={booking.id} className="list-row items-center">
                 <div className="min-w-0 list-col-grow">
-                  <div className="font-semibold">
+                  <div className="flex flex-wrap items-center gap-2 font-semibold">
                     {session?.title ?? `Session #${booking.session_id}`}
+                    {!isTrainer && booking.id === nextBooking?.id && (
+                      <span className="badge badge-primary badge-soft badge-sm">
+                        next
+                      </span>
+                    )}
                   </div>
                   {session ? (
                     <div className="flex flex-wrap gap-x-3 text-xs opacity-70">

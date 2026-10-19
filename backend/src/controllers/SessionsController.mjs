@@ -116,9 +116,9 @@ const sortSessions = (
   );
 };
 
-/** HTTP handlers for sessions. */
+// HTTP handlers for sessions.
 export class SessionsController {
-  /** @type {express.Router} */
+  // @type {express.Router}
   static routes = express.Router();
 
   /**
@@ -427,7 +427,7 @@ export class SessionsController {
     }
   }
 
-  /** @type {express.RequestHandler} */
+  // @type {express.RequestHandler}
   static async list(req, res, next) {
     try {
       res.json(await SessionsModel.getAll());
@@ -436,7 +436,7 @@ export class SessionsController {
     }
   }
 
-  /** @type {express.RequestHandler} */
+  // @type {express.RequestHandler}
   static async getById(req, res, next) {
     try {
       res.json(await SessionsModel.getById(Number(req.params.id)));
@@ -445,7 +445,7 @@ export class SessionsController {
     }
   }
 
-  /** @type {express.RequestHandler} */
+  // @type {express.RequestHandler}
   static async create(req, res, next) {
     try {
       const result = await SessionsModel.create(req.body);
@@ -455,7 +455,7 @@ export class SessionsController {
     }
   }
 
-  /** @type {express.RequestHandler} */
+  // @type {express.RequestHandler}
   static async update(req, res, next) {
     try {
       const result = await SessionsModel.update({
@@ -468,7 +468,7 @@ export class SessionsController {
     }
   }
 
-  /** @type {express.RequestHandler} */
+  // @type {express.RequestHandler}
   static async delete(req, res, next) {
     try {
       res.json(await SessionsModel.delete(Number(req.params.id)));

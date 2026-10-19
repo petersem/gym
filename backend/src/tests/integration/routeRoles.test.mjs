@@ -96,7 +96,7 @@ const routes = [
   },
 ];
 
-/** Status an authorised role receives when no override is given. */
+// Status an authorised role receives when no override is given.
 const defaultAllowed = { GET: 200, POST: 303 };
 
 /**

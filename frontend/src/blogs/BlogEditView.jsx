@@ -4,7 +4,7 @@ import { useAuthenticate } from "../authentication/useAuthenticate.jsx";
 import StatusAlert from "../common/StatusAlert.jsx";
 import { PERMISSIONS } from "../common/permissions.mjs";
 
-/** Create (/blogs/new) or edit (/blogs/:blogId/edit) a post owned by the current user. */
+// Create (/blogs/new) or edit (/blogs/:blogId/edit) a post owned by the current user.
 function BlogEditView() {
   const navigate = useNavigate();
   const { blogId } = useParams();

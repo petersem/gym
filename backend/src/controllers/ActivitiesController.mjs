@@ -8,7 +8,7 @@ import { management } from "../utilities/formValidation.mjs";
  * @class
  */
 export class ActivitiesController {
-  /** @type {express.Router} */
+  // @type {express.Router}
   static routes = express.Router();
 
   /**
@@ -178,7 +178,7 @@ export class ActivitiesController {
     }
   }
 
-  /** @type {express.RequestHandler} */
+  // @type {express.RequestHandler}
   static async list(req, res, next) {
     try {
       const activities = req.query.search_term
@@ -190,7 +190,7 @@ export class ActivitiesController {
     }
   }
 
-  /** @type {express.RequestHandler} */
+  // @type {express.RequestHandler}
   static async getById(req, res, next) {
     try {
       res.json(await ActivitiesModel.getById(Number(req.params.id)));
@@ -199,7 +199,7 @@ export class ActivitiesController {
     }
   }
 
-  /** @type {express.RequestHandler} */
+  // @type {express.RequestHandler}
   static async create(req, res, next) {
     try {
       res.status(201).json(await ActivitiesModel.create(req.body));
@@ -208,7 +208,7 @@ export class ActivitiesController {
     }
   }
 
-  /** @type {express.RequestHandler} */
+  // @type {express.RequestHandler}
   static async update(req, res, next) {
     try {
       res.json(
@@ -222,7 +222,7 @@ export class ActivitiesController {
     }
   }
 
-  /** @type {express.RequestHandler} */
+  // @type {express.RequestHandler}
   static async delete(req, res, next) {
     try {
       res.json(await ActivitiesModel.delete(Number(req.params.id)));
