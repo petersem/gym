@@ -18,9 +18,12 @@ import UserBadge from "./common/UserBadge.jsx";
 import PWAStatus from "./common/PWAStatus.jsx";
 
 function useTheme() {
-  const [theme, setTheme] = useState(() =>
-    localStorage.getItem("theme") === "dim" ? "dim" : "autumn",
-  );
+  const [theme, setTheme] = useState(() => {
+    const savedTheme = localStorage.getItem("theme");
+    return ["luxury", "business", "coffee", "dim"].includes(savedTheme)
+      ? "luxury"
+      : "corporate";
+  });
   useEffect(() => {
     document.documentElement.dataset.theme = theme;
     localStorage.setItem("theme", theme);
@@ -103,11 +106,13 @@ function Layout() {
           <div className="flex min-w-0 flex-1 items-center justify-end gap-1">
             <UserBadge user={user} />
             <button
-              onClick={() => setTheme(theme === "dim" ? "autumn" : "dim")}
+              onClick={() =>
+                setTheme(theme === "luxury" ? "corporate" : "luxury")
+              }
               className="btn btn-ghost btn-circle text-lg"
               aria-label="Toggle theme"
             >
-              {theme === "dim" ? <FaSun /> : <FaMoon />}
+              {theme === "luxury" ? <FaSun /> : <FaMoon />}
             </button>
             {user ? (
               <button
