@@ -1,11 +1,11 @@
 {
   "name": "gym",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "",
   "main": "index.js",
   "scripts": {
     "dev": "npm-run-all --parallel dev:backend dev:frontend",
-    "dev:backend": "npm run dev --workspace backend",
+    "dev:backend": "npm run devall --workspace backend",
     "dev:frontend": "npm run dev --workspace frontend",
     "test": "node --experimental-vm-modules ./node_modules/jest/bin/jest.js --reporters=default",
     "test:coverage": "npm test -- --coverage --verbose",
