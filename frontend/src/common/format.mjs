@@ -31,6 +31,24 @@ export function formatDate(value) {
   });
 }
 
+export function formatRelativeDate(value, now = new Date()) {
+  if (!value) {
+    return "";
+  }
+  const date = toLocalDate(value);
+  const today = new Date(now);
+  today.setHours(0, 0, 0, 0);
+  const tomorrow = new Date(today);
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  if (date.getTime() === today.getTime()) {
+    return "Today";
+  }
+  if (date.getTime() === tomorrow.getTime()) {
+    return "Tomorrow";
+  }
+  return formatDate(value);
+}
+
 export const formatWeekday = (value) =>
   value
     ? toLocalDate(value).toLocaleDateString(undefined, { weekday: "short" })

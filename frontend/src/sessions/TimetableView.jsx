@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router";
 import {
   FaClock,
+  FaChevronDown,
   FaMapMarkerAlt,
   FaTrash,
   FaUser,
@@ -15,6 +16,7 @@ import StatusAlert from "../common/StatusAlert.jsx";
 import XMLDownloadButton from "../common/XMLDownloadButton.jsx";
 import {
   formatDayOfMonth,
+  formatRelativeDate,
   formatTime,
   formatWeekday,
   fullName,
@@ -45,11 +47,35 @@ function TimetableView() {
   const [success, setSuccess] = useState(null);
   const [pendingId, setPendingId] = useState(null);
   const [confirm, setConfirm] = useState(null);
+  const [openDays, setOpenDays] = useState(null);
 
   const locationId = searchParams.get("location_id") ?? "";
   const trainerId = searchParams.get("trainer_id") ?? "";
   const canBook = can(user, "makeBooking");
   const isTrainer = user?.role === "trainer";
+  const dayViewKey = [searchTerm, sortBy, sortDir, locationId, trainerId].join(
+    "\0",
+  );
+  const sessionGroups = useMemo(() => {
+    if (sortBy !== "date") {
+      return [{ date: null, sessions: sessions ?? [] }];
+    }
+    const groups = new Map();
+    for (const session of sessions ?? []) {
+      const date = session.date.slice(0, 10);
+      if (!groups.has(date)) {
+        groups.set(date, { date, sessions: [] });
+      }
+      groups.get(date).sessions.push(session);
+    }
+    return [...groups.values()];
+  }, [sessions, sortBy]);
+  const expandedDays =
+    openDays?.viewKey === dayViewKey &&
+    (openDays.dates.length === 0 ||
+      sessionGroups.some((group) => openDays.dates.includes(group.date)))
+      ? openDays.dates
+      : [sessionGroups[0]?.date];
 
   const setFilter = (name, value) => {
     const next = new URLSearchParams(searchParams);
@@ -223,114 +249,193 @@ function TimetableView() {
       ) : sessions.length === 0 ? (
         <span className="self-center p-4 opacity-70">No sessions found</span>
       ) : (
-        <ul className="list rounded-box bg-base-200 shadow-sm">
-          {sessions.map((session) => {
-            const booking = bookingBySession.get(session.id);
-            const isOwnSession =
-              can(user, "deleteSession") && session.trainer_id === user.id;
-            const busy = pendingId === session.id;
-            return (
-              <li key={session.id} className="list-row items-center">
-                <div className="flex w-14 flex-col items-center rounded-box bg-primary/10 p-1 text-center text-primary">
-                  <span className="text-xs uppercase">
-                    {formatWeekday(session.date)}
-                  </span>
-                  <span className="text-lg font-bold leading-none">
-                    {formatDayOfMonth(session.date)}
-                  </span>
-                </div>
-                <div className="min-w-0">
-                  <div className="flex items-center gap-2 font-semibold">
-                    {session.title}
-                    {isOwnSession && (
-                      <span className="badge badge-warning badge-xs">
-                        yours
-                      </span>
-                    )}
-                  </div>
-                  <div className="flex flex-wrap gap-x-3 text-xs opacity-70">
-                    <span className="flex items-center gap-1">
-                      <FaClock /> {formatTime(session.time)}
-                    </span>
-                    <span className="flex items-center gap-1">
-                      <FaUser /> {fullName(trainerById.get(session.trainer_id))}
-                    </span>
-                    <span className="flex items-center gap-1">
-                      <FaMapMarkerAlt />{" "}
-                      {locationById.get(session.location_id)?.name}
-                    </span>
-                    {isOwnSession && (
-                      <span className="flex items-center gap-1">
-                        <FaUsers /> {bookingCountBySession.get(session.id) ?? 0}{" "}
-                        {bookingCountBySession.get(session.id) === 1
-                          ? "booking"
-                          : "bookings"}
-                      </span>
-                    )}
-                  </div>
-                </div>
-                {canBook &&
-                  (booking ? (
-                    <span className="badge badge-success badge-soft">
-                      Booked
-                    </span>
-                  ) : (
-                    <button
-                      className="btn btn-primary btn-sm"
-                      disabled={busy}
-                      onClick={() =>
-                        runAction(
-                          session,
-                          "POST",
-                          "/bookings",
-                          { session_id: session.id },
-                          `Booked "${session.title}".`,
-                        )
-                      }
-                    >
-                      {busy ? (
-                        <span className="loading loading-spinner loading-xs" />
-                      ) : (
-                        "Book"
-                      )}
-                    </button>
-                  ))}
-                {isOwnSession && (
+        <div className="flex flex-col gap-3">
+          {sortBy === "date" && (
+            <div className="flex justify-end gap-2">
+              <button
+                type="button"
+                className="btn btn-ghost btn-sm"
+                disabled={sessionGroups.every((group) =>
+                  expandedDays.includes(group.date),
+                )}
+                onClick={() =>
+                  setOpenDays({
+                    viewKey: dayViewKey,
+                    dates: sessionGroups.map((group) => group.date),
+                  })
+                }
+              >
+                Expand all
+              </button>
+              <button
+                type="button"
+                className="btn btn-ghost btn-sm"
+                disabled={
+                  !sessionGroups.some((group) =>
+                    expandedDays.includes(group.date),
+                  )
+                }
+                onClick={() => setOpenDays({ viewKey: dayViewKey, dates: [] })}
+              >
+                Collapse all
+              </button>
+            </div>
+          )}
+          {sessionGroups.map((group) => (
+            <section
+              key={group.date ?? "all"}
+              className="overflow-hidden rounded-box bg-base-200 shadow-sm"
+            >
+              {group.date && (
+                <h2>
                   <button
-                    className="btn btn-ghost btn-sm text-error"
-                    aria-label="Delete session"
-                    disabled={busy}
+                    type="button"
+                    id={`day-heading-${group.date}`}
+                    className="flex w-full items-center justify-between bg-base-300 px-4 py-3 text-left text-sm font-semibold"
+                    aria-expanded={expandedDays.includes(group.date)}
+                    aria-controls={`day-sessions-${group.date}`}
                     onClick={() =>
-                      setConfirm({
-                        title: "Delete session?",
-                        message: `Delete "${session.title}"? All bookings for it will also be removed.`,
-                        label: "Delete session",
-                        action: () =>
-                          runAction(
-                            session,
-                            "DELETE",
-                            `/sessions/${session.id}`,
-                            null,
-                            `Deleted "${session.title}".`,
-                          ),
+                      setOpenDays({
+                        viewKey: dayViewKey,
+                        dates: expandedDays.includes(group.date)
+                          ? expandedDays.filter((date) => date !== group.date)
+                          : [...expandedDays, group.date],
                       })
                     }
                   >
-                    <FaTrash />
+                    {formatRelativeDate(group.date)}
+                    <FaChevronDown
+                      aria-hidden="true"
+                      className={
+                        expandedDays.includes(group.date) ? "rotate-180" : ""
+                      }
+                    />
                   </button>
-                )}
-                {!user && (
-                  <button
-                    className="btn btn-ghost btn-sm"
-                    onClick={() => navigate("/login")}
-                  >
-                    Log in
-                  </button>
-                )}
-              </li>
-            );
-          })}
-        </ul>
+                </h2>
+              )}
+              <ul
+                id={group.date ? `day-sessions-${group.date}` : undefined}
+                aria-labelledby={
+                  group.date ? `day-heading-${group.date}` : undefined
+                }
+                hidden={
+                  group.date !== null && !expandedDays.includes(group.date)
+                }
+                className="list"
+              >
+                {group.sessions.map((session) => {
+                  const booking = bookingBySession.get(session.id);
+                  const isOwnSession =
+                    can(user, "deleteSession") &&
+                    session.trainer_id === user.id;
+                  const busy = pendingId === session.id;
+                  return (
+                    <li key={session.id} className="list-row items-center">
+                      <div className="flex w-14 flex-col items-center rounded-box bg-primary/10 p-1 text-center text-primary">
+                        <span className="text-xs uppercase">
+                          {formatWeekday(session.date)}
+                        </span>
+                        <span className="text-lg font-bold leading-none">
+                          {formatDayOfMonth(session.date)}
+                        </span>
+                      </div>
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-2 font-semibold">
+                          {session.title}
+                          {isOwnSession && (
+                            <span className="badge badge-warning badge-xs">
+                              yours
+                            </span>
+                          )}
+                        </div>
+                        <div className="flex flex-wrap gap-x-3 text-xs opacity-70">
+                          <span className="flex items-center gap-1">
+                            <FaClock /> {formatTime(session.time)}
+                          </span>
+                          <span className="flex items-center gap-1">
+                            <FaUser />{" "}
+                            {fullName(trainerById.get(session.trainer_id))}
+                          </span>
+                          <span className="flex items-center gap-1">
+                            <FaMapMarkerAlt />{" "}
+                            {locationById.get(session.location_id)?.name}
+                          </span>
+                          {isOwnSession && (
+                            <span className="flex items-center gap-1">
+                              <FaUsers />{" "}
+                              {bookingCountBySession.get(session.id) ?? 0}{" "}
+                              {bookingCountBySession.get(session.id) === 1
+                                ? "booking"
+                                : "bookings"}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                      {canBook &&
+                        (booking ? (
+                          <span className="badge badge-success badge-soft">
+                            Booked
+                          </span>
+                        ) : (
+                          <button
+                            className="btn btn-primary btn-sm"
+                            disabled={busy}
+                            onClick={() =>
+                              runAction(
+                                session,
+                                "POST",
+                                "/bookings",
+                                { session_id: session.id },
+                                `Booked "${session.title}".`,
+                              )
+                            }
+                          >
+                            {busy ? (
+                              <span className="loading loading-spinner loading-xs" />
+                            ) : (
+                              "Book"
+                            )}
+                          </button>
+                        ))}
+                      {isOwnSession && (
+                        <button
+                          className="btn btn-ghost btn-sm text-error"
+                          aria-label="Delete session"
+                          disabled={busy}
+                          onClick={() =>
+                            setConfirm({
+                              title: "Delete session?",
+                              message: `Delete "${session.title}"? All bookings for it will also be removed.`,
+                              label: "Delete session",
+                              action: () =>
+                                runAction(
+                                  session,
+                                  "DELETE",
+                                  `/sessions/${session.id}`,
+                                  null,
+                                  `Deleted "${session.title}".`,
+                                ),
+                            })
+                          }
+                        >
+                          <FaTrash />
+                        </button>
+                      )}
+                      {!user && (
+                        <button
+                          className="btn btn-ghost btn-sm"
+                          onClick={() => navigate("/login")}
+                        >
+                          Log in
+                        </button>
+                      )}
+                    </li>
+                  );
+                })}
+              </ul>
+            </section>
+          ))}
+        </div>
       )}
 
       <ConfirmDialog
