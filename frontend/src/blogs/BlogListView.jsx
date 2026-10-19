@@ -134,8 +134,9 @@ function BlogListView() {
         type="success"
         message={success}
         onClose={() => setSuccess(null)}
+        autoHideMs={3000}
       />
-      <StatusAlert message={error} onClose={() => setError(null)} />
+      <StatusAlert message={error} onClose={() => setError(null)} autoHideMs={3000} />
 
       {blogs === null ? (
         <span className="loading loading-spinner loading-xl self-center"></span>

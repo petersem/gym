@@ -93,9 +93,8 @@ function BookingListView() {
     [sessions],
   );
 
-  // Bookings don't include a session date, so sessions missing from the timetable
-  // are classified by where they fall in session-date order: anything before the
-  // first booking in this week's timetable happened before today.
+  // Bookings don't include session dates, so use session-date order to identify
+  // older bookings before the first known upcoming session.
   const pastBookingIds = useMemo(() => {
     const pastIds = new Set();
     for (const booking of bookingsByDate) {
@@ -112,8 +111,12 @@ function BookingListView() {
     () =>
       sessions === null || bookings === null
         ? null
-        : bookings.filter((booking) => !pastBookingIds.has(booking.id)),
-    [bookings, sessions, pastBookingIds],
+        : bookings.filter(
+            (booking) =>
+              sessionById.has(booking.session_id) &&
+              !pastBookingIds.has(booking.id),
+          ),
+    [bookings, sessions, sessionById, pastBookingIds],
   );
 
   const cancelBooking = () => {

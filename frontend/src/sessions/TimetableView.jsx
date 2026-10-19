@@ -204,7 +204,6 @@ function TimetableView() {
           ))}
         </select>
       </SearchSortBar>
-
       {!user && (
         <StatusAlert
           type="info"
