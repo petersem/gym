@@ -1456,13 +1456,14 @@ describe("searching and sorting", () => {
     expect(await ids("search_term=Morning")).toEqual([1]);
   });
 
-  test("searches trainer bookings by member name without widening access", async () => {
+  test("searches trainer bookings by session title only without widening access", async () => {
     const ids = async (query) =>
       (await request(`/bookings?${query}`, { user: 2 })).body.map(
         (booking) => booking.id,
       );
     expect(await ids("sort_by=member")).toEqual([3, 1, 2]);
-    expect(await ids("search_term=zara")).toEqual([3]);
+    expect(await ids("search_term=zara")).toEqual([]);
+    expect(await ids("search_term=Morning")).toEqual([1, 3]);
     expect(await ids("search_term=pilates")).toEqual([]);
   });
 

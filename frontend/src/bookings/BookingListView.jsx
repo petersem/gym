@@ -21,7 +21,7 @@ import { useLookups } from "../common/useLookups.jsx";
 const SORTS = [
   { value: "session_date", label: "session date" },
   { value: "session", label: "session" },
-  { value: "member", label: "member" },
+  { value: "member", label: "trainer" },
   { value: "created", label: "booked on" },
 ];
 
@@ -243,7 +243,7 @@ function BookingListView() {
           )}
         </div>
       ) : (
-        <ul className="list rounded-box bg-base-100 shadow-sm">
+        <ul className="list rounded-box bg-base-200 shadow-sm">
           {rows.map((booking) => {
             const session = sessionById.get(booking.session_id);
             return (

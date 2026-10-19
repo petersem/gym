@@ -223,7 +223,7 @@ function TimetableView() {
       ) : sessions.length === 0 ? (
         <span className="self-center p-4 opacity-70">No sessions found</span>
       ) : (
-        <ul className="list rounded-box bg-base-100 shadow-sm">
+        <ul className="list rounded-box bg-base-200 shadow-sm">
           {sessions.map((session) => {
             const booking = bookingBySession.get(session.id);
             const isOwnSession =

@@ -91,8 +91,8 @@ function ProfileView() {
   }
 
   const field = (name, label, props = {}) => (
-    <label className="floating-label">
-      <span>{label}</span>
+    <label className="flex flex-col gap-1">
+      <span className="text-xs font-medium">{label}</span>
       <input
         className="input w-full"
         placeholder={label}
@@ -121,10 +121,11 @@ function ProfileView() {
         type="success"
         message={success}
         onClose={() => setSuccess(null)}
+        autoHideMs={3000}
       />
       <StatusAlert message={error} onClose={() => setError(null)} />
 
-      <fieldset className="fieldset gap-4 rounded-box border border-base-300 p-4">
+      <fieldset className="fieldset gap-2 rounded-box border border-base-300 bg-base-200 p-4">
         <legend className="fieldset-legend">Details</legend>
         {field("first_name", "First name", { required: true, maxLength: 45 })}
         {field("last_name", "Last name", { required: true, maxLength: 45 })}
@@ -141,7 +142,7 @@ function ProfileView() {
         {field("dob", "Date of birth", { type: "date" })}
       </fieldset>
 
-      <fieldset className="fieldset gap-4 rounded-box border border-base-300 p-4">
+      <fieldset className="fieldset gap-2 rounded-box border border-base-300 bg-base-200 p-4">
         <legend className="fieldset-legend">Change password</legend>
         {field("password", "New password (leave blank to keep)", {
           type: "password",

@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { Outlet, useLocation, useNavigate } from "react-router";
+import packageJson from "../package.json";
 import { TbLogout } from "react-icons/tb";
 import {
   FaCalendarAlt,
@@ -92,7 +93,10 @@ function Layout() {
             >
               HSG
             </span>
-            High Street Gym
+            <span className="flex flex-col items-start leading-tight">
+              <span>High Street Gym</span>
+              <span className="text-xs opacity-60">© 2026 v{packageJson.version}</span>
+            </span>
           </button>
           <div className="flex min-w-0 flex-1 items-center justify-end gap-1">
             <UserBadge user={user} />

@@ -72,7 +72,7 @@ const resources = [
     getRoles: ["trainer", "member"],
     putRoles: [],
     query: {
-      searchDescription: "session title or member name",
+      searchDescription: "session title",
       sorts: ["session_date", "session", "member", "created"],
       defaultSort: "session_date",
       defaultDir: "asc",
@@ -549,7 +549,7 @@ async function searchAndSort(resource, records, query) {
           ? DatabaseModel.toMySqlDate(session.date)
           : String(session.date ?? "").slice(0, 10);
       return {
-        search: [session.title, member?.first_name, member?.last_name],
+        search: [session.title],
         session_date: `${date} ${session.time ?? ""}`,
         session: session.title,
         member: member ? `${member.last_name}, ${member.first_name}` : "",

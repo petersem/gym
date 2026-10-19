@@ -106,6 +106,50 @@ function BlogListView() {
       });
   };
 
+  const pagination = pageCount > 1 && (
+    <nav
+      className="flex flex-col items-center gap-1"
+      aria-label="Blog pages"
+    >
+      <div className="join">
+        <button
+          className="btn btn-sm join-item"
+          disabled={page === 1}
+          onClick={() => goToPage(page - 1)}
+          aria-label="Previous page"
+        >
+          «
+        </button>
+        {Array.from({ length: pageCount }, (_, index) => index + 1).map(
+          (number) => (
+            <button
+              key={number}
+              className={`btn btn-sm join-item ${
+                number === page ? "btn-active btn-primary" : ""
+              }`}
+              aria-current={number === page ? "page" : undefined}
+              onClick={() => goToPage(number)}
+            >
+              {number}
+            </button>
+          ),
+        )}
+        <button
+          className="btn btn-sm join-item"
+          disabled={page === pageCount}
+          onClick={() => goToPage(page + 1)}
+          aria-label="Next page"
+        >
+          »
+        </button>
+      </div>
+      <span className="text-xs opacity-60">
+        Showing {(page - 1) * PAGE_SIZE + 1}–
+        {Math.min(page * PAGE_SIZE, blogs.length)} of {blogs.length} posts
+      </span>
+    </nav>
+  );
+
   return (
     <section className="flex flex-col gap-4 p-4">
       <div className="flex items-center justify-between gap-2">
@@ -137,6 +181,8 @@ function BlogListView() {
         autoHideMs={3000}
       />
       <StatusAlert message={error} onClose={() => setError(null)} autoHideMs={3000} />
+
+      {pagination}
 
       {blogs === null ? (
         <span className="loading loading-spinner loading-xl self-center"></span>
@@ -177,49 +223,7 @@ function BlogListView() {
         ))
       )}
 
-      {pageCount > 1 && (
-        <nav
-          className="flex flex-col items-center gap-1"
-          aria-label="Blog pages"
-        >
-          <div className="join">
-            <button
-              className="btn btn-sm join-item"
-              disabled={page === 1}
-              onClick={() => goToPage(page - 1)}
-              aria-label="Previous page"
-            >
-              «
-            </button>
-            {Array.from({ length: pageCount }, (_, index) => index + 1).map(
-              (number) => (
-                <button
-                  key={number}
-                  className={`btn btn-sm join-item ${
-                    number === page ? "btn-active btn-primary" : ""
-                  }`}
-                  aria-current={number === page ? "page" : undefined}
-                  onClick={() => goToPage(number)}
-                >
-                  {number}
-                </button>
-              ),
-            )}
-            <button
-              className="btn btn-sm join-item"
-              disabled={page === pageCount}
-              onClick={() => goToPage(page + 1)}
-              aria-label="Next page"
-            >
-              »
-            </button>
-          </div>
-          <span className="text-xs opacity-60">
-            Showing {(page - 1) * PAGE_SIZE + 1}–
-            {Math.min(page * PAGE_SIZE, blogs.length)} of {blogs.length} posts
-          </span>
-        </nav>
-      )}
+      {pagination}
 
       <ConfirmDialog
         open={!!deleting}
