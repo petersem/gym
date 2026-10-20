@@ -26,7 +26,9 @@ function UserBadge({ user }) {
 
   if (!user) {
     return (
-      <span className={`badge badge-sm rounded leading-none ${ROLE_BADGE[role]}`}>
+      <span
+        className={`badge badge-sm rounded leading-none ${ROLE_BADGE[role]}`}
+      >
         {role}
       </span>
     );
