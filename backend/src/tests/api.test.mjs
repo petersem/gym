@@ -1614,34 +1614,42 @@ describe("XML exports", () => {
       { ...bodies.sessions, id: 2, date: day(1), time: "07:00:00" },
       { ...bodies.sessions, id: 3, trainer_id: 5, date: day(1) },
       { ...bodies.sessions, id: 4, date: day(9), time: "07:00:00" },
+      { ...bodies.sessions, id: 5, date: day(-1), time: "07:00:00" },
+      { ...bodies.sessions, id: 6, trainer_id: 5, date: day(-30) },
+      { ...bodies.sessions, id: 7, date: day(-2), time: "09:00:00" },
     ];
-    records.bookings = [1, 2, 3, 4].map((sessionId) => ({
+    records.bookings = [1, 2, 3, 4, 5, 6].map((sessionId) => ({
       id: sessionId,
       session_id: sessionId,
       user_id: 3,
       created: "2026-10-16 09:00:00",
     }));
-    records.bookings.push({ ...records.bookings[0], id: 5, user_id: 4 });
+    records.bookings.push({
+      ...records.bookings[0],
+      id: 7,
+      session_id: 7,
+      user_id: 4,
+    });
   });
 
-  test("members download their upcoming bookings as XML", async () => {
+  test("members download all their past bookings as XML", async () => {
     const result = await xml("/bookings/export.xml", 3);
     expect(result.status).toBe(200);
     expect(result.type).toMatch(/^application\/xml/);
     expect(result.disposition).toBe('attachment; filename="gym-bookings.xml"');
     expect(result.body).toMatch(/^<\?xml version="1.0" encoding="UTF-8"\?>/);
     expect(result.body).toContain("<!DOCTYPE gymBookings [");
-    expect(ids(result.body, "booking")).toEqual([2, 3, 1]);
+    expect(ids(result.body, "booking")).toEqual([6, 5]);
     expect(result.body).toContain("<firstName>Mia</firstName>");
     expect(result.body).toContain("<firstName>Tom</firstName>");
     expect(result.body).toContain("<name>City</name>");
     expect(result.body).toContain("<created>16/10/2026, 9:00am</created>");
     expect(result.body).toContain(
-      `<date>${day(1).split("-").reverse().join("/")}</date>`,
+      `<date>${day(-1).split("-").reverse().join("/")}</date>`,
     );
     expect(result.body).toContain("<time>7:00am</time>");
     expect(ids((await xml("/bookings/export.xml", 4)).body, "booking")).toEqual(
-      [5],
+      [7],
     );
   });
 

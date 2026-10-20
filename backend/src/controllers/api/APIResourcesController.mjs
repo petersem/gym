@@ -336,9 +336,9 @@ const xmlExportPath = ({
 apiResourcePaths["/api/v1/bookings/export.xml"] = xmlExportPath({
   tag: "Bookings",
   operationId: "exportBookingsXml",
-  summary: "Download your bookings for the next seven days as XML",
+  summary: "Download your past bookings as XML",
   description:
-    "Members download their own bookings for sessions in the next seven days, with session, activity, trainer and location details. Guests, trainers and administrators have no access.",
+    "Members download all of their own bookings for sessions that have already taken place, with session, activity, trainer and location details. Guests, trainers and administrators have no access.",
   root: "gymBookings",
   filename: "gym-bookings.xml",
 });
@@ -634,6 +634,32 @@ async function upcomingSessions() {
 }
 
 /**
+ * Get public session records whose start date and time has already passed.
+ *
+ * @returns {Promise<object[]>} Past sessions ordered by date and time.
+ */
+async function pastSessions() {
+  const now = new Date();
+  const pad = (value) => String(value).padStart(2, "0");
+  const nowValue = `${DatabaseModel.toMySqlDate(now)} ${pad(
+    now.getHours(),
+  )}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`;
+  return (await SessionsModel.getAll())
+    .map(publicRecord)
+    .filter(
+      (session) =>
+        `${String(session.date).slice(0, 10)} ${String(
+          session.time ?? "00:00:00",
+        ).slice(0, 8)}` < nowValue,
+    )
+    .sort(
+      (a, b) =>
+        `${a.date} ${a.time}`.localeCompare(`${b.date} ${b.time}`) ||
+        Number(a.id) - Number(b.id),
+    );
+}
+
+/**
  * Load lookup records required to add related details to XML exports.
  *
  * @returns {Promise<{activities: object[], locations: object[], users: object[]}>}
@@ -683,7 +709,7 @@ export class APIResourcesController {
       APIAuthenticationController.restrict(["member"]),
       async (req, res) => {
         const [sessions, bookings, lookups] = await Promise.all([
-          upcomingSessions(),
+          pastSessions(),
           BookingsModel.getByUserId(req.authenticatedUser.id),
           xmlLookups(),
         ]);

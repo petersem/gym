@@ -167,18 +167,13 @@ export class BookingsController {
         ? Number(req.query.booking_trainer_id) || null
         : null;
       const selectedLocationId = Number(req.query.booking_location_id) || null;
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
-      const endDate = new Date(today);
-      endDate.setDate(endDate.getDate() + 7);
-      const dateValue = (date) =>
-        [
-          date.getFullYear(),
-          String(date.getMonth() + 1).padStart(2, "0"),
-          String(date.getDate()).padStart(2, "0"),
-        ].join("-");
-      const firstDateValue = dateValue(today);
-      const endDateValue = dateValue(endDate);
+      const now = new Date();
+      const pad = (value) => String(value).padStart(2, "0");
+      const nowValue = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(
+        now.getDate(),
+      )} ${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(
+        now.getSeconds(),
+      )}`;
       const ownBookingSessionIds = new Set();
       if (authenticatedUser.role === "trainer") {
         bookings.forEach((booking) => {
@@ -191,8 +186,8 @@ export class BookingsController {
       const visibleSessions = sessions
         .filter((session) => {
           const sessionDate = String(session.date).slice(0, 10);
-          const matchesDate =
-            sessionDate >= firstDateValue && sessionDate < endDateValue;
+          const sessionTime = String(session.time ?? "00:00:00").slice(0, 8);
+          const matchesDate = `${sessionDate} ${sessionTime}` < nowValue;
           const matchesLocation =
             !selectedLocationId ||
             Number(session.location_id) === selectedLocationId;

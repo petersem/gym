@@ -65,7 +65,7 @@ describe("BookingsController", () => {
     expect(getAll).not.toHaveBeenCalled();
   });
 
-  test("exports a member's upcoming bookings as well-formed XML", async () => {
+  test("exports a member's past bookings as well-formed XML", async () => {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     const dateValue = (date) =>
@@ -74,10 +74,12 @@ describe("BookingsController", () => {
         String(date.getMonth() + 1).padStart(2, "0"),
         String(date.getDate()).padStart(2, "0"),
       ].join("-");
-    const todayValue = dateValue(today);
-    const afterSevenDays = new Date(today);
-    afterSevenDays.setDate(afterSevenDays.getDate() + 7);
-    const tooLateValue = dateValue(afterSevenDays);
+    const yesterday = new Date(today);
+    yesterday.setDate(yesterday.getDate() - 1);
+    const pastValue = dateValue(yesterday);
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    const futureValue = dateValue(tomorrow);
     const bookings = [
       {
         id: 101,
@@ -98,16 +100,16 @@ describe("BookingsController", () => {
         activity_id: 3,
         location_id: 9,
         trainer_id: 12,
-        date: todayValue,
+        date: pastValue,
         time: "10:30:00",
       },
       {
         id: 12,
-        title: "Next week",
+        title: "Tomorrow",
         activity_id: 3,
         location_id: 9,
         trainer_id: 12,
-        date: tooLateValue,
+        date: futureValue,
         time: "11:00:00",
       },
     ]);
@@ -163,7 +165,7 @@ describe("BookingsController", () => {
       "<title>Spin &amp; Strength</title>",
     );
     expect(res.send.mock.calls[0][0]).toContain(
-      `<date>${todayValue.split("-").reverse().join("/")}</date>`,
+      `<date>${pastValue.split("-").reverse().join("/")}</date>`,
     );
     expect(res.send.mock.calls[0][0]).toContain("<time>10:30am</time>");
     expect(res.send.mock.calls[0][0]).toContain(
@@ -173,7 +175,7 @@ describe("BookingsController", () => {
     expect(res.send.mock.calls[0][0]).toContain(
       "<street>1 Main Street</street>",
     );
-    expect(res.send.mock.calls[0][0]).not.toContain("Next week");
+    expect(res.send.mock.calls[0][0]).not.toContain("Tomorrow");
   });
 
   test.each([

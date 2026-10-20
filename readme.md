@@ -125,7 +125,7 @@ can already see, and timetable search/sort also works with its `location_id` and
 `trainer_id` filters. Timetable text search matches session names only
 (case-insensitive); use the separate filters to narrow by trainer or location.
 
-Members can download their bookings for the next seven days as XML from
+Members can download all of their past bookings as XML from
 `GET /api/v1/bookings/export.xml`. Trainers can download their own sessions for
 the next seven days from `GET /api/v1/sessions/export.xml`. Both files include a
 DTD and session, activity, trainer and location details. XML downloads (including
