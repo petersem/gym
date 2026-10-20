@@ -25,10 +25,14 @@ function UserBadge({ user }) {
   }, [name]);
 
   if (!user) {
-    return <span className={`badge badge-sm ${ROLE_BADGE[role]}`}>{role}</span>;
+    return (
+      <span className={`badge badge-sm rounded leading-none ${ROLE_BADGE[role]}`}>
+        {role}
+      </span>
+    );
   }
 
-  const badgeClass = `badge badge-sm whitespace-nowrap ${ROLE_BADGE[role]}`;
+  const badgeClass = `badge badge-sm rounded whitespace-nowrap leading-none ${ROLE_BADGE[role]}`;
   return (
     <div
       ref={containerRef}
@@ -41,7 +45,7 @@ function UserBadge({ user }) {
       >
         {name}
       </span>
-      <div className="tooltip tooltip-bottom" data-tip={role}>
+      <div className="tooltip tooltip-bottom flex items-center" data-tip={role}>
         <span className={badgeClass} aria-label={`${name} (${role})`}>
           {fits ? name : initials(user)}
         </span>
