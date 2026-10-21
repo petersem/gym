@@ -47,9 +47,9 @@ const resources = [
     tag: "Locations",
     model: LocationModel,
     roles: [],
-    publicRead: true,
+    getRoles: ["trainer", "member"],
     description:
-      "Guests, members and trainers can list and read locations. Locations cannot be created, updated or deleted through the API.",
+      "Authenticated members and trainers can list and read locations. Guests have no access. Locations cannot be created, updated or deleted through the API.",
   },
   {
     path: "sessions",
@@ -61,7 +61,7 @@ const resources = [
     roles: [],
     deleteRoles: ["trainer"],
     description:
-      "Trainers can delete only their own sessions; sessions cannot be listed, read, created or updated through this resource. Guests, members and trainers use the timetable to browse sessions. Deleting a session also removes its bookings.",
+      "Trainers can delete only their own sessions; sessions cannot be listed, read, created or updated through this resource. Members and trainers use the timetable to browse sessions. Deleting a session also removes its bookings.",
   },
   {
     path: "bookings",
@@ -253,8 +253,8 @@ apiResourcePaths["/api/v1/trainers"] = {
     operationId: "listTrainers",
     summary: "List trainers",
     description:
-      "Guests, members and trainers can list trainers, which returns only ID, name and role. Administrators have no access.",
-    security: [],
+      "Authenticated members and trainers can list trainers, which returns only ID, name and role. Guests and administrators have no access.",
+    security: [{ ApiKey: [] }],
     responses: {
       200: response(
         { type: "array", items: ref("UserSummary") },
@@ -271,8 +271,8 @@ apiResourcePaths["/api/v1/timetable"] = {
     operationId: "getTimetable",
     summary: "Browse, search and sort the next seven days of sessions",
     description:
-      "Guests, members and trainers can browse, search and sort the next seven days of sessions. Administrators have no timetable access.",
-    security: [],
+      "Authenticated members and trainers can browse, search and sort the next seven days of sessions. Guests and administrators have no timetable access.",
+    security: [{ ApiKey: [] }],
     parameters: [
       ...["location_id", "trainer_id"].map((name) => ({
         name,
@@ -680,29 +680,37 @@ export class APIResourcesController {
   static routes = express.Router();
 
   static {
-    this.routes.get("/timetable", async (req, res) => {
-      const sessions = (await upcomingSessions()).filter(
-        (session) =>
-          (!req.query.location_id ||
-            Number(session.location_id) === Number(req.query.location_id)) &&
-          (!req.query.trainer_id ||
-            Number(session.trainer_id) === Number(req.query.trainer_id)),
-      );
-      res.json(await searchAndSort(timetable, sessions, req.query));
-    });
+    this.routes.get(
+      "/timetable",
+      APIAuthenticationController.restrict(["member", "trainer"]),
+      async (req, res) => {
+        const sessions = (await upcomingSessions()).filter(
+          (session) =>
+            (!req.query.location_id ||
+              Number(session.location_id) === Number(req.query.location_id)) &&
+            (!req.query.trainer_id ||
+              Number(session.trainer_id) === Number(req.query.trainer_id)),
+        );
+        res.json(await searchAndSort(timetable, sessions, req.query));
+      },
+    );
 
-    this.routes.get("/trainers", async (req, res) => {
-      res.json(
-        (await UsersModel.getAll())
-          .filter((user) => user.role === "trainer")
-          .map(({ id, first_name, last_name, role }) => ({
-            id,
-            first_name,
-            last_name,
-            role,
-          })),
-      );
-    });
+    this.routes.get(
+      "/trainers",
+      APIAuthenticationController.restrict(["member", "trainer"]),
+      async (req, res) => {
+        res.json(
+          (await UsersModel.getAll())
+            .filter((user) => user.role === "trainer")
+            .map(({ id, first_name, last_name, role }) => ({
+              id,
+              first_name,
+              last_name,
+              role,
+            })),
+        );
+      },
+    );
 
     this.routes.get(
       "/bookings/export.xml",

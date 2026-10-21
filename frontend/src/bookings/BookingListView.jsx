@@ -33,7 +33,7 @@ const TRAINER_SORTS = [
 function BookingListView() {
   const navigate = useNavigate();
   const { user, authFetch } = useAuthenticate(PERMISSIONS.readBookings);
-  const { trainerById, locationById } = useLookups();
+  const { trainerById, locationById, error: lookupError } = useLookups();
   const isTrainer = user?.role === "trainer";
 
   const [bookings, setBookings] = useState(null);
@@ -81,12 +81,15 @@ function BookingListView() {
   // Sessions can't be read individually via the API; the timetable covers today
   // plus the next 6 days.
   useEffect(() => {
+    if (!can(user, "viewTimetable")) {
+      return;
+    }
     authFetch("GET", "/timetable")
       .then((response) =>
         setSessions(response.status === 200 ? response.body : []),
       )
       .catch(() => setSessions([]));
-  }, [authFetch]);
+  }, [authFetch, user]);
 
   const sessionById = useMemo(
     () => new Map((sessions ?? []).map((session) => [session.id, session])),
@@ -233,6 +236,7 @@ function BookingListView() {
         autoHideMs={3000}
       />
       <StatusAlert message={error} onClose={() => setError(null)} />
+      <StatusAlert message={lookupError} />
 
       {rows === null ? (
         <span className="loading loading-spinner loading-xl self-center"></span>

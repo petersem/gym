@@ -213,8 +213,10 @@ afterAll(async () => {
 });
 
 describe("OpenAPI contract", () => {
-  test("lists only trainer summaries publicly at /trainers while keeping user detail private", async () => {
-    expect(swaggerSpec.paths["/api/v1/trainers"].get.security).toEqual([]);
+  test("lists only trainer summaries for members and trainers while keeping user detail private", async () => {
+    expect(swaggerSpec.paths["/api/v1/trainers"].get.security).toEqual([
+      { ApiKey: [] },
+    ]);
     expect(
       swaggerSpec.paths["/api/v1/trainers"].get.responses[200].content[
         "application/json"
@@ -224,7 +226,7 @@ describe("OpenAPI contract", () => {
     expect(swaggerSpec.paths["/api/v1/users/{id}"].get.security).toEqual([
       { ApiKey: [] },
     ]);
-    for (const user of [undefined, 2, 3]) {
+    for (const user of [2, 3]) {
       const response = await request("/trainers", { user });
       expect(response.status).toBe(200);
       expect(response.body).toEqual([
@@ -241,8 +243,11 @@ describe("OpenAPI contract", () => {
     expect((await request("/users/2", { user: 3 })).status).toBe(403);
   });
 
-  test("lets guests, members and trainers read locations", async () => {
-    for (const user of [undefined, 2, 3]) {
+  test("lets only members and trainers read locations", async () => {
+    for (const path of ["/api/v1/locations", "/api/v1/locations/{id}"]) {
+      expect(swaggerSpec.paths[path].get.security).toEqual([{ ApiKey: [] }]);
+    }
+    for (const user of [2, 3]) {
       const list = await request("/locations", { user });
       expect(list.status).toBe(200);
       expect(list.body.map((record) => record.id)).toEqual([1]);
@@ -783,12 +788,16 @@ describe("API authentication and access", () => {
     expect((await request("/user/self", { user: 99 })).status).toBe(401);
   });
 
-  test("guests can read blogs, locations, trainers and the timetable only", async () => {
+  test("guests can read blogs only", async () => {
     for (const path of [
       "/user/self",
       "/users/3",
       "/bookings",
       "/bookings/1",
+      "/timetable",
+      "/locations",
+      "/locations/1",
+      "/trainers",
       "/sessions",
       "/sessions/1",
       "/users",
@@ -806,10 +815,6 @@ describe("API authentication and access", () => {
     for (const path of [
       "/blogs",
       "/blogs/1",
-      "/locations",
-      "/locations/1",
-      "/trainers",
-      "/timetable",
     ]) {
       expect((await request(path)).status).toBe(200);
     }
@@ -1331,7 +1336,24 @@ describe("ownership and gym rules", () => {
     expect(result.body.message).toBeTruthy();
   });
 
-  test("timetable filters the next seven days for guests, members and trainers", async () => {
+  test.each([
+    {},
+    { headers: { "x-auth-key": "invalid" } },
+    { user: 99 },
+    { headers: { "x-test-cookie-session": "1" } },
+  ])("requires a valid API key for timetable and lookup reads: %j", async (options) => {
+    for (const path of ["/timetable", "/locations", "/locations/1", "/trainers"]) {
+      const result = await request(path, options);
+      expect(result.status).toBe(401);
+      expect(result.body.message).toBeTruthy();
+    }
+    expect(SessionsModel.getAll).not.toHaveBeenCalled();
+    expect(LocationModel.getAll).not.toHaveBeenCalled();
+    expect(LocationModel.getById).not.toHaveBeenCalled();
+    expect(UsersModel.getAll).not.toHaveBeenCalled();
+  });
+
+  test("timetable filters the next seven days for members and trainers", async () => {
     const today = new Date();
     const end = new Date(today);
     end.setDate(end.getDate() + 7);
@@ -1353,7 +1375,7 @@ describe("ownership and gym rules", () => {
     expect((await request("/timetable", { user: 3 })).body).toHaveLength(2);
     expect((await request("/timetable", { user: 1 })).status).toBe(403);
     expect((await request("/timetable", { user: 2 })).body).toHaveLength(2);
-    expect((await request("/timetable")).body).toHaveLength(2);
+    expect((await request("/timetable")).status).toBe(401);
     expect(
       (await request("/timetable?location_id=invalid", { user: 2 })).status,
     ).toBe(400);
@@ -1467,7 +1489,7 @@ describe("searching and sorting", () => {
     expect(await ids("search_term=pilates")).toEqual([]);
   });
 
-  test("searches and sorts the timetable for guests, members and trainers", async () => {
+  test("searches and sorts the timetable for members and trainers", async () => {
     const day = (offset) => {
       const date = new Date();
       date.setDate(date.getDate() + offset);
@@ -1551,13 +1573,18 @@ describe("searching and sorting", () => {
     expect(parameters[2].description).toBe(
       "Case-insensitive match on session title only.",
     );
-    const guestIds = async (query) =>
-      (await request(`/timetable?${query}`)).body.map((session) => session.id);
-    expect(await guestIds("search_term=annex&sort_by=title")).toEqual([]);
-    expect(await guestIds("search_term=alex")).toEqual([]);
-    expect(await guestIds("search_term=BOX&sort_by=title")).toEqual([2]);
-    expect(await guestIds("sort_by=location")).toEqual([2, 1, 3]);
-    expect(swaggerSpec.paths["/api/v1/timetable"].get.security).toEqual([]);
+    for (const query of [
+      "search_term=annex&sort_by=title",
+      "search_term=alex",
+      "search_term=BOX&sort_by=title",
+      "sort_by=location",
+      "location_id=1&trainer_id=2",
+    ]) {
+      expect((await request(`/timetable?${query}`)).status).toBe(401);
+    }
+    expect(swaggerSpec.paths["/api/v1/timetable"].get.security).toEqual([
+      { ApiKey: [] },
+    ]);
     expect(
       (await request("/timetable?sort_by=title", { user: 1 })).status,
     ).toBe(403);

@@ -7,10 +7,10 @@ const ALL = ["guest", "member", "trainer"];
 const AUTHENTICATED = ["member", "trainer"];
 
 export const PERMISSIONS = {
-  readLocations: ALL,
-  listTrainers: ALL,
+  readLocations: AUTHENTICATED,
+  listTrainers: AUTHENTICATED,
   readBlogs: ALL,
-  viewTimetable: ALL,
+  viewTimetable: AUTHENTICATED,
   createBlog: AUTHENTICATED,
   manageOwnBlog: AUTHENTICATED,
   readProfile: AUTHENTICATED,

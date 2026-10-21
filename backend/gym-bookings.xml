@@ -1,0 +1,170 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE gymBookings [
+<!ELEMENT gymBookings (booking*)>
+<!ELEMENT booking (id, userId, user, created, session)>
+<!ELEMENT userId (#PCDATA)>
+<!ELEMENT user (firstName, lastName)>
+<!ELEMENT created (#PCDATA)>
+<!ELEMENT session (id, title, date, time, activity, trainer, location)>
+<!ELEMENT id (#PCDATA)>
+<!ELEMENT title (#PCDATA)>
+<!ELEMENT date (#PCDATA)>
+<!ELEMENT time (#PCDATA)>
+<!ELEMENT activity (name, description)>
+<!ELEMENT name (#PCDATA)>
+<!ELEMENT description (#PCDATA)>
+<!ELEMENT trainer (firstName, lastName)>
+<!ELEMENT firstName (#PCDATA)>
+<!ELEMENT lastName (#PCDATA)>
+<!ELEMENT location (name, street, suburb, postcode)>
+<!ELEMENT street (#PCDATA)>
+<!ELEMENT suburb (#PCDATA)>
+<!ELEMENT postcode (#PCDATA)>
+]>
+<gymBookings>
+  <booking>
+    <id>1922</id>
+    <userId>10036</userId>
+    <user>
+      <firstName>Walter</firstName>
+      <lastName>White</lastName>
+    </user>
+    <created>28/09/2026, 3:16pm</created>
+    <session>
+      <id>1812</id>
+      <title>Go for it</title>
+      <date>30/09/2026</date>
+      <time>11:00am</time>
+      <activity>
+        <name>Flexibility</name>
+        <description>Free your body in coordinated stretching routines.</description>
+      </activity>
+      <trainer>
+        <firstName>Doctor</firstName>
+        <lastName>Doom</lastName>
+      </trainer>
+      <location>
+        <name>Graceville</name>
+        <street>606 Sherwood Road</street>
+        <suburb>Sherwood</suburb>
+        <postcode>4075</postcode>
+      </location>
+    </session>
+  </booking>
+  <booking>
+    <id>2325</id>
+    <userId>10036</userId>
+    <user>
+      <firstName>Walter</firstName>
+      <lastName>White</lastName>
+    </user>
+    <created>30/09/2026, 11:56am</created>
+    <session>
+      <id>1813</id>
+      <title>Dance session</title>
+      <date>01/10/2026</date>
+      <time>3:00pm</time>
+      <activity>
+        <name>Pole dancing</name>
+        <description>Get fit and have fun</description>
+      </activity>
+      <trainer>
+        <firstName>Lex</firstName>
+        <lastName>Luthor</lastName>
+      </trainer>
+      <location>
+        <name>Ashgrove</name>
+        <street>20–30 Harry Street</street>
+        <suburb>Ashgrove</suburb>
+        <postcode>4060</postcode>
+      </location>
+    </session>
+  </booking>
+  <booking>
+    <id>3495</id>
+    <userId>10036</userId>
+    <user>
+      <firstName>Walter</firstName>
+      <lastName>White</lastName>
+    </user>
+    <created>08/10/2026, 8:01am</created>
+    <session>
+      <id>3681</id>
+      <title>The wheels on the bike</title>
+      <date>08/10/2026</date>
+      <time>4:00pm</time>
+      <activity>
+        <name>Bike Riding</name>
+        <description>Bring your spandex and take up all the road</description>
+      </activity>
+      <trainer>
+        <firstName>Doctor</firstName>
+        <lastName>Doom</lastName>
+      </trainer>
+      <location>
+        <name>Brisbane City</name>
+        <street>15 Adelaide Street</street>
+        <suburb>Brisbane</suburb>
+        <postcode>4000</postcode>
+      </location>
+    </session>
+  </booking>
+  <booking>
+    <id>2326</id>
+    <userId>10036</userId>
+    <user>
+      <firstName>Walter</firstName>
+      <lastName>White</lastName>
+    </user>
+    <created>30/09/2026, 11:56am</created>
+    <session>
+      <id>3680</id>
+      <title>Eat for success</title>
+      <date>08/10/2026</date>
+      <time>6:00pm</time>
+      <activity>
+        <name>Health Foods</name>
+        <description>Learn about what you can eat and drink to improve your health</description>
+      </activity>
+      <trainer>
+        <firstName>Lex</firstName>
+        <lastName>Luthor</lastName>
+      </trainer>
+      <location>
+        <name>Chermside</name>
+        <street>Shop 5A / 725 Webster Rd</street>
+        <suburb>Chermside</suburb>
+        <postcode>4032</postcode>
+      </location>
+    </session>
+  </booking>
+  <booking>
+    <id>3488</id>
+    <userId>10036</userId>
+    <user>
+      <firstName>Walter</firstName>
+      <lastName>White</lastName>
+    </user>
+    <created>07/10/2026, 6:08pm</created>
+    <session>
+      <id>3334</id>
+      <title>Pole work</title>
+      <date>09/10/2026</date>
+      <time>9:00am</time>
+      <activity>
+        <name>Pole dancing</name>
+        <description>Get fit and have fun</description>
+      </activity>
+      <trainer>
+        <firstName>Doctor</firstName>
+        <lastName>Evil</lastName>
+      </trainer>
+      <location>
+        <name>Ashgrove</name>
+        <street>20–30 Harry Street</street>
+        <suburb>Ashgrove</suburb>
+        <postcode>4060</postcode>
+      </location>
+    </session>
+  </booking>
+</gymBookings>

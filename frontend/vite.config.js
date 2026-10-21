@@ -47,10 +47,9 @@ export default defineConfig(({ mode }) => {
           navigateFallbackDenylist: [/^\/api\//],
           runtimeCaching: [
             {
-              // Only guest (keyless) API reads are cached, so one user's
-              // bookings or profile are never served to someone else offline.
+              // Cache only public blog reads, never protected data or old lookup responses.
               urlPattern: ({ url, request }) =>
-                url.pathname.startsWith("/api/v1/") &&
+                /^\/api\/v1\/blogs(\/|$)/.test(url.pathname) &&
                 !request.headers.has("x-auth-key"),
               method: "GET",
               handler: "NetworkFirst",

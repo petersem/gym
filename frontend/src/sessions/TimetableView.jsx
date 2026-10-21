@@ -36,7 +36,13 @@ function TimetableView() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const { user, authFetch } = useAuthenticate(PERMISSIONS.viewTimetable);
-  const { trainers, locations, trainerById, locationById } = useLookups();
+  const {
+    trainers,
+    locations,
+    trainerById,
+    locationById,
+    error: lookupError,
+  } = useLookups();
 
   const [sessions, setSessions] = useState(null);
   const [bookings, setBookings] = useState([]);
@@ -51,6 +57,7 @@ function TimetableView() {
 
   const locationId = searchParams.get("location_id") ?? "";
   const trainerId = searchParams.get("trainer_id") ?? "";
+  const canViewTimetable = can(user, "viewTimetable");
   const canBook = can(user, "makeBooking");
   const isTrainer = user?.role === "trainer";
   const dayViewKey = [searchTerm, sortBy, sortDir, locationId, trainerId].join(
@@ -88,6 +95,9 @@ function TimetableView() {
   };
 
   const getSessions = useCallback(() => {
+    if (!canViewTimetable) {
+      return;
+    }
     authFetch(
       "GET",
       "/timetable" +
@@ -107,7 +117,15 @@ function TimetableView() {
         }
       })
       .catch(setError);
-  }, [authFetch, searchTerm, sortBy, sortDir, locationId, trainerId]);
+  }, [
+    canViewTimetable,
+    authFetch,
+    searchTerm,
+    sortBy,
+    sortDir,
+    locationId,
+    trainerId,
+  ]);
 
   const getBookings = useCallback(() => {
     if (!canBook && !isTrainer) {
@@ -171,6 +189,10 @@ function TimetableView() {
         setConfirm(null);
       });
   };
+
+  if (!canViewTimetable) {
+    return null;
+  }
 
   return (
     <section className="flex flex-col gap-4 p-4">
@@ -243,6 +265,7 @@ function TimetableView() {
         autoHideMs={3000}
       />
       <StatusAlert message={error} onClose={() => setError(null)} />
+      <StatusAlert message={lookupError} />
 
       {sessions === null ? (
         <span className="loading loading-spinner loading-xl self-center"></span>

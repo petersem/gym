@@ -113,7 +113,9 @@ function ProfileView() {
         </div>
         <div>
           <h1 className="text-3xl">My profile</h1>
-          <span className={`badge ${ROLE_BADGE[user.role]}`}>{user.role}</span>
+          <span className={`badge rounded ${ROLE_BADGE[user.role]}`}>
+            {user.role}
+          </span>
         </div>
       </div>
 

@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="960" height="842" viewBox="0 0 960 842" role="img" aria-labelledby="title description">
   <title id="title">Gym API access by role</title>
-  <desc id="description">Guest, Member, Trainer and Admin API permissions. Guests can read blogs, locations, the trainer list and the timetable (members and trainers can too), and register a new member account. Members and trainers can authenticate, read and update their own profile, and create blog posts or edit and delete their own posts. Members can read, create and cancel their own bookings and download them as XML. Trainers can read bookings for sessions assigned to them and delete and download their own upcoming sessions as XML, but cannot make or cancel bookings. The blog, timetable and booking lists can be searched and sorted within each role&#x2019;s access. Administrators have no API access. Documentation remains public.</desc>
+  <desc id="description">Guest, Member, Trainer and Admin API permissions. Guests can read blogs and register a new member account. Only authenticated members and trainers can view the timetable, locations and trainer list. Activity endpoints are not available. Members and trainers can authenticate, read and update their own profile, and create blog posts or edit and delete their own posts. Members can read, create and cancel their own bookings and download them as XML. Trainers can read bookings for sessions assigned to them and delete and download their own upcoming sessions as XML, but cannot make or cancel bookings. The blog, timetable and booking lists can be searched and sorted within each role&#x2019;s access. Administrators have no API access. Documentation remains public.</desc>
   <style>
     text { font-family: Arial, Helvetica, sans-serif; font-size: 15px; fill: #17231d; }
     .heading { font-weight: 700; }
@@ -70,10 +70,7 @@
     <text x="20" y="690">Register member &#x2014; POST /register &#x2074;</text>
   </g>
   <g class="guest">
-    <use href="#allowed" x="570" y="150"/>
-    <use href="#allowed" x="570" y="186"/>
     <use href="#allowed" x="570" y="222"/>
-    <use href="#allowed" x="570" y="402"/>
     <use href="#allowed" x="570" y="690"/>
   </g>
   <g class="member">
@@ -106,6 +103,8 @@
     <use href="#allowed" x="790" y="654"/>
   </g>
   <g class="unavailable">
+    <text x="570" y="150">&#x2014;</text>
+    <text x="570" y="186">&#x2014;</text>
     <text x="900" y="150">&#x2014;</text>
     <text x="900" y="186">&#x2014;</text>
     <text x="900" y="222">&#x2014;</text>
@@ -117,6 +116,7 @@
     <text x="900" y="330">&#x2014;</text>
     <text x="570" y="366">&#x2014;</text>
     <text x="900" y="366">&#x2014;</text>
+    <text x="570" y="402">&#x2014;</text>
     <text x="900" y="402">&#x2014;</text>
     <text x="570" y="438">&#x2014;</text>
     <text x="900" y="438">&#x2014;</text>
