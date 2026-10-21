@@ -237,6 +237,7 @@ for (const resource of resources) {
           },
         }
       : {}),
+    // [TODO] Cleanup - Not required, but leave for now in case i need to add again.
     // get: operation(
     //   "get",
     //   `Get ${resource.schema.toLowerCase()}`,
