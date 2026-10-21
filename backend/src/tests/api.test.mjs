@@ -213,6 +213,19 @@ afterAll(async () => {
 });
 
 describe("user PATCH", () => {
+  test.each(["blogs", "bookings", "locations", "sessions"])(
+    "rejects unsupported PATCH requests for %s",
+    async (resource) => {
+      const result = await request(`/${resource}/1`, {
+        method: "PATCH",
+        user: 3,
+        body: { first_name: "Unsupported" },
+      });
+      expect(result.status).toBe(resource === "locations" ? 404 : 405);
+      expect(models[resource].update).not.toHaveBeenCalled();
+    },
+  );
+
   test("documents partial updates only for users", () => {
     const operation = swaggerSpec.paths["/api/v1/users/{id}"].patch;
     expect(operation.security).toEqual([{ ApiKey: [] }]);
@@ -323,20 +336,16 @@ describe("user PATCH", () => {
 });
 
 describe("OpenAPI contract", () => {
-  test("lists only trainer summaries for members and trainers while keeping user detail private", async () => {
-    expect(swaggerSpec.paths["/api/v1/trainers"].get.security).toEqual([
-      { ApiKey: [] },
-    ]);
+  test("lists trainer summaries publicly while keeping profiles behind /user/self", async () => {
+    expect(swaggerSpec.paths["/api/v1/trainers"].get.security).toEqual([]);
     expect(
       swaggerSpec.paths["/api/v1/trainers"].get.responses[200].content[
         "application/json"
       ].schema.items.$ref,
     ).toBe("#/components/schemas/UserSummary");
     expect(swaggerSpec.paths).not.toHaveProperty("/api/v1/users");
-    expect(swaggerSpec.paths["/api/v1/users/{id}"].get.security).toEqual([
-      { ApiKey: [] },
-    ]);
-    for (const user of [2, 3]) {
+    expect(swaggerSpec.paths["/api/v1/users/{id}"]).not.toHaveProperty("get");
+    for (const user of [undefined, 2, 3]) {
       const response = await request("/trainers", { user });
       expect(response.status).toBe(200);
       expect(response.body).toEqual([
@@ -345,23 +354,24 @@ describe("OpenAPI contract", () => {
       ]);
       expect((await request("/users", { user })).status).toBe(404);
     }
-    expect((await request("/users/3")).status).toBe(401);
+    expect((await request("/users/3")).status).toBe(405);
     expect((await request("/trainers", { user: 1 })).status).toBe(403);
-    const own = await request("/users/3", { user: 3 });
+    const own = await request("/user/self", { user: 3 });
     expect(own.status).toBe(200);
     expect(own.body.email).toBe("user3@example.com");
-    expect((await request("/users/2", { user: 3 })).status).toBe(403);
+    expect((await request("/users/2", { user: 3 })).status).toBe(405);
   });
 
-  test("lets only members and trainers read locations", async () => {
-    for (const path of ["/api/v1/locations", "/api/v1/locations/{id}"]) {
-      expect(swaggerSpec.paths[path].get.security).toEqual([{ ApiKey: [] }]);
-    }
-    for (const user of [2, 3]) {
+  test("lets guests, members and trainers list locations but not read by ID", async () => {
+    expect(swaggerSpec.paths["/api/v1/locations"].get.security).toEqual([]);
+    expect(swaggerSpec.paths["/api/v1/locations/{id}"]).not.toHaveProperty(
+      "get",
+    );
+    for (const user of [undefined, 2, 3]) {
       const list = await request("/locations", { user });
       expect(list.status).toBe(200);
       expect(list.body.map((record) => record.id)).toEqual([1]);
-      expect((await request("/locations/1", { user })).status).toBe(200);
+      expect((await request("/locations/1", { user })).status).toBe(404);
     }
     expect((await request("/locations", { user: 1 })).status).toBe(403);
   });
@@ -413,7 +423,8 @@ describe("OpenAPI contract", () => {
               : {}),
           });
           expect(result.status).toBe(
-            removedBasePaths.includes(resource) && method === "post"
+            (resource === "locations" && method !== "post") ||
+              (removedBasePaths.includes(resource) && method === "post")
               ? 404
               : 405,
           );
@@ -542,7 +553,7 @@ describe("OpenAPI contract", () => {
         expect(swaggerSpec.paths).not.toHaveProperty("/api/v1/users");
         expect(
           Object.keys(swaggerSpec.paths["/api/v1/users/{id}"]).sort(),
-        ).toEqual(["get", "parameters", "put"]);
+        ).toEqual(["parameters", "patch", "put"]);
         expect(swaggerSpec.paths["/api/v1/trainers"]).toHaveProperty("get");
         continue;
       }
@@ -596,7 +607,15 @@ describe("OpenAPI contract", () => {
   test.each(["0", "-1", "abc", "1.5", "2147483648"])(
     "rejects invalid resource ID %s",
     async (id) => {
-      expect((await request(`/blogs/${id}`, { user: 3 })).status).toBe(400);
+      expect(
+        (
+          await request(`/blogs/${id}`, {
+            method: "PUT",
+            user: 3,
+            body: bodies.blogs,
+          })
+        ).status,
+      ).toBe(400);
       expect(BlogModel.getById).not.toHaveBeenCalled();
     },
   );
@@ -645,9 +664,9 @@ describe("OpenAPI contract", () => {
 
 describe("API authentication and access", () => {
   test.each([2, 3])(
-    "returns a schema-valid own profile by ID and key for user %s",
+    "returns a schema-valid own profile by key for user %s",
     async (user) => {
-      for (const path of [`/users/${user}`, "/user/self"]) {
+      for (const path of ["/user/self"]) {
         const result = await request(path, { user });
         expect(result.status).toBe(200);
         expect(result.body).toEqual({
@@ -697,12 +716,8 @@ describe("API authentication and access", () => {
       const list = await request("/bookings", { user });
       expect(list.status).toBe(200);
       expect(list.body.map((record) => record.user_id)).toEqual([user]);
-      const ownId = user === 2 ? 2 : 1;
-      const otherId = user === 2 ? 1 : 2;
-      expect((await request(`/bookings/${ownId}`, { user })).status).toBe(200);
-      expect((await request(`/bookings/${otherId}`, { user })).status).toBe(
-        403,
-      );
+      expect((await request("/bookings/1", { user })).status).toBe(405);
+      expect((await request("/bookings/2", { user })).status).toBe(405);
       expect((await request("/timetable", { user })).status).toBe(200);
       const login = await request("/authenticate", {
         method: "POST",
@@ -730,16 +745,17 @@ describe("API authentication and access", () => {
     expect(list.status).toBe(200);
     expect(list.body.map((booking) => booking.id)).toEqual([1, 3]);
     expect(BookingsModel.getByUserId).not.toHaveBeenCalled();
-    expect((await request("/bookings/1", { user: 2 })).status).toBe(200);
-    expect((await request("/bookings/3", { user: 2 })).status).toBe(200);
-    expect((await request("/bookings/2", { user: 2 })).status).toBe(403);
-    expect((await request("/bookings/4", { user: 2 })).status).toBe(404);
+    for (const id of [1, 2, 3, 4]) {
+      expect((await request(`/bookings/${id}`, { user: 2 })).status).toBe(405);
+    }
     const otherTrainer = await request("/bookings", { user: 5 });
     expect(otherTrainer.body.map((booking) => booking.id)).toEqual([2]);
     records.sessions[1].trainer_id = 2;
-    expect((await request("/bookings/2", { user: 2 })).status).toBe(200);
+    expect(
+      (await request("/bookings", { user: 2 })).body.map(({ id }) => id),
+    ).toEqual([1, 2, 3]);
     expect((await request("/bookings", { user: 5 })).body).toEqual([]);
-    expect((await request("/bookings/2", { user: 5 })).status).toBe(403);
+    expect((await request("/bookings/2", { user: 5 })).status).toBe(405);
   });
 
   test("blocks trainers from all booking writes, even for their own bookings", async () => {
@@ -770,7 +786,7 @@ describe("API authentication and access", () => {
       const { first_name, last_name, email, phone } = records.users[user - 1];
       const body = { first_name, last_name, email, phone };
       records.users[user - 1].dob = new Date(1990, 4, 12);
-      expect((await request(`/users/${user}`, { user })).status).toBe(200);
+      expect((await request("/user/self", { user })).status).toBe(200);
       const updated = await request(`/users/${user}`, {
         method: "PUT",
         user,
@@ -804,7 +820,7 @@ describe("API authentication and access", () => {
               ...(method === "PUT" ? { body } : {}),
             })
           ).status,
-        ).toBe(method === "DELETE" ? 405 : 403);
+        ).toBe(method === "PUT" ? 403 : 405);
       }
       for (const [method, path] of [
         ["POST", "/users"],
@@ -869,6 +885,7 @@ describe("API authentication and access", () => {
         });
         expect(result.status).toBe(
           resource === "activities" ||
+            (resource === "locations" && method !== "POST") ||
             (removedBasePaths.includes(resource) && method === "POST")
             ? 404
             : removedMethods[resource]?.includes(method.toLowerCase())
@@ -883,10 +900,10 @@ describe("API authentication and access", () => {
   );
 
   test("rejects missing/invalid API keys and does not reuse browser sessions", async () => {
-    expect((await request("/users/3")).status).toBe(401);
+    expect((await request("/user/self")).status).toBe(401);
     expect(
       (
-        await request("/users/3", {
+        await request("/user/self", {
           headers: { "x-test-cookie-session": "yes" },
         })
       ).status,
@@ -898,16 +915,14 @@ describe("API authentication and access", () => {
     expect((await request("/user/self", { user: 99 })).status).toBe(401);
   });
 
-  test("guests can read blogs only", async () => {
+  test("guests can list blogs, locations and trainers but cannot read resource details", async () => {
     for (const path of [
       "/user/self",
       "/users/3",
       "/bookings",
       "/bookings/1",
       "/timetable",
-      "/locations",
       "/locations/1",
-      "/trainers",
       "/sessions",
       "/sessions/1",
       "/users",
@@ -915,14 +930,22 @@ describe("API authentication and access", () => {
       "/activities/1",
     ]) {
       expect((await request(path)).status).toBe(
-        ["/sessions", "/users", "/activities", "/activities/1"].includes(path)
+        [
+          "/sessions",
+          "/users",
+          "/activities",
+          "/activities/1",
+          "/locations/1",
+        ].includes(path)
           ? 404
-          : path === "/sessions/1"
+          : ["/users/3", "/bookings/1", "/locations/1", "/sessions/1"].includes(
+                path,
+              )
             ? 405
             : 401,
       );
     }
-    for (const path of ["/blogs", "/blogs/1"]) {
+    for (const path of ["/blogs", "/locations", "/trainers"]) {
       expect((await request(path)).status).toBe(200);
     }
   });
@@ -1060,7 +1083,7 @@ describe("ownership and gym rules", () => {
       expect(result.body[0]).not.toHaveProperty("last_name");
       expect(result.body[0]).not.toHaveProperty("email");
     }
-    expect((await request("/blogs/1")).body).not.toHaveProperty("first_name");
+    expect((await request("/blogs/1")).status).toBe(405);
     expect(
       swaggerSpec.paths["/api/v1/blogs"].get.responses[200].content[
         "application/json"
@@ -1069,9 +1092,9 @@ describe("ownership and gym rules", () => {
   });
 
   test("serializes database timestamps as RFC 3339", async () => {
-    const result = await request("/bookings/1", { user: 3 });
+    const result = await request("/bookings", { user: 3 });
     expect(result.status).toBe(200);
-    expect(result.body.created).toMatch(/^\d{4}-\d{2}-\d{2}T.*Z$/);
+    expect(result.body[0].created).toMatch(/^\d{4}-\d{2}-\d{2}T.*Z$/);
   });
 
   test("blocks trainers from creating sessions but allows authoring blog posts", async () => {
@@ -1155,7 +1178,15 @@ describe("ownership and gym rules", () => {
 
   test("hides soft-deleted records and validates active foreign keys", async () => {
     records.users[3].deleted = 1;
-    expect((await request("/users/4", { user: 3 })).status).toBe(404);
+    expect(
+      (
+        await request("/users/4", {
+          method: "PATCH",
+          user: 3,
+          body: { first_name: "Updated" },
+        })
+      ).status,
+    ).toBe(404);
     expect(
       (
         await request("/bookings", {
@@ -1280,7 +1311,7 @@ describe("ownership and gym rules", () => {
             ...(method === "PUT" ? { body: bodies.bookings } : {}),
           })
         ).status,
-      ).toBe(403);
+      ).toBe(method === "GET" ? 405 : 403);
     }
     expect(
       (
@@ -1379,7 +1410,7 @@ describe("ownership and gym rules", () => {
     "supports public blog reads and ownership-checked writes for user %s",
     async (user) => {
       expect((await request("/blogs")).status).toBe(200);
-      expect((await request("/blogs/1")).status).toBe(200);
+      expect((await request("/blogs/1")).status).toBe(405);
       expect(
         (await request("/blogs", { method: "POST", body: bodies.blogs }))
           .status,
@@ -1437,7 +1468,15 @@ describe("ownership and gym rules", () => {
         })
       ).status,
     ).toBe(409);
-    expect((await request("/blogs/999", { user: 3 })).status).toBe(404);
+    expect(
+      (
+        await request("/blogs/999", {
+          method: "PUT",
+          user: 3,
+          body: bodies.blogs,
+        })
+      ).status,
+    ).toBe(404);
     const result = await request("/missing");
     expect(result.status).toBe(404);
     expect(result.body.message).toBeTruthy();
@@ -1448,25 +1487,17 @@ describe("ownership and gym rules", () => {
     { headers: { "x-auth-key": "invalid" } },
     { user: 99 },
     { headers: { "x-test-cookie-session": "1" } },
-  ])(
-    "requires a valid API key for timetable and lookup reads: %j",
-    async (options) => {
-      for (const path of [
-        "/timetable",
-        "/locations",
-        "/locations/1",
-        "/trainers",
-      ]) {
-        const result = await request(path, options);
-        expect(result.status).toBe(401);
-        expect(result.body.message).toBeTruthy();
-      }
-      expect(SessionsModel.getAll).not.toHaveBeenCalled();
-      expect(LocationModel.getAll).not.toHaveBeenCalled();
-      expect(LocationModel.getById).not.toHaveBeenCalled();
-      expect(UsersModel.getAll).not.toHaveBeenCalled();
-    },
-  );
+  ])("requires a valid API key for timetable reads: %j", async (options) => {
+    for (const path of ["/timetable"]) {
+      const result = await request(path, options);
+      expect(result.status).toBe(401);
+      expect(result.body.message).toBeTruthy();
+    }
+    expect(SessionsModel.getAll).not.toHaveBeenCalled();
+    expect(LocationModel.getAll).not.toHaveBeenCalled();
+    expect(LocationModel.getById).not.toHaveBeenCalled();
+    expect(UsersModel.getAll).not.toHaveBeenCalled();
+  });
 
   test("timetable filters the next seven days for members and trainers", async () => {
     const today = new Date();
@@ -1820,7 +1851,7 @@ describe("XML exports", () => {
     expect((await xml("/sessions/export.xml")).status).toBe(401);
     expect((await xml("/sessions/export.xml", 3)).status).toBe(403);
     expect((await xml("/sessions/export.xml", 1)).status).toBe(403);
-    expect((await request("/bookings/1", { user: 3 })).status).toBe(200);
+    expect((await request("/bookings", { user: 3 })).status).toBe(200);
     expect((await request("/sessions/1", { user: 2 })).status).toBe(405);
     for (const path of ["bookings", "sessions"]) {
       const operation = swaggerSpec.paths[`/api/v1/${path}/export.xml`].get;

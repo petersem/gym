@@ -229,14 +229,14 @@ for (const resource of resources) {
       ),
       requestBody: body(`${resource.schema}Update`),
     },
-    patch: {
-      ...operation(
-        "patch",
-        `Partially update ${resource.schema.toLowerCase()}`,
-        ref(resource.schema),
-      ),
-      requestBody: body("UserPatch"),
-    }, 
+    ...(resource.path === "users"
+      ? {
+          patch: {
+            ...operation("patch", "Partially update user", ref("User")),
+            requestBody: body("UserPatch"),
+          },
+        }
+      : {}),
     // get: operation(
     //   "get",
     //   `Get ${resource.schema.toLowerCase()}`,

@@ -62,20 +62,6 @@ field limits, response schemas, error codes, and role/ownership rules.
    the previous key.
 
 > Administrators cannot log in to the API or use existing API keys.
-> Guests without a key can read blogs.
-> The timetable, locations and trainer list require a member or trainer API key;
-> guests receive `401`. Activity list and detail endpoints are not available in the API.
-> Guests can also create a member account with `POST /api/v1/register`
-> (`first_name`, `last_name`, `email`, `phone`, `password`, optional `dob`), then
-> log in with `POST /api/v1/authenticate`. Requests that send an `x-auth-key` are
-> rejected, and the role is always `member`.
-
-`GET /api/v1/blogs`, `GET /api/v1/bookings` and `GET /api/v1/timetable` accept
-optional search and sort query parameters. Results stay limited to what your role
-can already see, and timetable search/sort also works with its `location_id` and
-`trainer_id` filters. Timetable text search matches session names only
-(case-insensitive); use the separate filters to narrow by trainer or location.
-
 Members can download all of their past bookings as XML from
 `GET /api/v1/bookings/export.xml`. Trainers can download their own sessions for
 the next seven days from `GET /api/v1/sessions/export.xml`. Both files include a
