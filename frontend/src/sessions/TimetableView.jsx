@@ -177,6 +177,9 @@ function TimetableView() {
       .then((response) => {
         if (response.status >= 200 && response.status < 300) {
           setSuccess(message);
+          if (method === "POST") {
+            window.scrollTo({ top: 0, behavior: "smooth" });
+          }
           getSessions();
           getBookings();
         } else {
