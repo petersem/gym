@@ -72,7 +72,7 @@ const routes = [
     mount: "/bookings",
     router: BookingsController.routes,
     paths: ["/", "/7"],
-    readOnlyPaths: ["/export.xml"],
+    readOnlyPaths: ["/xml"],
     readers: ["member"],
   },
   {

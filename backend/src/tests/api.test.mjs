@@ -1806,7 +1806,7 @@ describe("XML exports", () => {
   });
 
   test("members download all their past bookings as XML", async () => {
-    const result = await xml("/bookings/export.xml", 3);
+    const result = await xml("/bookings/xml", 3);
     expect(result.status).toBe(200);
     expect(result.type).toMatch(/^application\/xml/);
     expect(result.disposition).toBe('attachment; filename="gym-bookings.xml"');
@@ -1821,13 +1821,13 @@ describe("XML exports", () => {
       `<date>${day(-1).split("-").reverse().join("/")}</date>`,
     );
     expect(result.body).toContain("<time>7:00am</time>");
-    expect(ids((await xml("/bookings/export.xml", 4)).body, "booking")).toEqual(
+    expect(ids((await xml("/bookings/xml", 4)).body, "booking")).toEqual(
       [7],
     );
   });
 
   test("trainers download their own upcoming sessions as XML", async () => {
-    const result = await xml("/sessions/export.xml", 2);
+    const result = await xml("/sessions/xml", 2);
     expect(result.status).toBe(200);
     expect(result.type).toMatch(/^application\/xml/);
     expect(result.disposition).toBe('attachment; filename="gym-sessions.xml"');
@@ -1839,22 +1839,22 @@ describe("XML exports", () => {
     );
     expect(result.body).toContain("<time>9:00am</time>");
     expect(result.body).not.toContain("<booking>");
-    expect(ids((await xml("/sessions/export.xml", 5)).body, "session")).toEqual(
+    expect(ids((await xml("/sessions/xml", 5)).body, "session")).toEqual(
       [3],
     );
   });
 
   test("restricts XML exports by role and documents them", async () => {
-    expect((await xml("/bookings/export.xml")).status).toBe(401);
-    expect((await xml("/bookings/export.xml", 2)).status).toBe(403);
-    expect((await xml("/bookings/export.xml", 1)).status).toBe(403);
-    expect((await xml("/sessions/export.xml")).status).toBe(401);
-    expect((await xml("/sessions/export.xml", 3)).status).toBe(403);
-    expect((await xml("/sessions/export.xml", 1)).status).toBe(403);
+    expect((await xml("/bookings/xml")).status).toBe(401);
+    expect((await xml("/bookings/xml", 2)).status).toBe(403);
+    expect((await xml("/bookings/xml", 1)).status).toBe(403);
+    expect((await xml("/sessions/xml")).status).toBe(401);
+    expect((await xml("/sessions/xml", 3)).status).toBe(403);
+    expect((await xml("/sessions/xml", 1)).status).toBe(403);
     expect((await request("/bookings", { user: 3 })).status).toBe(200);
     expect((await request("/sessions/1", { user: 2 })).status).toBe(405);
     for (const path of ["bookings", "sessions"]) {
-      const operation = swaggerSpec.paths[`/api/v1/${path}/export.xml`].get;
+      const operation = swaggerSpec.paths[`/api/v1/${path}/xml`].get;
       expect(operation.security).toEqual([{ ApiKey: [] }]);
       expect(operation.responses[200].content).toHaveProperty(
         "application/xml",

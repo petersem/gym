@@ -197,7 +197,7 @@ function BookingListView() {
         </div>
         {can(user, "exportBookings") && (
           <XMLDownloadButton
-            route="/bookings/export.xml"
+            route="/bookings/xml"
             filename="gym-bookings.xml"
             authenticationKey={user.authenticationKey}
             onError={setError}
@@ -208,7 +208,7 @@ function BookingListView() {
         )}
         {can(user, "exportSessions") && (
           <XMLDownloadButton
-            route="/sessions/export.xml"
+            route="/sessions/xml"
             filename="gym-sessions.xml"
             authenticationKey={user.authenticationKey}
             onError={setError}

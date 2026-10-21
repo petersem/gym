@@ -208,7 +208,7 @@ function TimetableView() {
         </div>
         {can(user, "exportSessions") && (
           <XMLDownloadButton
-            route="/sessions/export.xml"
+            route="/sessions/xml"
             filename="gym-sessions.xml"
             authenticationKey={user.authenticationKey}
             onError={setError}

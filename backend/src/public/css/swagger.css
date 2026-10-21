@@ -6,7 +6,7 @@
 
 .swagger-ui .btn {
   border-radius: 12px;
-  background: linear-gradient(#206300, #072b00);
+  background: #072b00;
   box-shadow:
     0 -2px 0 #ffffff59,
     inset 0 -2 0 #0003,

@@ -348,7 +348,7 @@ const xmlExportPath = ({
     },
   },
 });
-apiResourcePaths["/api/v1/bookings/export.xml"] = xmlExportPath({
+apiResourcePaths["/api/v1/bookings/xml"] = xmlExportPath({
   tag: "Bookings",
   operationId: "exportBookingsXml",
   summary: "Download your past bookings as XML",
@@ -357,7 +357,7 @@ apiResourcePaths["/api/v1/bookings/export.xml"] = xmlExportPath({
   root: "gymBookings",
   filename: "gym-bookings.xml",
 });
-apiResourcePaths["/api/v1/sessions/export.xml"] = xmlExportPath({
+apiResourcePaths["/api/v1/sessions/xml"] = xmlExportPath({
   tag: "Sessions",
   operationId: "exportSessionsXml",
   summary: "Download your sessions for the next seven days as XML",
@@ -724,7 +724,7 @@ export class APIResourcesController {
     });
 
     this.routes.get(
-      "/bookings/export.xml",
+      "/bookings/xml",
       APIAuthenticationController.restrict(["member"]),
       async (req, res) => {
         const [sessions, bookings, lookups] = await Promise.all([
@@ -763,7 +763,7 @@ export class APIResourcesController {
     );
 
     this.routes.get(
-      "/sessions/export.xml",
+      "/sessions/xml",
       APIAuthenticationController.restrict(["trainer"]),
       async (req, res) => {
         const [sessions, lookups] = await Promise.all([

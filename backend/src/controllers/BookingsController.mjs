@@ -116,7 +116,7 @@ export class BookingsController {
   static {
     this.routes.use(AuthenticationController.restrict(["member"]));
     this.routes.get("/", this.viewBookingManagement);
-    this.routes.get("/export.xml", this.exportBookingsXml);
+    this.routes.get("/xml", this.exportBookingsXml);
     this.routes.get("/:id", this.viewBookingManagement);
     this.routes.post("/", this.formValidation, this.handleBookingManagement);
     this.routes.post("/:id", this.formValidation, this.handleBookingManagement);

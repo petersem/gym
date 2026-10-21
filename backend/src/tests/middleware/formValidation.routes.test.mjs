@@ -182,7 +182,7 @@ describe("mounted form validation", () => {
         jest.spyOn(BookingsModel, method),
       );
       for (const [method, paths] of [
-        ["GET", ["/bookings", "/bookings/1", "/bookings/export.xml"]],
+        ["GET", ["/bookings", "/bookings/1", "/bookings/xml"]],
         ["POST", ["/bookings", "/bookings/1"]],
       ]) {
         for (const path of paths) {
