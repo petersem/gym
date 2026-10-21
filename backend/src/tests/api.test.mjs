@@ -812,10 +812,7 @@ describe("API authentication and access", () => {
             : 401,
       );
     }
-    for (const path of [
-      "/blogs",
-      "/blogs/1",
-    ]) {
+    for (const path of ["/blogs", "/blogs/1"]) {
       expect((await request(path)).status).toBe(200);
     }
   });
@@ -1341,17 +1338,25 @@ describe("ownership and gym rules", () => {
     { headers: { "x-auth-key": "invalid" } },
     { user: 99 },
     { headers: { "x-test-cookie-session": "1" } },
-  ])("requires a valid API key for timetable and lookup reads: %j", async (options) => {
-    for (const path of ["/timetable", "/locations", "/locations/1", "/trainers"]) {
-      const result = await request(path, options);
-      expect(result.status).toBe(401);
-      expect(result.body.message).toBeTruthy();
-    }
-    expect(SessionsModel.getAll).not.toHaveBeenCalled();
-    expect(LocationModel.getAll).not.toHaveBeenCalled();
-    expect(LocationModel.getById).not.toHaveBeenCalled();
-    expect(UsersModel.getAll).not.toHaveBeenCalled();
-  });
+  ])(
+    "requires a valid API key for timetable and lookup reads: %j",
+    async (options) => {
+      for (const path of [
+        "/timetable",
+        "/locations",
+        "/locations/1",
+        "/trainers",
+      ]) {
+        const result = await request(path, options);
+        expect(result.status).toBe(401);
+        expect(result.body.message).toBeTruthy();
+      }
+      expect(SessionsModel.getAll).not.toHaveBeenCalled();
+      expect(LocationModel.getAll).not.toHaveBeenCalled();
+      expect(LocationModel.getById).not.toHaveBeenCalled();
+      expect(UsersModel.getAll).not.toHaveBeenCalled();
+    },
+  );
 
   test("timetable filters the next seven days for members and trainers", async () => {
     const today = new Date();

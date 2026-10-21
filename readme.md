@@ -14,7 +14,7 @@ daisyUI and Tailwind CSS. It talks only to the `/api/v1` JSON API and follows th
 
 | Role    | Timetable                                      | Blog                    | Bookings                         | Profile              |
 | ------- | ---------------------------------------------- | ----------------------- | -------------------------------- | -------------------- |
-| Guest   | No access (login required)                    | Read, search, sort      | —                                | Register as a member |
+| Guest   | No access (login required)                     | Read, search, sort      | —                                | Register as a member |
 | Member  | Book sessions (shows "Booked")                 | Create; edit/delete own | Own bookings, cancel, XML export | View / edit          |
 | Trainer | Booking counts and delete on own sessions, XML | Create; edit/delete own | Read bookings for own sessions   | View / edit          |
 | Admin   | Rejected at login (no API access)              |                         |                                  |                      |
