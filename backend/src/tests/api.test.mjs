@@ -212,6 +212,116 @@ afterAll(async () => {
   );
 });
 
+describe("user PATCH", () => {
+  test("documents partial updates only for users", () => {
+    const operation = swaggerSpec.paths["/api/v1/users/{id}"].patch;
+    expect(operation.security).toEqual([{ ApiKey: [] }]);
+    expect(operation.requestBody.content["application/json"].schema.$ref).toBe(
+      "#/components/schemas/UserPatch",
+    );
+    expect(swaggerSpec.components.schemas.UserPatch.required).toBeUndefined();
+    expect(swaggerSpec.components.schemas.UserPatch.properties).toEqual(
+      swaggerSpec.components.schemas.UserUpdate.properties,
+    );
+    for (const resource of ["blogs", "bookings", "locations", "sessions"]) {
+      expect(swaggerSpec.paths[`/api/v1/${resource}/{id}`]).not.toHaveProperty(
+        "patch",
+      );
+    }
+  });
+
+  test.each([2, 3])(
+    "partially updates user %s without changing omitted fields",
+    async (user) => {
+      const before = structuredClone(records.users[user - 1]);
+      records.users[user - 1].dob = new Date(1990, 4, 12);
+      const result = await request(`/users/${user}`, {
+        method: "PATCH",
+        user,
+        body: { first_name: "Patched" },
+      });
+      expect(result.status).toBe(200);
+      expect(result.body.first_name).toBe("Patched");
+      expect(result.body.dob).toBe("1990-05-12");
+      expect(records.users[user - 1]).toEqual({
+        ...before,
+        first_name: "Patched",
+        dob: "1990-05-12",
+      });
+      expect(result.body).not.toHaveProperty("password");
+      expect(result.body).not.toHaveProperty("authentication_key");
+    },
+  );
+
+  test.each([
+    {},
+    { first_name: "" },
+    { first_name: null },
+    { email: "invalid" },
+    { phone: "123" },
+    { dob: "1990-02-30" },
+    { password: "short" },
+    { password: "\u00e9".repeat(20) },
+    { role: "admin" },
+    { id: 4 },
+    { authentication_key: "replacement" },
+    { deleted: 1 },
+  ])("rejects invalid partial updates without writing: %j", async (body) => {
+    const result = await request("/users/3", {
+      method: "PATCH",
+      user: 3,
+      body,
+    });
+    expect(result.status).toBe(400);
+    expect(UsersModel.update).not.toHaveBeenCalled();
+    expect(records.users[2].authentication_key).toBe(key(3));
+  });
+
+  test.each([
+    [undefined, 3, 401],
+    [1, 1, 403],
+    [2, 3, 403],
+    [3, 4, 403],
+    [3, 99, 404],
+  ])("enforces access for user %s patching %s", async (user, id, status) => {
+    expect(
+      (
+        await request(`/users/${id}`, {
+          method: "PATCH",
+          user,
+          body: { first_name: "Denied" },
+        })
+      ).status,
+    ).toBe(status);
+    expect(UsersModel.update).not.toHaveBeenCalled();
+  });
+
+  test("preserves empty and unchanged passwords, hashes new passwords and revokes the key", async () => {
+    for (const password of ["", "testing123"]) {
+      const result = await request("/users/3", {
+        method: "PATCH",
+        user: 3,
+        body: { password },
+      });
+      expect(result.status).toBe(200);
+      expect(records.users[2].password).toBe(passwordHash);
+      expect(records.users[2].authentication_key).toBe(key(3));
+    }
+    const result = await request("/users/3", {
+      method: "PATCH",
+      user: 3,
+      body: { password: "newpassword123", dob: null },
+    });
+    expect(result.status).toBe(200);
+    expect(result.body.dob).toBeNull();
+    expect(
+      await bcrypt.compare("newpassword123", records.users[2].password),
+    ).toBe(true);
+    expect(records.users[2].authentication_key).toBeNull();
+    expect((await request("/user/self", { user: 3 })).status).toBe(401);
+  });
+});
+
 describe("OpenAPI contract", () => {
   test("lists only trainer summaries for members and trainers while keeping user detail private", async () => {
     expect(swaggerSpec.paths["/api/v1/trainers"].get.security).toEqual([

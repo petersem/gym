@@ -134,6 +134,56 @@ components:
         own record. Role is read-only and must not be included in updates.
         Omitting password, leaving it empty or supplying the current password preserves the API key.
         Only changing the password revokes the current API key.
+    UserPatch:
+      type: object
+      additionalProperties: false
+      minProperties: 1
+      properties:
+        first_name:
+          type: string
+          minLength: 1
+          maxLength: 45
+          pattern: \S
+          example: Jane
+        last_name:
+          type: string
+          minLength: 1
+          maxLength: 45
+          pattern: \S
+          example: Doe
+        email:
+          type: string
+          format: email
+          maxLength: 100
+          example: jane@gym.com
+        password:
+          type: string
+          format: password
+          writeOnly: true
+          maxLength: 36
+          anyOf:
+            - enum: [""]
+            - minLength: 8
+          description:
+            Leave empty or omit to keep the current password and API key.
+            A new password must be 8-36 characters and at most 36 UTF-8 bytes;
+            stored as a bcrypt hash.
+        phone:
+          type: string
+          maxLength: 20
+          pattern: '^\+?[0-9 ().-]*[0-9][0-9 ().-]*$'
+          description: Valid Australian phone number; spaces, parentheses, dots and hyphens are accepted.
+          example: "0412345678"
+        dob:
+          type: string
+          format: date
+          nullable: true
+          example: 1990-05-12
+      description:
+        Partially update editable user fields. Members and trainers can update
+        only their own record. Omitted fields remain unchanged. Supply at least
+        one editable field; role and other server-managed fields are not allowed.
+        Password rules and API key revocation are the same as for UserUpdate.
     User:
       type: object
       additionalProperties: false

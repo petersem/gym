@@ -58,7 +58,7 @@
     <text x="20" y="258">Create blog &#x2014; POST /blogs</text>
     <text x="20" y="294">Update / delete blog &#x2014; PUT / DELETE /blogs/{id}</text>
     <text x="20" y="330">Read profile &#x2014; GET /user/self, /users/{id}</text>
-    <text x="20" y="366">Update profile &#x2014; PUT /users/{id}</text>
+    <text x="20" y="366">Update profile &#x2014; PUT / PATCH /users/{id}</text>
     <text x="20" y="402">View timetable &#x2014; GET /timetable &#xB3;</text>
     <text x="20" y="438">Read bookings &#x2014; GET /bookings, /bookings/{id} &#xB3;</text>
     <text x="20" y="474">Make booking &#x2014; POST /bookings</text>

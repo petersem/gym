@@ -30,7 +30,7 @@ function ProfileView() {
     if (!user) {
       return;
     }
-    authFetch("GET", `/users/${user.id}`)
+    authFetch("GET", "/user/self")
       .then((response) => {
         if (response.status === 200) {
           setForm(toForm(response.body));

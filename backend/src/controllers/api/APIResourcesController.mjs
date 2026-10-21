@@ -36,6 +36,7 @@ const resources = [
     roles: [],
     getRoles: ["trainer", "member"],
     putRoles: ["trainer", "member"],
+    patchRoles: ["trainer", "member"],
     description:
       "Members and trainers can read and update only their own record, without changing their role. Users cannot be listed, created or deleted through this resource; use GET /trainers to list trainers. Passwords and authentication keys are never returned.",
     serialize: publicUser,
@@ -47,9 +48,9 @@ const resources = [
     tag: "Locations",
     model: LocationModel,
     roles: [],
-    getRoles: ["trainer", "member"],
+    publicRead: true,
     description:
-      "Authenticated members and trainers can list and read locations. Guests have no access. Locations cannot be created, updated or deleted through the API.",
+      "Guests, members and trainers can list and read locations. Locations cannot be created, updated or deleted through the API.",
   },
   {
     path: "sessions",
@@ -215,11 +216,11 @@ for (const resource of resources) {
   };
   apiResourcePaths[`${basePath}/{id}`] = {
     parameters: [idParameter],
-    get: operation(
-      "get",
-      `Get ${resource.schema.toLowerCase()}`,
-      ref(resource.schema),
-    ),
+    // get: operation(
+    //   "get",
+    //   `Get ${resource.schema.toLowerCase()}`,
+    //   ref(resource.schema),
+    // ),
     put: {
       ...operation(
         "update",
@@ -228,6 +229,19 @@ for (const resource of resources) {
       ),
       requestBody: body(`${resource.schema}Update`),
     },
+    patch: {
+      ...operation(
+        "patch",
+        `Partially update ${resource.schema.toLowerCase()}`,
+        ref(resource.schema),
+      ),
+      requestBody: body("UserPatch"),
+    }, 
+    // get: operation(
+    //   "get",
+    //   `Get ${resource.schema.toLowerCase()}`,
+    //   ref(resource.schema),
+    // ),
     delete: operation(
       "delete",
       `Delete ${resource.schema.toLowerCase()}`,
@@ -253,8 +267,8 @@ apiResourcePaths["/api/v1/trainers"] = {
     operationId: "listTrainers",
     summary: "List trainers",
     description:
-      "Authenticated members and trainers can list trainers, which returns only ID, name and role. Guests and administrators have no access.",
-    security: [{ ApiKey: [] }],
+      "Guests, members and trainers can list trainers, which returns only ID, name and role. Administrators have no access.",
+    security: [],
     responses: {
       200: response(
         { type: "array", items: ref("UserSummary") },
@@ -695,22 +709,18 @@ export class APIResourcesController {
       },
     );
 
-    this.routes.get(
-      "/trainers",
-      APIAuthenticationController.restrict(["member", "trainer"]),
-      async (req, res) => {
-        res.json(
-          (await UsersModel.getAll())
-            .filter((user) => user.role === "trainer")
-            .map(({ id, first_name, last_name, role }) => ({
-              id,
-              first_name,
-              last_name,
-              role,
-            })),
-        );
-      },
-    );
+    this.routes.get("/trainers", async (req, res) => {
+      res.json(
+        (await UsersModel.getAll())
+          .filter((user) => user.role === "trainer")
+          .map(({ id, first_name, last_name, role }) => ({
+            id,
+            first_name,
+            last_name,
+            role,
+          })),
+      );
+    });
 
     this.routes.get(
       "/bookings/export.xml",
@@ -871,7 +881,7 @@ export class APIResourcesController {
         });
       }
       if (!resource.removedMethods?.includes("put")) {
-        router.put("/:id", async (req, res) => {
+        const update = async (req, res) => {
           const existing = await activeRecord(
             resource.model,
             Number(req.params.id),
@@ -880,7 +890,11 @@ export class APIResourcesController {
           const record = await prepareRecord(resource, req, existing);
           checkWrite(await resource.model.update(record));
           res.json(serialize(await activeRecord(resource.model, existing.id)));
-        });
+        };
+        router.put("/:id", update);
+        if (resource.path === "users") {
+          router.patch("/:id", update);
+        }
       }
       if (!resource.removedMethods?.includes("delete")) {
         router.delete("/:id", async (req, res) => {
