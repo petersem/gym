@@ -37,6 +37,7 @@ const removedMethods = {
   users: ["post", "delete"],
   locations: ["post", "put", "delete"],
   sessions: ["post", "get", "put"],
+  blogs: ["put", "delete"],
 };
 const removedBasePaths = ["users", "sessions"];
 const bodies = {
@@ -221,7 +222,9 @@ describe("user PATCH", () => {
         user: 3,
         body: { first_name: "Unsupported" },
       });
-      expect(result.status).toBe(resource === "locations" ? 404 : 405);
+      expect(result.status).toBe(
+        ["locations", "blogs"].includes(resource) ? 404 : 405,
+      );
       expect(models[resource].update).not.toHaveBeenCalled();
     },
   );
@@ -424,7 +427,8 @@ describe("OpenAPI contract", () => {
           });
           expect(result.status).toBe(
             (resource === "locations" && method !== "post") ||
-              (removedBasePaths.includes(resource) && method === "post")
+              (removedBasePaths.includes(resource) && method === "post") ||
+              resource === "blogs"
               ? 404
               : 405,
           );
@@ -615,7 +619,7 @@ describe("OpenAPI contract", () => {
             body: bodies.blogs,
           })
         ).status,
-      ).toBe(400);
+      ).toBe(404);
       expect(BlogModel.getById).not.toHaveBeenCalled();
     },
   );
@@ -889,7 +893,9 @@ describe("API authentication and access", () => {
             (removedBasePaths.includes(resource) && method === "POST")
             ? 404
             : removedMethods[resource]?.includes(method.toLowerCase())
-              ? 405
+              ? resource === "blogs"
+                ? 404
+                : 405
               : 401,
         );
       }
@@ -1083,7 +1089,7 @@ describe("ownership and gym rules", () => {
       expect(result.body[0]).not.toHaveProperty("last_name");
       expect(result.body[0]).not.toHaveProperty("email");
     }
-    expect((await request("/blogs/1")).status).toBe(405);
+    expect((await request("/blogs/1")).status).toBe(404);
     expect(
       swaggerSpec.paths["/api/v1/blogs"].get.responses[200].content[
         "application/json"
@@ -1407,10 +1413,10 @@ describe("ownership and gym rules", () => {
   );
 
   test.each([2, 3])(
-    "supports public blog reads and ownership-checked writes for user %s",
+    "supports public blog reads and creation but not edits or deletes for user %s",
     async (user) => {
       expect((await request("/blogs")).status).toBe(200);
-      expect((await request("/blogs/1")).status).toBe(405);
+      expect((await request("/blogs/1")).status).toBe(404);
       expect(
         (await request("/blogs", { method: "POST", body: bodies.blogs }))
           .status,
@@ -1424,7 +1430,7 @@ describe("ownership and gym rules", () => {
               ...(method === "PUT" ? { body: bodies.blogs } : {}),
             })
           ).status,
-        ).toBe(403);
+        ).toBe(404);
       }
       expect(
         (
@@ -1442,16 +1448,14 @@ describe("ownership and gym rules", () => {
       });
       expect(created.status).toBe(201);
       expect(created.body.user_id).toBe(user);
-      const updated = await request("/blogs/100", {
-        method: "PUT",
-        user,
-        body: bodies.blogs,
-      });
-      expect(updated.status).toBe(200);
-      expect(updated.body.created).toBe(created.body.created);
       expect(
         (await request("/blogs/100", { method: "DELETE", user })).status,
-      ).toBe(200);
+      ).toBe(404);
+      expect(records.blogs).toContainEqual(
+        expect.objectContaining({ id: 100, user_id: user }),
+      );
+      expect(BlogModel.update).not.toHaveBeenCalled();
+      expect(BlogModel.delete).not.toHaveBeenCalled();
     },
   );
 
@@ -1812,7 +1816,15 @@ describe("XML exports", () => {
     expect(result.disposition).toBe('attachment; filename="gym-bookings.xml"');
     expect(result.body).toMatch(/^<\?xml version="1.0" encoding="UTF-8"\?>/);
     expect(result.body).toContain("<!DOCTYPE gymBookings [");
+    expect(result.body).toMatch(
+      /<gymBookings export-date="\d{4}-\d{2}-\d{2}">/,
+    );
+    expect(result.body).not.toContain('<booking export-date="');
     expect(ids(result.body, "booking")).toEqual([6, 5]);
+    expect(result.body).toContain(
+      "<!ELEMENT session (title, date, time, activity, trainer, location)>",
+    );
+    expect(result.body).not.toMatch(/<session>\s*<id>/);
     expect(result.body).toContain("<firstName>Mia</firstName>");
     expect(result.body).toContain("<firstName>Tom</firstName>");
     expect(result.body).toContain("<name>City</name>");
@@ -1821,9 +1833,7 @@ describe("XML exports", () => {
       `<date>${day(-1).split("-").reverse().join("/")}</date>`,
     );
     expect(result.body).toContain("<time>7:00am</time>");
-    expect(ids((await xml("/bookings/xml", 4)).body, "booking")).toEqual(
-      [7],
-    );
+    expect(ids((await xml("/bookings/xml", 4)).body, "booking")).toEqual([7]);
   });
 
   test("trainers download their own upcoming sessions as XML", async () => {
@@ -1832,6 +1842,9 @@ describe("XML exports", () => {
     expect(result.type).toMatch(/^application\/xml/);
     expect(result.disposition).toBe('attachment; filename="gym-sessions.xml"');
     expect(result.body).toContain("<!DOCTYPE gymSessions [");
+    expect(result.body).toContain(
+      "<!ELEMENT session (id, title, date, time, activity, trainer, location)>",
+    );
     expect(ids(result.body, "session")).toEqual([2, 1]);
     expect(result.body).toContain("<firstName>Tom</firstName>");
     expect(result.body).toContain(
@@ -1839,9 +1852,7 @@ describe("XML exports", () => {
     );
     expect(result.body).toContain("<time>9:00am</time>");
     expect(result.body).not.toContain("<booking>");
-    expect(ids((await xml("/sessions/xml", 5)).body, "session")).toEqual(
-      [3],
-    );
+    expect(ids((await xml("/sessions/xml", 5)).body, "session")).toEqual([3]);
   });
 
   test("restricts XML exports by role and documents them", async () => {

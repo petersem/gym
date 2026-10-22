@@ -11,6 +11,7 @@ import { DatabaseModel } from "../../models/DatabaseModel.mjs";
 import { APIAuthenticationController } from "./APIAuthenticationController.mjs";
 import {
   bookingXmlRecord,
+  bookingsXmlContent,
   bookingsDtd,
   buildXmlDocument,
   sendXmlDocument,
@@ -83,6 +84,7 @@ const resources = [
   },
   {
     path: "blogs",
+    removedMethods: ["put", "delete"],
     schema: "Blog",
     listSchema: "BlogSummary",
     tag: "Blogs",
@@ -96,7 +98,7 @@ const resources = [
       defaultDir: "desc",
     },
     description:
-      "Guests, members and trainers can read posts; blog lists include the author's first name. Members and trainers create posts as themselves and edit or delete only their own posts. Authors and creation timestamps are immutable. Administrators have no API access.",
+      "Guests, members and trainers can read posts; blog lists include the author's first name. Members and trainers can create posts as themselves, but posts cannot be updated or deleted through the API. Administrators have no API access.",
   },
 ];
 
@@ -757,7 +759,11 @@ export class APIResourcesController {
         sendXmlDocument(
           res,
           "gym-bookings.xml",
-          buildXmlDocument("gymBookings", { booking }, bookingsDtd),
+          buildXmlDocument(
+            "gymBookings",
+            bookingsXmlContent(booking),
+            bookingsDtd,
+          ),
         );
       },
     );

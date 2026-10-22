@@ -22,7 +22,7 @@ const sessionElements = `<!ELEMENT session (id, title, date, time, activity, tra
 <!ELEMENT suburb (#PCDATA)>
 <!ELEMENT postcode (#PCDATA)>`;
 
-const bookingSessionElements = `<!ELEMENT session (id, title, date, time, activity, trainer, location)>
+const bookingSessionElements = `<!ELEMENT session (title, date, time, activity, trainer, location)>
 <!ELEMENT title (#PCDATA)>
 <!ELEMENT date (#PCDATA)>
 <!ELEMENT time (#PCDATA)>
@@ -40,10 +40,11 @@ const bookingSessionElements = `<!ELEMENT session (id, title, date, time, activi
 export const bookingsDtd = `<!DOCTYPE gymBookings [
 <!ELEMENT gymBookings (booking*)>
 <!ATTLIST gymBookings export-date CDATA "0000-00-00">
-<!ELEMENT booking (id, user, created, session)>
-<!ELEMENT firstName (#PCDATA)
+<!ELEMENT booking (id, user, session)>
+<!ELEMENT id (#PCDATA)>
+<!ELEMENT user (firstName, lastName)>
+<!ELEMENT firstName (#PCDATA)>
 <!ELEMENT lastName (#PCDATA)>
-<!ELEMENT created (#PCDATA)>
 ${bookingSessionElements}
 ]>`;
 
@@ -67,19 +68,20 @@ const timeOptions = {
 };
 const localDate = new Intl.DateTimeFormat("en-AU", dateOptions);
 const localTime = new Intl.DateTimeFormat("en-AU", timeOptions);
-const localDateTime = new Intl.DateTimeFormat("en-AU", {
-  ...dateOptions,
-  ...timeOptions,
-});
 const compactMeridiem = (value) => value.replace(/\s+(am|pm)$/i, "$1");
 
 /**
  * Maps a session to its XML element content.
  * @param {Object} session Session record.
  * @param {{activities: Array, locations: Array, users: Array}} lookups Related records.
+ * @param {{includeId?: boolean}} [options] Whether to include the session ID.
  * @returns {Object} XML-ready session.
  */
-export function sessionXmlRecord(session, { activities, locations, users }) {
+export function sessionXmlRecord(
+  session,
+  { activities, locations, users },
+  { includeId = true } = {},
+) {
   const activity = byId(activities, session.activity_id);
   const trainer = byId(users, session.trainer_id);
   const location = byId(locations, session.location_id);
@@ -89,7 +91,7 @@ export function sessionXmlRecord(session, { activities, locations, users }) {
       : new Date(`${String(session.date).slice(0, 10)}T00:00:00`);
   const time = session.time ? new Date(`2000-01-01T${session.time}`) : null;
   return {
-    id: String(session.id),
+    ...(includeId ? { id: String(session.id) } : {}),
     title: String(session.title ?? ""),
     date: localDate.format(date),
     time: time ? compactMeridiem(localTime.format(time)) : "",
@@ -120,15 +122,30 @@ export function sessionXmlRecord(session, { activities, locations, users }) {
 export function bookingXmlRecord(booking, session, lookups) {
   const bookingUser = byId(lookups.users, booking.user_id);
   return {
-    "@_export-date": "2020-01-01",
     id: String(booking.id),
-    firstName: String(bookingUser.first_name ?? ""),
-    lastName: String(bookingUser.last_name ?? ""),
-    created:
-      booking.created == null || booking.created === ""
-        ? ""
-        : compactMeridiem(localDateTime.format(new Date(booking.created))),
-    session: sessionXmlRecord(session, lookups),
+    user: {
+      firstName: String(bookingUser.first_name ?? ""),
+      lastName: String(bookingUser.last_name ?? ""),
+    },
+    session: sessionXmlRecord(session, lookups, { includeId: false }),
+  };
+}
+
+/**
+ * Maps booking records to the root content for a bookings XML document.
+ * @param {Array} bookings XML-ready booking records.
+ * @returns {Object} XML-ready gymBookings root content.
+ */
+export function bookingsXmlContent(bookings) {
+  const today = new Date();
+  const exportDate = [
+    today.getFullYear(),
+    String(today.getMonth() + 1).padStart(2, "0"),
+    String(today.getDate()).padStart(2, "0"),
+  ].join("-");
+  return {
+    "@_export-date": exportDate,
+    booking: bookings,
   };
 }
 

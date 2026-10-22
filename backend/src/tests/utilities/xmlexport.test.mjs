@@ -1,6 +1,9 @@
 import { describe, expect, test } from "@jest/globals";
 import {
+  bookingsDtd,
+  bookingsXmlContent,
   bookingXmlRecord,
+  buildXmlDocument,
   sessionXmlRecord,
 } from "../../utilities/xmlExport.mjs";
 
@@ -27,6 +30,21 @@ describe("XML local date/time formatting", () => {
     ).toBe("16/10/2026");
   });
 
+  test("includes session IDs in session exports but omits them from booking exports", () => {
+    expect(sessionXmlRecord(session, lookups)).toHaveProperty("id", "1");
+    expect(
+      bookingXmlRecord({ id: 2 }, session, lookups).session,
+    ).not.toHaveProperty("id");
+  });
+
+  test("declares booking and user XML elements consistently", () => {
+    expect(bookingsDtd).toContain("<!ELEMENT id (#PCDATA)>");
+    expect(bookingsDtd).toContain(
+      "<!ELEMENT booking (id, user, created, session)>",
+    );
+    expect(bookingsDtd).toContain("<!ELEMENT user (firstName, lastName)>");
+  });
+
   test.each([
     "2026-10-16 00:05:00",
     new Date(2026, 9, 16, 0, 5),
@@ -45,5 +63,22 @@ describe("XML local date/time formatting", () => {
     expect(() =>
       bookingXmlRecord({ id: 1, created: "invalid" }, session, lookups),
     ).toThrow(RangeError);
+  });
+
+  test("places the export date on the gymBookings root element", () => {
+    const today = new Date();
+    const expectedDate = [
+      today.getFullYear(),
+      String(today.getMonth() + 1).padStart(2, "0"),
+      String(today.getDate()).padStart(2, "0"),
+    ].join("-");
+    const xml = buildXmlDocument(
+      "gymBookings",
+      bookingsXmlContent([{ id: "1" }]),
+      "<!DOCTYPE gymBookings []>",
+    );
+
+    expect(xml).toContain(`<gymBookings export-date="${expectedDate}">`);
+    expect(xml).not.toContain('<booking export-date="');
   });
 });

@@ -62,14 +62,14 @@ field limits, response schemas, error codes, and role/ownership rules.
    the previous key.
 
 > Administrators cannot log in to the API or use existing API keys.
-Members can download all of their past bookings as XML from
-`GET /api/v1/bookings/xml`. Trainers can download their own sessions for
-the next seven days from `GET /api/v1/sessions/xml`. Both files include a
-DTD and session, activity, trainer and location details. XML downloads (including
-the browser booking download) use Australian local formatting: `DD/MM/YYYY` dates
-and 12-hour times such as `1:05pm`, in the server's local timezone. Booking creation
-timestamps use the same format, for example `16/10/2026, 1:05pm`. JSON date/time
-formats are unchanged.
+> Members can download all of their past bookings as XML from
+> `GET /api/v1/bookings/xml`. Trainers can download their own sessions for
+> the next seven days from `GET /api/v1/sessions/xml`. Both files include a
+> DTD and session, activity, trainer and location details. XML downloads (including
+> the browser booking download) use Australian local formatting: `DD/MM/YYYY` dates
+> and 12-hour times such as `1:05pm`, in the server's local timezone. Booking creation
+> timestamps use the same format, for example `16/10/2026, 1:05pm`. JSON date/time
+> formats are unchanged.
 
 The API uses API keys rather than browser cookie sessions, validates JSON against
 OpenAPI instead of the HTML form sanitiser, and does not require an

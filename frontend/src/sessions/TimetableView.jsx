@@ -4,16 +4,13 @@ import {
   FaClock,
   FaChevronDown,
   FaMapMarkerAlt,
-  FaTrash,
   FaUser,
   FaUsers,
 } from "react-icons/fa";
 import { queryString } from "../api.mjs";
 import { useAuthenticate } from "../authentication/useAuthenticate.jsx";
-import ConfirmDialog from "../common/ConfirmDialog.jsx";
 import SearchSortBar from "../common/SearchSortBar.jsx";
 import StatusAlert from "../common/StatusAlert.jsx";
-import XMLDownloadButton from "../common/XMLDownloadButton.jsx";
 import {
   formatDayOfMonth,
   formatRelativeDate,
@@ -52,7 +49,6 @@ function TimetableView() {
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(null);
   const [pendingId, setPendingId] = useState(null);
-  const [confirm, setConfirm] = useState(null);
   const [openDays, setOpenDays] = useState(null);
 
   const locationId = searchParams.get("location_id") ?? "";
@@ -189,7 +185,6 @@ function TimetableView() {
       .catch(setError)
       .finally(() => {
         setPendingId(null);
-        setConfirm(null);
       });
   };
 
@@ -206,17 +201,6 @@ function TimetableView() {
             Sessions over the next seven days
           </p>
         </div>
-        {can(user, "exportSessions") && (
-          <XMLDownloadButton
-            route="/sessions/xml"
-            filename="gym-sessions.xml"
-            authenticationKey={user.authenticationKey}
-            onError={setError}
-            className="btn btn-sm btn-warning"
-          >
-            My sessions
-          </XMLDownloadButton>
-        )}
       </div>
 
       <SearchSortBar
@@ -423,30 +407,6 @@ function TimetableView() {
                             )}
                           </button>
                         ))}
-                      {isOwnSession && (
-                        <button
-                          className="btn btn-ghost btn-sm text-error"
-                          aria-label="Delete session"
-                          disabled={busy}
-                          onClick={() =>
-                            setConfirm({
-                              title: "Delete session?",
-                              message: `Delete "${session.title}"? All bookings for it will also be removed.`,
-                              label: "Delete session",
-                              action: () =>
-                                runAction(
-                                  session,
-                                  "DELETE",
-                                  `/sessions/${session.id}`,
-                                  null,
-                                  `Deleted "${session.title}".`,
-                                ),
-                            })
-                          }
-                        >
-                          <FaTrash />
-                        </button>
-                      )}
                       {!user && (
                         <button
                           className="btn btn-ghost btn-sm"
@@ -463,16 +423,6 @@ function TimetableView() {
           ))}
         </div>
       )}
-
-      <ConfirmDialog
-        open={!!confirm}
-        title={confirm?.title}
-        message={confirm?.message}
-        confirmLabel={confirm?.label}
-        busy={pendingId !== null}
-        onConfirm={() => confirm?.action()}
-        onClose={() => setConfirm(null)}
-      />
     </section>
   );
 }

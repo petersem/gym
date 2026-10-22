@@ -12,7 +12,6 @@ export const PERMISSIONS = {
   readBlogs: ALL,
   viewTimetable: AUTHENTICATED,
   createBlog: AUTHENTICATED,
-  manageOwnBlog: AUTHENTICATED,
   readProfile: AUTHENTICATED,
   updateProfile: AUTHENTICATED,
   readBookings: AUTHENTICATED, // members: own; trainers: grouped bookings on their sessions

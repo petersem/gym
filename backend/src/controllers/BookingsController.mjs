@@ -6,6 +6,7 @@ import { LocationModel } from "../models/LocationModel.mjs";
 import { ActivitiesModel } from "../models/ActivitiesModel.mjs";
 import {
   bookingXmlRecord,
+  bookingsXmlContent,
   bookingsDtd,
   buildXmlDocument,
   sendXmlDocument,
@@ -232,7 +233,7 @@ export class BookingsController {
         "gym-bookings.xml",
         buildXmlDocument(
           "gymBookings",
-          { booking: bookingRecords },
+          bookingsXmlContent(bookingRecords),
           bookingsDtd,
         ),
       );

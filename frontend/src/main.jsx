@@ -36,7 +36,7 @@ const router = createBrowserRouter([
       },
       {
         path: "/blogs/:blogId/edit",
-        Component: BlogEditView,
+        element: <Navigate to="/blogs" replace />,
       },
       {
         path: "/profile",

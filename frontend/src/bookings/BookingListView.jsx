@@ -1,6 +1,12 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router";
-import { FaClock, FaMapMarkerAlt, FaUser, FaUsers } from "react-icons/fa";
+import {
+  FaClock,
+  FaMapMarkerAlt,
+  FaTrash,
+  FaUser,
+  FaUsers,
+} from "react-icons/fa";
 import { queryString } from "../api.mjs";
 import { useAuthenticate } from "../authentication/useAuthenticate.jsx";
 import ConfirmDialog from "../common/ConfirmDialog.jsx";
@@ -45,6 +51,7 @@ function BookingListView() {
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(null);
   const [cancelling, setCancelling] = useState(null);
+  const [deletingSession, setDeletingSession] = useState(null);
   const [busy, setBusy] = useState(false);
 
   const getBookings = useCallback(() => {
@@ -147,6 +154,28 @@ function BookingListView() {
       });
   };
 
+  const deleteSession = () => {
+    setBusy(true);
+    setError(null);
+    authFetch("DELETE", `/sessions/${deletingSession.id}`)
+      .then((response) => {
+        if (response.status === 200) {
+          setSuccess("Session deleted.");
+          setSessions((current) =>
+            current.filter((session) => session.id !== deletingSession.id),
+          );
+          getBookings();
+        } else {
+          setError(response.body.message);
+        }
+      })
+      .catch(setError)
+      .finally(() => {
+        setBusy(false);
+        setDeletingSession(null);
+      });
+  };
+
   if (!user) {
     return (
       <span className="loading loading-spinner loading-xl mx-auto mt-8 block"></span>
@@ -155,27 +184,29 @@ function BookingListView() {
 
   // Trainers see one row per session with its booking total, not who booked.
   const sessionRows = [];
-  if (isTrainer && visibleBookings) {
-    const rowBySession = new Map();
-    for (const booking of visibleBookings) {
-      // Only sessions in the next 7 days have details available from the API.
-      if (!sessionById.has(booking.session_id)) {
-        continue;
-      }
-      let row = rowBySession.get(booking.session_id);
-      if (!row) {
-        row = {
-          id: booking.session_id,
-          session_id: booking.session_id,
-          count: 0,
-        };
-        rowBySession.set(booking.session_id, row);
-        sessionRows.push(row);
-      }
-      row.count += 1;
+  if (isTrainer && sessions) {
+    const bookingCounts = new Map();
+    for (const booking of visibleBookings ?? []) {
+      bookingCounts.set(
+        booking.session_id,
+        (bookingCounts.get(booking.session_id) ?? 0) + 1,
+      );
     }
+    sessionRows.push(
+      ...sessions
+        .filter((session) => Number(session.trainer_id) === Number(user.id))
+        .map((session) => ({
+          id: session.id,
+          session_id: session.id,
+          count: bookingCounts.get(session.id) ?? 0,
+        })),
+    );
   }
-  const rows = isTrainer ? visibleBookings && sessionRows : visibleBookings;
+  const rows = isTrainer
+    ? sessions === null || visibleBookings === null
+      ? null
+      : sessionRows
+    : visibleBookings;
   const totalBookings = sessionRows.reduce((sum, row) => sum + row.count, 0);
 
   return (
@@ -301,6 +332,16 @@ function BookingListView() {
                     {booking.count === 1 ? "booking" : "bookings"}
                   </span>
                 )}
+                {isTrainer && session && (
+                  <button
+                    className="btn btn-ghost btn-sm text-error"
+                    aria-label="Delete session"
+                    disabled={busy}
+                    onClick={() => setDeletingSession(session)}
+                  >
+                    <FaTrash />
+                  </button>
+                )}
                 {can(user, "cancelBooking") && (
                   <button
                     className="btn btn-ghost btn-sm text-error"
@@ -326,6 +367,15 @@ function BookingListView() {
         busy={busy}
         onConfirm={cancelBooking}
         onClose={() => setCancelling(null)}
+      />
+      <ConfirmDialog
+        open={!!deletingSession}
+        title="Delete session?"
+        message={`Delete "${deletingSession?.title}"? All bookings for it will also be removed.`}
+        confirmLabel="Delete session"
+        busy={busy}
+        onConfirm={deleteSession}
+        onClose={() => setDeletingSession(null)}
       />
     </section>
   );

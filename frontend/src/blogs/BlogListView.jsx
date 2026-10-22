@@ -1,9 +1,8 @@
 import { useCallback, useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router";
-import { FaEdit, FaPlus, FaTrash } from "react-icons/fa";
+import { FaPlus } from "react-icons/fa";
 import { queryString } from "../api.mjs";
 import { useAuthenticate } from "../authentication/useAuthenticate.jsx";
-import ConfirmDialog from "../common/ConfirmDialog.jsx";
 import SearchSortBar from "../common/SearchSortBar.jsx";
 import StatusAlert from "../common/StatusAlert.jsx";
 import { formatDateTime } from "../common/format.mjs";
@@ -26,9 +25,6 @@ function BlogListView() {
   const [sortBy, setSortBy] = useState("created");
   const [sortDir, setSortDir] = useState("desc");
   const [error, setError] = useState(null);
-  const [success, setSuccess] = useState(null);
-  const [deleting, setDeleting] = useState(null);
-  const [busy, setBusy] = useState(false);
 
   const getBlogs = useCallback(() => {
     authFetch(
@@ -82,28 +78,6 @@ function BlogListView() {
       next.delete("page");
       setSearchParams(next);
     }
-  };
-
-  const isOwnPost = (blog) =>
-    can(user, "manageOwnBlog") && blog.user_id === user.id;
-
-  const deleteBlog = () => {
-    setBusy(true);
-    setError(null);
-    authFetch("DELETE", `/blogs/${deleting.id}`)
-      .then((response) => {
-        if (response.status === 200) {
-          setSuccess("Post deleted.");
-          getBlogs();
-        } else {
-          setError(response.body.message);
-        }
-      })
-      .catch(setError)
-      .finally(() => {
-        setBusy(false);
-        setDeleting(null);
-      });
   };
 
   const pagination = pageCount > 1 && (
@@ -172,12 +146,6 @@ function BlogListView() {
       />
 
       <StatusAlert
-        type="success"
-        message={success}
-        onClose={() => setSuccess(null)}
-        autoHideMs={3000}
-      />
-      <StatusAlert
         message={error}
         onClose={() => setError(null)}
         autoHideMs={3000}
@@ -195,24 +163,6 @@ function BlogListView() {
             <div className="card-body">
               <div className="flex items-start justify-between gap-2">
                 <h2 className="card-title">{blog.title}</h2>
-                {isOwnPost(blog) && (
-                  <div className="join">
-                    <button
-                      className="btn btn-ghost btn-xs join-item"
-                      aria-label="Edit post"
-                      onClick={() => navigate(`/blogs/${blog.id}/edit`)}
-                    >
-                      <FaEdit />
-                    </button>
-                    <button
-                      className="btn btn-ghost btn-xs join-item text-error"
-                      aria-label="Delete post"
-                      onClick={() => setDeleting(blog)}
-                    >
-                      <FaTrash />
-                    </button>
-                  </div>
-                )}
               </div>
               <p className="whitespace-pre-line">{blog.content}</p>
               <p className="text-xs opacity-60">
@@ -225,16 +175,6 @@ function BlogListView() {
       )}
 
       {pagination}
-
-      <ConfirmDialog
-        open={!!deleting}
-        title="Delete post?"
-        message={`"${deleting?.title}" will be permanently removed.`}
-        confirmLabel="Delete"
-        busy={busy}
-        onConfirm={deleteBlog}
-        onClose={() => setDeleting(null)}
-      />
     </section>
   );
 }
