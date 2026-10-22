@@ -7,7 +7,10 @@ import {
 const sessionById = new Map([
   [1, { title: "Yoga", date: "2026-10-23", time: "10:00:00", trainer_id: 5 }],
   [2, { title: "Boxing", date: "2026-10-22", time: "15:00:00", trainer_id: 2 }],
-  [3, { title: "Stretch", date: "2026-10-22", time: "09:00:00", trainer_id: 5 }],
+  [
+    3,
+    { title: "Stretch", date: "2026-10-22", time: "09:00:00", trainer_id: 5 },
+  ],
 ]);
 const trainerById = new Map([
   [2, { first_name: "Zara", last_name: "Trainer" }],
