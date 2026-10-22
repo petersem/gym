@@ -3,6 +3,7 @@ import XMLBuilder from "fast-xml-builder";
 const xmlBuilder = new XMLBuilder({
   ignoreAttributes: false,
   format: true,
+  attributeNamePrefix: "@_",
 });
 
 const sessionElements = `<!ELEMENT session (id, title, date, time, activity, trainer, location)>
@@ -21,13 +22,29 @@ const sessionElements = `<!ELEMENT session (id, title, date, time, activity, tra
 <!ELEMENT suburb (#PCDATA)>
 <!ELEMENT postcode (#PCDATA)>`;
 
+const bookingSessionElements = `<!ELEMENT session (id, title, date, time, activity, trainer, location)>
+<!ELEMENT title (#PCDATA)>
+<!ELEMENT date (#PCDATA)>
+<!ELEMENT time (#PCDATA)>
+<!ELEMENT activity (name, description)>
+<!ELEMENT name (#PCDATA)>
+<!ELEMENT description (#PCDATA)>
+<!ELEMENT trainer (firstName, lastName)>
+<!ELEMENT firstName (#PCDATA)>
+<!ELEMENT lastName (#PCDATA)>
+<!ELEMENT location (name, street, suburb, postcode)>
+<!ELEMENT street (#PCDATA)>
+<!ELEMENT suburb (#PCDATA)>
+<!ELEMENT postcode (#PCDATA)>`;
+
 export const bookingsDtd = `<!DOCTYPE gymBookings [
 <!ELEMENT gymBookings (booking*)>
-<!ELEMENT booking (id, userId, user, created, session)>
-<!ELEMENT userId (#PCDATA)>
-<!ELEMENT user (firstName, lastName)>
+<!ATTLIST gymBookings export-date CDATA "0000-00-00">
+<!ELEMENT booking (id, user, created, session)>
+<!ELEMENT firstName (#PCDATA)
+<!ELEMENT lastName (#PCDATA)>
 <!ELEMENT created (#PCDATA)>
-${sessionElements}
+${bookingSessionElements}
 ]>`;
 
 export const sessionsDtd = `<!DOCTYPE gymSessions [
@@ -103,12 +120,10 @@ export function sessionXmlRecord(session, { activities, locations, users }) {
 export function bookingXmlRecord(booking, session, lookups) {
   const bookingUser = byId(lookups.users, booking.user_id);
   return {
+    "@_export-date": "2020-01-01",
     id: String(booking.id),
-    userId: String(booking.user_id),
-    user: {
-      firstName: String(bookingUser.first_name ?? ""),
-      lastName: String(bookingUser.last_name ?? ""),
-    },
+    firstName: String(bookingUser.first_name ?? ""),
+    lastName: String(bookingUser.last_name ?? ""),
     created:
       booking.created == null || booking.created === ""
         ? ""
