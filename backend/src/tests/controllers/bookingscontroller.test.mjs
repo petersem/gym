@@ -149,13 +149,13 @@ describe("BookingsController", () => {
     );
     expect(res.send.mock.calls[0][0]).toContain("<!DOCTYPE gymBookings [");
     expect(res.send.mock.calls[0][0]).toContain(
-      "<!ELEMENT booking (id, userId, user, created, session)>",
+      '<!ATTLIST gymBookings export-date CDATA "0000-00-00">',
     );
     expect(res.send.mock.calls[0][0]).toContain(
-      "<!ELEMENT user (firstName, lastName)>",
+      "<!ELEMENT booking (id, user, created, session)>",
     );
     expect(res.send.mock.calls[0][0]).toMatch(
-      /<user>\s*<firstName>Alex &amp; Sam<\/firstName>\s*<lastName>O&apos;Brien<\/lastName>\s*<\/user>/,
+      /<booking export-date="2020-01-01">\s*<id>.*?<\/id>\s*<firstName>Alex &amp; Sam<\/firstName>\s*<lastName>O&apos;Brien<\/lastName>/,
     );
     expect(res.send.mock.calls[0][0]).toMatch(
       /<trainer>\s*<firstName>Taylor<\/firstName>\s*<lastName>Trainer<\/lastName>\s*<\/trainer>/,
