@@ -80,7 +80,8 @@ const compactMeridiem = (value) => value.replace(/\s+(am|pm)$/i, "$1");
  * Maps a session to its XML element content.
  * @param {Object} session Session record.
  * @param {{activities: Array, locations: Array, users: Array}} lookups Related records.
- * @param {{includeId?: boolean}} [options] Whether to include the session ID.
+ * @param {Object} [options] Session export options.
+ * @param {boolean} [options.includeId=true] Whether to include the session ID.
  * @returns {Object} XML-ready session.
  */
 export function sessionXmlRecord(
