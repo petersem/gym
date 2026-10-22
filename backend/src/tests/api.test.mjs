@@ -1842,6 +1842,9 @@ describe("XML exports", () => {
     expect(result.type).toMatch(/^application\/xml/);
     expect(result.disposition).toBe('attachment; filename="gym-sessions.xml"');
     expect(result.body).toContain("<!DOCTYPE gymSessions [");
+    expect(result.body).toMatch(
+      /<gymSessions export-date="\d{4}-\d{2}-\d{2}">/,
+    );
     expect(result.body).toContain(
       "<!ELEMENT session (id, title, date, time, activity, trainer, location)>",
     );

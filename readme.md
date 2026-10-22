@@ -19,6 +19,8 @@ daisyUI and Tailwind CSS. It talks only to the `/api/v1` JSON API and follows th
 | Trainer | Booking counts and delete on own sessions, XML | Create; edit/delete own | Read bookings for own sessions   | View / edit          |
 | Admin   | Rejected at login (no API access)              |                         |                                  |                      |
 
+On the bookings page, members and trainers can search session titles and sort by session date or title in either direction. Members can also sort by trainer name or booking date. Trainer booking counts include all bookings, regardless of the search term.
+
 The authenticated `/locations` and `/trainers` endpoints are used only to populate form controls
 (timetable filters) and resolve names. Changing your password revokes the API key,
 so the app logs you out. The login page links to a registration form that creates
@@ -90,6 +92,10 @@ OpenAPI instead of the HTML form sanitiser, and does not require an
 ### Sample data
 
 If you choose to seed sample data on your first install, the passowrd for all sample users is `testing123`.
+
+Sample sessions include 15 sessions spread across today and the next six days, plus six sessions from the previous four days, using the database's current date when seeding runs. Existing databases are not reseeded.
+
+Sample bookings use a fixed, randomly generated selection of members and sessions. Six selected members each book 10–80% of sessions; users `10036` and `8` each book 20 of the 21 sessions (about 95%). Booking timestamps are seven days before seeding, before all sample sessions.
 
 Besides your app admin account, here are a few users to get you started:
 

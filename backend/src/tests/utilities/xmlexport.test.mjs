@@ -4,6 +4,8 @@ import {
   bookingsXmlContent,
   bookingXmlRecord,
   buildXmlDocument,
+  sessionsDtd,
+  sessionsXmlContent,
   sessionXmlRecord,
 } from "../../utilities/xmlExport.mjs";
 
@@ -80,5 +82,25 @@ describe("XML local date/time formatting", () => {
 
     expect(xml).toContain(`<gymBookings export-date="${expectedDate}">`);
     expect(xml).not.toContain('<booking export-date="');
+  });
+
+  test("places the export date on the gymSessions root element", () => {
+    const today = new Date();
+    const expectedDate = [
+      today.getFullYear(),
+      String(today.getMonth() + 1).padStart(2, "0"),
+      String(today.getDate()).padStart(2, "0"),
+    ].join("-");
+    const xml = buildXmlDocument(
+      "gymSessions",
+      sessionsXmlContent([{ id: "1" }]),
+      sessionsDtd,
+    );
+
+    expect(xml).toContain(`<gymSessions export-date="${expectedDate}">`);
+    expect(xml).not.toContain('<session export-date="');
+    expect(sessionsDtd).toContain(
+      '<!ATTLIST gymSessions export-date CDATA "0000-00-00">',
+    );
   });
 });

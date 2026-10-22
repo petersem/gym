@@ -341,7 +341,7 @@ function TimetableView() {
                   const busy = pendingId === session.id;
                   return (
                     <li key={session.id} className="list-row items-center">
-                      <div className="flex w-14 flex-col items-center rounded-box bg-primary/10 p-1 text-center text-primary">
+                      <div className="flex w-14 flex-col items-center rounded-box bg-primary/10 p-1 text-center text-[color-mix(in_oklab,var(--color-primary),var(--color-base-content)_25%)] dark:text-[color-mix(in_oklab,var(--color-primary),var(--color-base-content)_60%)]">
                         <span className="text-xs uppercase">
                           {formatWeekday(session.date)}
                         </span>

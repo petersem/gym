@@ -50,6 +50,7 @@ ${bookingSessionElements}
 
 export const sessionsDtd = `<!DOCTYPE gymSessions [
 <!ELEMENT gymSessions (session*)>
+<!ATTLIST gymSessions export-date CDATA "0000-00-00">
 ${sessionElements}
 ]>`;
 
@@ -137,16 +138,31 @@ export function bookingXmlRecord(booking, session, lookups) {
  * @returns {Object} XML-ready gymBookings root content.
  */
 export function bookingsXmlContent(bookings) {
+  return {
+    "@_export-date": exportDate(),
+    booking: bookings,
+  };
+}
+
+/**
+ * Maps session records to the root content for a sessions XML document.
+ * @param {Array} sessions XML-ready session records.
+ * @returns {Object} XML-ready gymSessions root content.
+ */
+export function sessionsXmlContent(sessions) {
+  return {
+    "@_export-date": exportDate(),
+    session: sessions,
+  };
+}
+
+function exportDate() {
   const today = new Date();
-  const exportDate = [
+  return [
     today.getFullYear(),
     String(today.getMonth() + 1).padStart(2, "0"),
     String(today.getDate()).padStart(2, "0"),
   ].join("-");
-  return {
-    "@_export-date": exportDate,
-    booking: bookings,
-  };
 }
 
 /**

@@ -17,6 +17,7 @@ import {
   sendXmlDocument,
   sessionXmlRecord,
   sessionsDtd,
+  sessionsXmlContent,
 } from "../../utilities/xmlExport.mjs";
 import {
   APIError,
@@ -785,7 +786,11 @@ export class APIResourcesController {
         sendXmlDocument(
           res,
           "gym-sessions.xml",
-          buildXmlDocument("gymSessions", { session }, sessionsDtd),
+          buildXmlDocument(
+            "gymSessions",
+            sessionsXmlContent(session),
+            sessionsDtd,
+          ),
         );
       },
     );

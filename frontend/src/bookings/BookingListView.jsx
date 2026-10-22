@@ -7,7 +7,10 @@ import {
   FaUser,
   FaUsers,
 } from "react-icons/fa";
-import { queryString } from "../api.mjs";
+import {
+  filterUpcomingSessionRows,
+  searchAndSortBookingRows,
+} from "./bookingRows.mjs";
 import { useAuthenticate } from "../authentication/useAuthenticate.jsx";
 import ConfirmDialog from "../common/ConfirmDialog.jsx";
 import SearchSortBar from "../common/SearchSortBar.jsx";
@@ -19,7 +22,6 @@ import {
   formatTime,
   fullName,
   sessionStart,
-  startOfToday,
 } from "../common/format.mjs";
 import { can, PERMISSIONS } from "../common/permissions.mjs";
 import { useLookups } from "../common/useLookups.jsx";
@@ -27,7 +29,7 @@ import { useLookups } from "../common/useLookups.jsx";
 const SORTS = [
   { value: "session_date", label: "session date" },
   { value: "session", label: "session" },
-  { value: "member", label: "trainer" },
+  { value: "trainer", label: "trainer" },
   { value: "created", label: "booked on" },
 ];
 
@@ -43,7 +45,6 @@ function BookingListView() {
   const isTrainer = user?.role === "trainer";
 
   const [bookings, setBookings] = useState(null);
-  const [bookingsByDate, setBookingsByDate] = useState([]);
   const [sessions, setSessions] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [sortBy, setSortBy] = useState("session_date");
@@ -53,33 +54,22 @@ function BookingListView() {
   const [cancelling, setCancelling] = useState(null);
   const [deletingSession, setDeletingSession] = useState(null);
   const [busy, setBusy] = useState(false);
+  const [now, setNow] = useState(() => new Date());
 
   const getBookings = useCallback(() => {
     if (!user) {
       return;
     }
-    Promise.all([
-      authFetch(
-        "GET",
-        "/bookings" +
-          queryString({
-            search_term: searchTerm,
-            sort_by: sortBy,
-            sort_dir: sortDir,
-          }),
-      ),
-      authFetch("GET", "/bookings?sort_by=session_date&sort_dir=asc"),
-    ])
-      .then(([response, byDate]) => {
-        if (response.status === 200 && byDate.status === 200) {
+    authFetch("GET", "/bookings?sort_by=session_date&sort_dir=asc")
+      .then((response) => {
+        if (response.status === 200) {
           setBookings(response.body);
-          setBookingsByDate(byDate.body);
         } else {
-          setError((response.status === 200 ? byDate : response).body.message);
+          setError(response.body.message);
         }
       })
       .catch(setError);
-  }, [user, authFetch, searchTerm, sortBy, sortDir]);
+  }, [user, authFetch]);
 
   useEffect(() => {
     getBookings();
@@ -103,34 +93,30 @@ function BookingListView() {
     [sessions],
   );
 
-  // Bookings don't include session dates, so use session-date order to identify
-  // older bookings before the first known upcoming session.
-  const pastBookingIds = useMemo(() => {
-    const pastIds = new Set();
-    for (const booking of bookingsByDate) {
-      const session = sessionById.get(booking.session_id);
-      if (session && sessionStart(session) >= startOfToday()) {
-        break;
-      }
-      pastIds.add(booking.id);
+  useEffect(() => {
+    const nextStart = (sessions ?? [])
+      .map(sessionStart)
+      .filter((start) => start > now)
+      .sort((a, b) => a - b)[0];
+    if (!nextStart) {
+      return;
     }
-    return pastIds;
-  }, [bookingsByDate, sessionById]);
+    const timeout = setTimeout(
+      () => setNow(new Date()),
+      nextStart.getTime() - now.getTime() + 1,
+    );
+    return () => clearTimeout(timeout);
+  }, [sessions, now]);
 
   const visibleBookings = useMemo(
     () =>
       sessions === null || bookings === null
         ? null
-        : bookings.filter(
-            (booking) =>
-              sessionById.has(booking.session_id) &&
-              !pastBookingIds.has(booking.id),
-          ),
-    [bookings, sessions, sessionById, pastBookingIds],
+        : filterUpcomingSessionRows(bookings, sessionById, now),
+    [bookings, sessions, sessionById, now],
   );
 
-  const now = new Date();
-  const nextBooking = bookingsByDate.find((booking) => {
+  const nextBooking = (bookings ?? []).find((booking) => {
     const session = sessionById.get(booking.session_id);
     return session && sessionStart(session) > now;
   });
@@ -193,20 +179,34 @@ function BookingListView() {
       );
     }
     sessionRows.push(
-      ...sessions
-        .filter((session) => Number(session.trainer_id) === Number(user.id))
-        .map((session) => ({
-          id: session.id,
-          session_id: session.id,
-          count: bookingCounts.get(session.id) ?? 0,
-        })),
+      ...filterUpcomingSessionRows(
+        sessions
+          .filter((session) => Number(session.trainer_id) === Number(user.id))
+          .map((session) => ({
+            id: session.id,
+            session_id: session.id,
+            count: bookingCounts.get(session.id) ?? 0,
+          })),
+        sessionById,
+        now,
+      ),
     );
   }
-  const rows = isTrainer
+  const unfilteredRows = isTrainer
     ? sessions === null || visibleBookings === null
       ? null
       : sessionRows
     : visibleBookings;
+  const rows =
+    unfilteredRows === null
+      ? null
+      : searchAndSortBookingRows(unfilteredRows, {
+          sessionById,
+          trainerById,
+          searchTerm,
+          sortBy,
+          sortDir,
+        });
   const totalBookings = sessionRows.reduce((sum, row) => sum + row.count, 0);
 
   return (
@@ -327,7 +327,7 @@ function BookingListView() {
                   )}
                 </div>
                 {isTrainer && (
-                  <span className="badge badge-warning badge-soft whitespace-nowrap">
+                  <span className="badge badge-warning badge-soft text-base-content whitespace-nowrap">
                     <FaUsers /> {booking.count}{" "}
                     {booking.count === 1 ? "booking" : "bookings"}
                   </span>

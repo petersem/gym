@@ -22,9 +22,40 @@ INSERT INTO `locations` VALUES (1,'Ashgrove','0499 026 517','ftp@hsg.com','20–
 --
 -- Dumping data for table `sessions`
 --
-INSERT INTO `sessions` VALUES (624,'Get lean and mean',1,315,2,'2026-10-11','17:00:00'),(1578,'Endurance',1,1,5,'2026-10-02','11:15:00'),(1803,'Papperazzi',1910,2,5,'2026-10-05','19:00:00'),(1804,'Spandex people',1909,2,2,'2026-10-09','11:00:00'),(1805,'Definition session',1911,1,5,'2026-10-09','17:30:00'),(1806,'Work it out',1912,2,2,'2026-10-10','10:00:00'),(1807,'Shake it',1,1,5,'2026-10-08','15:00:00'),(1808,'Look at Meeeee',1910,2,5,'2026-10-05','09:00:00'),(1810,'Getting Evil',1909,315,2,'2026-10-11','09:00:00'),(1811,'Work it out',1,1,2,'2026-10-05','16:00:00'),(1812,'Go for it',1914,1935,2,'2026-10-07','11:00:00'),(1813,'Dance session',1913,1,5,'2026-10-08','15:00:00'),(1814,'Take all the road',1909,1,2,'2026-10-07','09:00:00'),(1815,'1M Dollars',1,1,2,'2026-10-08','09:00:00'),(1816,'Use the force',1910,315,2,'2026-10-11','11:00:00');
+INSERT INTO `sessions` VALUES
+(624,'Get lean and mean',1,315,2,DATE_ADD(CURRENT_DATE(), INTERVAL 0 DAY),'17:00:00'),
+(1578,'Endurance',1,1,5,DATE_ADD(CURRENT_DATE(), INTERVAL 1 DAY),'11:15:00'),
+(1803,'Papperazzi',1910,2,5,DATE_ADD(CURRENT_DATE(), INTERVAL 2 DAY),'19:00:00'),
+(1804,'Spandex people',1909,2,2,DATE_ADD(CURRENT_DATE(), INTERVAL 3 DAY),'11:00:00'),
+(1805,'Definition session',1911,1,5,DATE_ADD(CURRENT_DATE(), INTERVAL 4 DAY),'17:30:00'),
+(1806,'Work it out',1912,2,2,DATE_ADD(CURRENT_DATE(), INTERVAL 5 DAY),'10:00:00'),
+(1807,'Shake it',1,1,5,DATE_ADD(CURRENT_DATE(), INTERVAL 6 DAY),'15:00:00'),
+(1808,'Work it baby',1910,2,5,DATE_ADD(CURRENT_DATE(), INTERVAL 0 DAY),'09:00:00'),
+(1810,'Getting Evil',1909,315,2,DATE_ADD(CURRENT_DATE(), INTERVAL 1 DAY),'09:00:00'),
+(1811,'Work it out',1,1,2,DATE_ADD(CURRENT_DATE(), INTERVAL 2 DAY),'16:00:00'),
+(1812,'Go for it',1914,1935,2,DATE_ADD(CURRENT_DATE(), INTERVAL 3 DAY),'11:00:00'),
+(1813,'Dance session',1913,1,5,DATE_ADD(CURRENT_DATE(), INTERVAL 4 DAY),'15:00:00'),
+(1814,'Take all the road',1909,1,2,DATE_ADD(CURRENT_DATE(), INTERVAL 5 DAY),'09:00:00'),
+(1815,'1M Dollars',1,1,2,DATE_ADD(CURRENT_DATE(), INTERVAL 6 DAY),'09:00:00'),
+(1816,'Use the force',1910,315,2,DATE_ADD(CURRENT_DATE(), INTERVAL 0 DAY),'11:00:00'),
+(1817,'Cardio blast',1,1,5,DATE_SUB(CURRENT_DATE(), INTERVAL 1 DAY),'08:00:00'),
+(1818,'Boxing basics',1912,2,2,DATE_SUB(CURRENT_DATE(), INTERVAL 2 DAY),'10:00:00'),
+(1819,'Stretch and recover',1914,1935,5,DATE_SUB(CURRENT_DATE(), INTERVAL 3 DAY),'11:00:00'),
+(1820,'Mindful morning',2246,315,2,DATE_SUB(CURRENT_DATE(), INTERVAL 4 DAY),'09:00:00'),
+(1821,'Ride together',1909,2,5,DATE_SUB(CURRENT_DATE(), INTERVAL 1 DAY),'15:00:00'),
+(1822,'Dance fitness',1913,1,2,DATE_SUB(CURRENT_DATE(), INTERVAL 2 DAY),'17:30:00');
 --
 -- Dumping data for table `bookings`
 --
 
-INSERT INTO `bookings` VALUES (1619,1578,2,'2026-09-26 16:54:26'),(1646,624,2,'2026-09-26 16:57:15'),(1650,1804,2,'2026-09-27 14:46:39'),(1659,1805,8,'2026-09-27 16:00:58'),(1661,1806,2,'2026-09-27 16:12:37'),(1664,1807,2,'2026-09-27 17:53:27'),(1666,1807,8,'2026-09-27 17:55:03'),(1667,1805,2,'2026-09-28 08:41:22'),(1669,1808,2,'2026-09-28 09:50:14'),(1684,1803,8,'2026-09-28 11:17:17'),(1688,624,8,'2026-09-28 11:21:24'),(1689,1806,8,'2026-09-28 11:23:30'),(1691,1811,8,'2026-09-28 11:47:54'),(1693,1813,2,'2026-09-28 12:43:33'),(1694,1812,2,'2026-09-28 12:43:42'),(1695,1811,2,'2026-09-28 12:43:51'),(1696,1808,10071,'2026-09-28 13:21:05'),(1697,1812,10071,'2026-09-28 13:21:13'),(1698,1813,10071,'2026-09-28 13:21:17'),(1701,1815,2,'2026-09-28 14:24:23'),(1702,1813,8,'2026-09-28 14:26:07'),(1703,1815,8,'2026-09-28 14:26:09'),(1704,1812,8,'2026-09-28 14:26:12'),(1705,1816,8,'2026-09-28 14:26:18'),(1706,1808,8,'2026-09-28 14:26:23'),(1708,1810,8,'2026-09-28 14:45:00'),(1918,1810,10036,'2026-09-28 15:16:35'),(1919,624,10036,'2026-09-28 15:16:36'),(1920,1804,10036,'2026-09-28 15:16:39'),(1921,1807,10036,'2026-09-28 15:16:40'),(1922,1812,10036,'2026-09-28 15:16:42'),(1923,1808,10036,'2026-09-28 15:16:46'),(1924,1811,10036,'2026-09-28 15:16:51'),(1925,1814,10036,'2026-09-28 15:21:36'),(1952,1816,2,'2026-09-28 15:40:00'),(2213,1803,2,'2026-09-28 19:02:50'),(2240,1804,10066,'2026-09-28 20:52:44'),(2241,1813,10066,'2026-09-28 20:52:46'),(2242,1803,10066,'2026-09-28 20:52:47'),(2243,624,10066,'2026-09-28 20:52:49'),(2244,1806,10066,'2026-09-28 20:53:13');
+SET @seed_booking_created = DATE_SUB(CURRENT_TIMESTAMP(), INTERVAL 7 DAY);
+
+INSERT INTO `bookings` (session_id, user_id, created) VALUES
+(1810,10015,@seed_booking_created),(1816,10015,@seed_booking_created),(1806,10015,@seed_booking_created),(1815,10015,@seed_booking_created),(1578,10015,@seed_booking_created),(1822,10015,@seed_booking_created),(1804,10015,@seed_booking_created),(1814,10015,@seed_booking_created),(1807,10015,@seed_booking_created),(1811,10015,@seed_booking_created),(624,10015,@seed_booking_created),(1812,10015,@seed_booking_created),(1805,10015,@seed_booking_created),(1817,10015,@seed_booking_created),(1820,10015,@seed_booking_created),(1808,10015,@seed_booking_created),
+(1814,10067,@seed_booking_created),(1811,10067,@seed_booking_created),(1813,10067,@seed_booking_created),(1819,10067,@seed_booking_created),(1818,10067,@seed_booking_created),(624,10067,@seed_booking_created),
+(1817,10071,@seed_booking_created),(1803,10071,@seed_booking_created),(1816,10071,@seed_booking_created),(1811,10071,@seed_booking_created),(1806,10071,@seed_booking_created),(1578,10071,@seed_booking_created),(1815,10071,@seed_booking_created),(1805,10071,@seed_booking_created),
+(1815,9772,@seed_booking_created),(1810,9772,@seed_booking_created),(624,9772,@seed_booking_created),(1578,9772,@seed_booking_created),(1817,9772,@seed_booking_created),(1818,9772,@seed_booking_created),(1806,9772,@seed_booking_created),(1813,9772,@seed_booking_created),(1816,9772,@seed_booking_created),(1808,9772,@seed_booking_created),(1804,9772,@seed_booking_created),(1811,9772,@seed_booking_created),(1821,9772,@seed_booking_created),(1820,9772,@seed_booking_created),
+(1808,10014,@seed_booking_created),(1821,10014,@seed_booking_created),(1812,10014,@seed_booking_created),(1819,10014,@seed_booking_created),(1817,10014,@seed_booking_created),(1805,10014,@seed_booking_created),
+(1806,10085,@seed_booking_created),(1813,10085,@seed_booking_created),(1812,10085,@seed_booking_created),(1808,10085,@seed_booking_created),(1805,10085,@seed_booking_created),
+(1821,8,@seed_booking_created),(1811,8,@seed_booking_created),(1822,8,@seed_booking_created),(1818,8,@seed_booking_created),(1810,8,@seed_booking_created),(624,8,@seed_booking_created),(1806,8,@seed_booking_created),(1808,8,@seed_booking_created),(1820,8,@seed_booking_created),(1813,8,@seed_booking_created),(1803,8,@seed_booking_created),(1819,8,@seed_booking_created),(1814,8,@seed_booking_created),(1578,8,@seed_booking_created),(1804,8,@seed_booking_created),(1816,8,@seed_booking_created),(1807,8,@seed_booking_created),(1812,8,@seed_booking_created),(1815,8,@seed_booking_created),(1805,8,@seed_booking_created),
+(1814,10036,@seed_booking_created),(1822,10036,@seed_booking_created),(624,10036,@seed_booking_created),(1817,10036,@seed_booking_created),(1807,10036,@seed_booking_created),(1806,10036,@seed_booking_created),(1818,10036,@seed_booking_created),(1816,10036,@seed_booking_created),(1803,10036,@seed_booking_created),(1821,10036,@seed_booking_created),(1820,10036,@seed_booking_created),(1812,10036,@seed_booking_created),(1808,10036,@seed_booking_created),(1813,10036,@seed_booking_created),(1819,10036,@seed_booking_created),(1810,10036,@seed_booking_created),(1815,10036,@seed_booking_created),(1804,10036,@seed_booking_created),(1578,10036,@seed_booking_created),(1811,10036,@seed_booking_created);
