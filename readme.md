@@ -21,18 +21,6 @@ daisyUI and Tailwind CSS. It talks only to the `/api/v1` JSON API and follows th
 
 On the bookings page, members and trainers can search session titles and sort by session date or title in either direction. Members can also sort by trainer name or booking date. Trainer booking counts include all bookings, regardless of the search term.
 
-The authenticated `/locations` and `/trainers` endpoints are used only to populate form controls
-(timetable filters) and resolve names. Changing your password revokes the API key,
-so the app logs you out. The login page links to a registration form that creates
-a member account and logs straight in.
-
-The frontend needs the backend running on port 3000 (otherwise Vite logs
-`http proxy error ... ECONNREFUSED`). Start both together from the repo root:
-
-```bash
-npm run dev                        # backend :3000 + frontend http://localhost:5173
-```
-
 The frontend is an installable Progressive Web App (via `vite-plugin-pwa`): it has a
 web manifest, HSG icons in `frontend/public/`, and a service worker that precaches the
 app shell. Public (keyless) blog API reads use a

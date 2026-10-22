@@ -40,8 +40,9 @@ const bookingSessionElements = `<!ELEMENT session (title, date, time, activity, 
 export const bookingsDtd = `<!DOCTYPE gymBookings [
 <!ELEMENT gymBookings (booking*)>
 <!ATTLIST gymBookings export-date CDATA "0000-00-00">
-<!ELEMENT booking (id, user, session)>
+<!ELEMENT booking (id, user, created, session)>
 <!ELEMENT id (#PCDATA)>
+<!ELEMENT created (#PCDATA)>
 <!ELEMENT user (firstName, lastName)>
 <!ELEMENT firstName (#PCDATA)>
 <!ELEMENT lastName (#PCDATA)>
@@ -69,6 +70,10 @@ const timeOptions = {
 };
 const localDate = new Intl.DateTimeFormat("en-AU", dateOptions);
 const localTime = new Intl.DateTimeFormat("en-AU", timeOptions);
+const localDateTime = new Intl.DateTimeFormat("en-AU", {
+  ...dateOptions,
+  ...timeOptions,
+});
 const compactMeridiem = (value) => value.replace(/\s+(am|pm)$/i, "$1");
 
 /**
@@ -128,6 +133,10 @@ export function bookingXmlRecord(booking, session, lookups) {
       firstName: String(bookingUser.first_name ?? ""),
       lastName: String(bookingUser.last_name ?? ""),
     },
+    created:
+      booking.created == null || booking.created === ""
+        ? ""
+        : compactMeridiem(localDateTime.format(new Date(booking.created))),
     session: sessionXmlRecord(session, lookups, { includeId: false }),
   };
 }
