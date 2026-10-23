@@ -31,8 +31,14 @@ export class APIUserController {
    *                      application/json:
    *                          schema:
    *                              $ref: "#/components/schemas/User"
-   *              default:
-   *                  $ref: "#/components/responses/Error"
+   *              '400':
+   *                  $ref: "#/components/responses/BadRequest"
+   *              '401':
+   *                  $ref: "#/components/responses/Unauthorized"
+   *              '403':
+   *                  $ref: "#/components/responses/Forbidden"
+   *              '500':
+   *                  $ref: "#/components/responses/InternalServerError"
    */
   static async getAuthenticatedUser(req, res) {
     res.status(200).json(publicUser(req.authenticatedUser));

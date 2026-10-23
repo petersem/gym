@@ -70,13 +70,17 @@ export class APIAuthenticationController {
    *              '200':
    *                  $ref: "#/components/responses/LoginSuccessful"
    *              '400':
-   *                  $ref: "#/components/responses/Error"
+   *                  $ref: "#/components/responses/LoginBadRequest"
    *              '401':
-   *                  $ref: "#/components/responses/Error"
+   *                  $ref: "#/components/responses/Unauthorized"
    *              '403':
-   *                  $ref: "#/components/responses/Error"
+   *                  $ref: "#/components/responses/Forbidden"
+   *              '413':
+   *                  $ref: "#/components/responses/PayloadTooLarge"
+   *              '415':
+   *                  $ref: "#/components/responses/UnsupportedMediaType"
    *              '500':
-   *                  $ref: "#/components/responses/Error"
+   *                  $ref: "#/components/responses/AuthenticationFailed"
    *      delete:
    *          summary: "Deauthenticate"
    *          description: "Revoke the current API key."
@@ -88,13 +92,13 @@ export class APIAuthenticationController {
    *              '200':
    *                  $ref: "#/components/responses/Updated"
    *              '400':
-   *                  $ref: "#/components/responses/Error"
+   *                  $ref: "#/components/responses/BadRequest"
    *              '401':
-   *                  $ref: "#/components/responses/Error"
+   *                  $ref: "#/components/responses/Unauthorized"
+   *              '403':
+   *                  $ref: "#/components/responses/Forbidden"
    *              '500':
-   *                  $ref: "#/components/responses/Error"
-   *              default:
-   *                  $ref: "#/components/responses/Error"
+   *                  $ref: "#/components/responses/InternalServerError"
    */
   static async handleAuthenticate(req, res) {
     if (req.method === "POST") {
@@ -180,13 +184,19 @@ export class APIAuthenticationController {
    *                          schema:
    *                              $ref: "#/components/schemas/User"
    *              '400':
-   *                  $ref: "#/components/responses/Error"
+   *                  $ref: "#/components/responses/BadRequest"
+   *              '401':
+   *                  $ref: "#/components/responses/Unauthorized"
    *              '403':
-   *                  $ref: "#/components/responses/Error"
+   *                  $ref: "#/components/responses/Forbidden"
    *              '409':
-   *                  $ref: "#/components/responses/Error"
+   *                  $ref: "#/components/responses/Conflict"
+   *              '413':
+   *                  $ref: "#/components/responses/PayloadTooLarge"
+   *              '415':
+   *                  $ref: "#/components/responses/UnsupportedMediaType"
    *              '500':
-   *                  $ref: "#/components/responses/Error"
+   *                  $ref: "#/components/responses/InternalServerError"
    */
   static async handleRegister(req, res) {
     if (req.authenticatedUser) {

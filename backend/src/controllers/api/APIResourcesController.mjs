@@ -108,12 +108,25 @@ const response = (schema, description) => ({
   content: { "application/json": { schema } },
 });
 const ref = (name) => ({ $ref: `#/components/schemas/${name}` });
-const errorResponses = Object.fromEntries(
-  [400, 401, 403, 404, 409, 415, 500, "default"].map((status) => [
-    status,
-    { $ref: "#/components/responses/Error" },
-  ]),
-);
+const errorResponseNames = {
+  400: "BadRequest",
+  401: "Unauthorized",
+  403: "Forbidden",
+  404: "NotFound",
+  409: "Conflict",
+  413: "PayloadTooLarge",
+  415: "UnsupportedMediaType",
+  500: "InternalServerError",
+};
+const errorResponses = (...statuses) =>
+  Object.fromEntries(
+    statuses.map((status) => [
+      status,
+      {
+        $ref: `#/components/responses/${errorResponseNames[status]}`,
+      },
+    ]),
+  );
 const idParameter = {
   name: "id",
   in: "path",
@@ -187,7 +200,21 @@ for (const resource of resources) {
         : [{ ApiKey: [] }],
     responses: {
       [status]: response(schema, summary),
-      ...errorResponses,
+      ...errorResponses(
+        400,
+        401,
+        403,
+        ...(method !== "list" &&
+        !(resource.path === "bookings" && method === "update")
+          ? [404]
+          : []),
+        ...(["create", "update", "patch", "delete"].includes(method) &&
+        !(resource.path === "bookings" && method === "update")
+          ? [409]
+          : []),
+        ...(["create", "update", "patch"].includes(method) ? [413, 415] : []),
+        500,
+      ),
     },
   });
   const body = (schema) => ({
@@ -278,7 +305,7 @@ apiResourcePaths["/api/v1/trainers"] = {
         { type: "array", items: ref("UserSummary") },
         "Trainers, ordered by ID.",
       ),
-      ...errorResponses,
+      ...errorResponses(400, 401, 403, 500),
     },
   },
 };
@@ -305,7 +332,7 @@ apiResourcePaths["/api/v1/timetable"] = {
         { type: "array", items: ref("Session") },
         "Upcoming sessions, ordered by date and time unless sort_by is given.",
       ),
-      ...errorResponses,
+      ...errorResponses(400, 401, 403, 500),
     },
   },
 };
@@ -347,7 +374,7 @@ const xmlExportPath = ({
         },
         content: { "application/xml": { schema: { type: "string" } } },
       },
-      ...errorResponses,
+      ...errorResponses(400, 401, 403, 500),
     },
   },
 });

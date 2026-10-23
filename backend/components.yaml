@@ -339,110 +339,6 @@ components:
           minimum: 1
           maximum: 2147483647
           example: 1
-    # LocationCreate:
-    #   type: object
-    #   additionalProperties: false
-    #   required:
-    #     - name
-    #     - phone
-    #     - email
-    #     - street
-    #     - suburb
-    #     - postcode
-    #     - manager
-    #   properties:
-    #     name:
-    #       type: string
-    #       minLength: 1
-    #       maxLength: 100
-    #       pattern: \S
-    #       example: High Street Gym
-    #     phone:
-    #       type: string
-    #       minLength: 1
-    #       maxLength: 20
-    #       pattern: ^\+?[0-9 ().-]*[0-9][0-9 ().-]*$
-    #       example: "0733334444"
-    #     email:
-    #       type: string
-    #       format: email
-    #       maxLength: 45
-    #       example: reception@gym.com
-    #     street:
-    #       type: string
-    #       minLength: 1
-    #       maxLength: 100
-    #       pattern: \S
-    #       example: 12 High Street
-    #     suburb:
-    #       type: string
-    #       minLength: 1
-    #       maxLength: 100
-    #       pattern: \S
-    #       example: Brisbane
-    #     postcode:
-    #       type: integer
-    #       minimum: 0
-    #       maximum: 9999
-    #       example: 4000
-    #     manager:
-    #       type: integer
-    #       minimum: 1
-    #       maximum: 2147483647
-    #       example: 1
-    #       description: ID of an existing active user.
-    # LocationUpdate:
-    #   type: object
-    #   additionalProperties: false
-    #   required:
-    #     - name
-    #     - phone
-    #     - email
-    #     - street
-    #     - suburb
-    #     - postcode
-    #     - manager
-    #   properties:
-    #     name:
-    #       type: string
-    #       minLength: 1
-    #       maxLength: 100
-    #       pattern: \S
-    #       example: High Street Gym
-    #     phone:
-    #       type: string
-    #       minLength: 1
-    #       maxLength: 20
-    #       pattern: ^\+?[0-9 ().-]*[0-9][0-9 ().-]*$
-    #       example: "0733334444"
-    #     email:
-    #       type: string
-    #       format: email
-    #       maxLength: 45
-    #       example: reception@gym.com
-    #     street:
-    #       type: string
-    #       minLength: 1
-    #       maxLength: 100
-    #       pattern: \S
-    #       example: 12 High Street
-    #     suburb:
-    #       type: string
-    #       minLength: 1
-    #       maxLength: 100
-    #       pattern: \S
-    #       example: Brisbane
-    #     postcode:
-    #       type: integer
-    #       minimum: 0
-    #       maximum: 9999
-    #       example: 4000
-    #     manager:
-    #       type: integer
-    #       minimum: 1
-    #       maximum: 2147483647
-    #       example: 1
-    #       description: ID of an existing active user.
     Location:
       type: object
       required:
@@ -514,96 +410,6 @@ components:
           minimum: 1
           maximum: 2147483647
           example: 1
-    # SessionCreate:
-    #   type: object
-    #   additionalProperties: false
-    #   required:
-    #     - title
-    #     - activity_id
-    #     - location_id
-    #     - trainer_id
-    #     - date
-    #     - time
-    #   properties:
-    #     title:
-    #       type: string
-    #       minLength: 1
-    #       maxLength: 200
-    #       pattern: \S
-    #       example: Morning yoga
-    #     activity_id:
-    #       type: integer
-    #       minimum: 1
-    #       maximum: 2147483647
-    #       example: 1
-    #       description: ID of an existing active activity.
-    #     location_id:
-    #       type: integer
-    #       minimum: 1
-    #       maximum: 2147483647
-    #       example: 1
-    #       description: ID of an existing active location.
-    #     trainer_id:
-    #       type: integer
-    #       minimum: 1
-    #       maximum: 2147483647
-    #       example: 1
-    #       description: ID of an active trainer. Trainers must use their own ID.
-    #     date:
-    #       type: string
-    #       format: date
-    #       description: Local session date; must be today or later when writing.
-    #       example: 2026-12-01
-    #     time:
-    #       type: string
-    #       pattern: ^(?:[01][0-9]|2[0-3]):[0-5][0-9](?::[0-5][0-9])?$
-    #       description: Local 24-hour start time; responses use HH:mm:ss.
-    #       example: 09:00:00
-    # SessionUpdate:
-    #   type: object
-    #   additionalProperties: false
-    #   required:
-    #     - title
-    #     - activity_id
-    #     - location_id
-    #     - trainer_id
-    #     - date
-    #     - time
-    #   properties:
-    #     title:
-    #       type: string
-    #       minLength: 1
-    #       maxLength: 200
-    #       pattern: \S
-    #       example: Morning yoga
-    #     activity_id:
-    #       type: integer
-    #       minimum: 1
-    #       maximum: 2147483647
-    #       example: 1
-    #       description: ID of an existing active activity.
-    #     location_id:
-    #       type: integer
-    #       minimum: 1
-    #       maximum: 2147483647
-    #       example: 1
-    #       description: ID of an existing active location.
-    #     trainer_id:
-    #       type: integer
-    #       minimum: 1
-    #       maximum: 2147483647
-    #       example: 1
-    #       description: ID of an active trainer. Trainers must use their own ID.
-    #     date:
-    #       type: string
-    #       format: date
-    #       description: Local session date; must be today or later when writing.
-    #       example: 2026-12-01
-    #     time:
-    #       type: string
-    #       pattern: ^(?:[01][0-9]|2[0-3]):[0-5][0-9](?::[0-5][0-9])?$
-    #       description: Local 24-hour start time; responses use HH:mm:ss.
-    #       example: 09:00:00
     Session:
       type: object
       required:
@@ -833,19 +639,169 @@ components:
       properties:
         message:
           type: string
-          example: Resource not found.
+          description: Explanation of the specific error.
         errors:
           type: array
           items: {}
   responses:
-    Error:
-      description: Invalid input (400), missing/invalid authentication (401),
-        forbidden (403), not found (404), conflict (409), unsupported content
-        type (415), or internal error (500).
+    BadRequest:
+      description: Malformed JSON, invalid request fields, parameters or business rules.
       content:
         application/json:
           schema:
             $ref: "#/components/schemas/Error"
+          examples:
+            validation:
+              summary: Request schema validation failed
+              value:
+                message: request/body must have required property 'session_id'
+                errors:
+                  - path: /body/session_id
+                    message: must have required property 'session_id'
+                    errorCode: required.openapi.validation
+            phone:
+              summary: Invalid Australian phone number
+              value:
+                message: Phone must be a valid Australian phone number.
+            dob:
+              summary: Invalid calendar date
+              value:
+                message: Date of birth must be a real calendar date.
+            password:
+              summary: Password exceeds the UTF-8 byte limit
+              value:
+                message: Password must be at most 36 UTF-8 bytes.
+            pastSession:
+              summary: Booking a past session
+              value:
+                message: Cannot book a past session.
+            member:
+              summary: Booking for a user who is not a member
+              value:
+                message: Select an existing member.
+    LoginBadRequest:
+      description: Invalid username/password, malformed JSON or invalid credentials fields.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+          examples:
+            credentials:
+              value:
+                message: Invalid credentials
+            validation:
+              value:
+                message: request/body must have required property 'username'
+                errors:
+                  - path: /body/username
+                    message: must have required property 'username'
+                    errorCode: required.openapi.validation
+    Unauthorized:
+      description: Authentication is required, or the supplied x-auth-key is malformed, unknown or revoked.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+          examples:
+            missingKey:
+              value:
+                message: Not authenticated
+                errors:
+                  - Please authenticate to access the requested resource.
+            invalidKey:
+              value:
+                message: Invalid authentication key.
+    Forbidden:
+      description: The authenticated role has no access, the record belongs to another user, or registration was attempted while logged in.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+          examples:
+            role:
+              value:
+                message: Access forbidden
+                errors:
+                  - Role does not have access to the requested resource.
+            noApiAccess:
+              value:
+                message: This role has no API access.
+            ownership:
+              value:
+                message: You can only manage your own records.
+            bookingOwnership:
+              value:
+                message: Members can only book for themselves.
+            registration:
+              value:
+                message: Log out before registering a new account.
+    NotFound:
+      description: The requested record or a referenced record does not exist or has been deleted.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+          example:
+            message: Resource not found.
+    Conflict:
+      description: Duplicate account/details, duplicate or overlapping booking, or a conflict with related records.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+          examples:
+            email:
+              value:
+                message: An account with this email already exists.
+            booking:
+              value:
+                message: The member already has a booking for this session or start time.
+            duplicate:
+              value:
+                message: A record with these details already exists.
+            relatedRecords:
+              value:
+                message: The operation conflicts with related records.
+    PayloadTooLarge:
+      description: The JSON request body exceeds the server's 100 KB limit.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+          example:
+            message: request entity too large
+    UnsupportedMediaType:
+      description: The request content type, charset or encoding is not supported. Send JSON bodies as application/json with UTF-8 encoding.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+          example:
+            message: unsupported media type text/plain
+            errors:
+              - path: /api/v1/register
+                message: unsupported media type text/plain
+    InternalServerError:
+      description: An unexpected server/database error or invalid server response prevented the operation. Internal details are not returned.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+          example:
+            message: Unable to process the API request.
+    AuthenticationFailed:
+      description: An unexpected server/database error prevented login.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+          examples:
+            login:
+              value:
+                message: Failed to authenticate user
+            middleware:
+              value:
+                message: Unable to process the API request.
     LoginSuccessful:
       description: Login successful. Copy key into Swagger's Authorize dialog.
       content:

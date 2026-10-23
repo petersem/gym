@@ -213,6 +213,100 @@ afterAll(async () => {
   );
 });
 
+describe("documented API errors", () => {
+  const documentedResponse = (path, method, status) => {
+    const response = swaggerSpec.paths[`/api/v1${path}`][method].responses[status];
+    return swaggerSpec.components.responses[response.$ref.split("/").at(-1)];
+  };
+
+  test.each([
+    ["/authenticate", "post", [200, 400, 401, 403, 413, 415, 500]],
+    ["/authenticate", "delete", [200, 400, 401, 403, 500]],
+    ["/register", "post", [201, 400, 401, 403, 409, 413, 415, 500]],
+    ["/user/self", "get", [200, 400, 401, 403, 500]],
+    ["/users/{id}", "put", [200, 400, 401, 403, 404, 409, 413, 415, 500]],
+    ["/users/{id}", "patch", [200, 400, 401, 403, 404, 409, 413, 415, 500]],
+    ["/locations", "get", [200, 400, 401, 403, 500]],
+    ["/trainers", "get", [200, 400, 401, 403, 500]],
+    ["/timetable", "get", [200, 400, 401, 403, 500]],
+    ["/sessions/{id}", "delete", [200, 400, 401, 403, 404, 409, 500]],
+    ["/bookings", "get", [200, 400, 401, 403, 500]],
+    ["/bookings", "post", [201, 400, 401, 403, 404, 409, 413, 415, 500]],
+    ["/bookings/{id}", "put", [200, 400, 401, 403, 413, 415, 500]],
+    ["/bookings/{id}", "delete", [200, 400, 401, 403, 404, 409, 500]],
+    ["/blogs", "get", [200, 400, 401, 403, 500]],
+    ["/blogs", "post", [201, 400, 401, 403, 404, 409, 413, 415, 500]],
+    ["/bookings/xml", "get", [200, 400, 401, 403, 500]],
+    ["/sessions/xml", "get", [200, 400, 401, 403, 500]],
+  ])("lists explicit statuses for %s %s", (path, method, statuses) => {
+    const { responses } = swaggerSpec.paths[`/api/v1${path}`][method];
+    expect(Object.keys(responses).sort()).toEqual(statuses.map(String).sort());
+    for (const status of statuses.filter((status) => status >= 400)) {
+      const response = documentedResponse(path, method, status);
+      expect(response.description).toBeTruthy();
+      const content = response.content["application/json"];
+      expect(content.schema.$ref).toBe("#/components/schemas/Error");
+      expect(content.example || content.examples).toBeTruthy();
+    }
+  });
+
+  test.each([
+    ["/authenticate", "post", 400, "credentials", {
+      method: "POST",
+      body: { username: "user3@example.com", password: "wrong" },
+    }],
+    ["/user/self", "get", 401, "missingKey", {}],
+    ["/user/self", "get", 401, "invalidKey", {
+      headers: { "x-auth-key": "invalid" },
+    }],
+    ["/user/self", "get", 403, "noApiAccess", { user: 1 }],
+    ["/register", "post", 409, "email", {
+      method: "POST",
+      body: { ...bodies.users, email: "user3@example.com" },
+    }],
+    ["/register", "post", 400, "phone", {
+      method: "POST",
+      body: { ...bodies.users, phone: "12345" },
+    }],
+    ["/register", "post", 415, null, {
+      method: "POST",
+      body: bodies.users,
+      headers: { "Content-Type": "text/plain" },
+    }],
+    ["/register", "post", 413, null, {
+      method: "POST",
+      body: { ...bodies.users, first_name: "x".repeat(110000) },
+    }],
+  ])("matches the %s %s %s example (%s)", async (
+    path, method, status, example, options,
+  ) => {
+    const result = await request(path, options);
+    const content = documentedResponse(path, method, status).content["application/json"];
+    expect(result.status).toBe(status);
+    expect(result.body).toEqual(example ? content.examples[example].value : content.example);
+  });
+
+  test("matches the documented missing record and internal error messages", async () => {
+    const missing = await request("/users/999", {
+      method: "PATCH",
+      user: 3,
+      body: { first_name: "Updated" },
+    });
+    expect(missing.status).toBe(404);
+    expect(missing.body).toEqual(
+      documentedResponse("/users/{id}", "patch", 404).content["application/json"].example,
+    );
+
+    jest.spyOn(console, "error").mockImplementation(() => {});
+    BlogModel.getAll.mockRejectedValue(new Error("private database details"));
+    const failed = await request("/blogs");
+    expect(failed.status).toBe(500);
+    expect(failed.body).toEqual(
+      documentedResponse("/blogs", "get", 500).content["application/json"].example,
+    );
+  });
+});
+
 describe("user PATCH", () => {
   test.each(["blogs", "bookings", "locations", "sessions"])(
     "rejects unsupported PATCH requests for %s",

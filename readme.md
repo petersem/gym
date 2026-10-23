@@ -43,6 +43,10 @@ All API endpoints use the `/api/v1` prefix.
 Open `/api/v1/docs/` for interactive Swagger documentation, or `/api/v1/openapi.json`
 for the OpenAPI specification. The specification includes request examples,
 field limits, response schemas, error codes, and role/ownership rules.
+Each operation lists explicit error statuses with descriptions and example JSON
+messages: invalid input (400), missing/invalid authentication (401), forbidden
+access (403), missing records (404), conflicts (409), oversized bodies (413),
+unsupported content types (415), and unexpected server errors (500), as applicable.
 
 1. Send `POST /api/v1/authenticate` with JSON
    `{"username":"your-email@example.com","password":"your-password"}`.
