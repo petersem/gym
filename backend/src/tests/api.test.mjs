@@ -215,7 +215,8 @@ afterAll(async () => {
 
 describe("documented API errors", () => {
   const documentedResponse = (path, method, status) => {
-    const response = swaggerSpec.paths[`/api/v1${path}`][method].responses[status];
+    const response =
+      swaggerSpec.paths[`/api/v1${path}`][method].responses[status];
     return swaggerSpec.components.responses[response.$ref.split("/").at(-1)];
   };
 
@@ -251,40 +252,81 @@ describe("documented API errors", () => {
   });
 
   test.each([
-    ["/authenticate", "post", 400, "credentials", {
-      method: "POST",
-      body: { username: "user3@example.com", password: "wrong" },
-    }],
+    [
+      "/authenticate",
+      "post",
+      400,
+      "credentials",
+      {
+        method: "POST",
+        body: { username: "user3@example.com", password: "wrong" },
+      },
+    ],
     ["/user/self", "get", 401, "missingKey", {}],
-    ["/user/self", "get", 401, "invalidKey", {
-      headers: { "x-auth-key": "invalid" },
-    }],
+    [
+      "/user/self",
+      "get",
+      401,
+      "invalidKey",
+      {
+        headers: { "x-auth-key": "invalid" },
+      },
+    ],
     ["/user/self", "get", 403, "noApiAccess", { user: 1 }],
-    ["/register", "post", 409, "email", {
-      method: "POST",
-      body: { ...bodies.users, email: "user3@example.com" },
-    }],
-    ["/register", "post", 400, "phone", {
-      method: "POST",
-      body: { ...bodies.users, phone: "12345" },
-    }],
-    ["/register", "post", 415, null, {
-      method: "POST",
-      body: bodies.users,
-      headers: { "Content-Type": "text/plain" },
-    }],
-    ["/register", "post", 413, null, {
-      method: "POST",
-      body: { ...bodies.users, first_name: "x".repeat(110000) },
-    }],
-  ])("matches the %s %s %s example (%s)", async (
-    path, method, status, example, options,
-  ) => {
-    const result = await request(path, options);
-    const content = documentedResponse(path, method, status).content["application/json"];
-    expect(result.status).toBe(status);
-    expect(result.body).toEqual(example ? content.examples[example].value : content.example);
-  });
+    [
+      "/register",
+      "post",
+      409,
+      "email",
+      {
+        method: "POST",
+        body: { ...bodies.users, email: "user3@example.com" },
+      },
+    ],
+    [
+      "/register",
+      "post",
+      400,
+      "phone",
+      {
+        method: "POST",
+        body: { ...bodies.users, phone: "12345" },
+      },
+    ],
+    [
+      "/register",
+      "post",
+      415,
+      null,
+      {
+        method: "POST",
+        body: bodies.users,
+        headers: { "Content-Type": "text/plain" },
+      },
+    ],
+    [
+      "/register",
+      "post",
+      413,
+      null,
+      {
+        method: "POST",
+        body: { ...bodies.users, first_name: "x".repeat(110000) },
+      },
+    ],
+  ])(
+    "matches the %s %s %s example (%s)",
+    async (path, method, status, example, options) => {
+      const result = await request(path, options);
+      const content = documentedResponse(path, method, status).content[
+        "application/json"
+      ];
+      expect(result.status).toBe(status);
+      expect(result.body).toEqual(
+        example ? content.examples[example].value : content.example,
+      );
+    },
+  );
 
   test("matches the documented missing record and internal error messages", async () => {
     const missing = await request("/users/999", {
@@ -294,7 +336,9 @@ describe("documented API errors", () => {
     });
     expect(missing.status).toBe(404);
     expect(missing.body).toEqual(
-      documentedResponse("/users/{id}", "patch", 404).content["application/json"].example,
+      documentedResponse("/users/{id}", "patch", 404).content[
+        "application/json"
+      ].example,
     );
 
     jest.spyOn(console, "error").mockImplementation(() => {});
@@ -302,11 +346,11 @@ describe("documented API errors", () => {
     const failed = await request("/blogs");
     expect(failed.status).toBe(500);
     expect(failed.body).toEqual(
-      documentedResponse("/blogs", "get", 500).content["application/json"].example,
+      documentedResponse("/blogs", "get", 500).content["application/json"]
+        .example,
     );
   });
 });
-
 describe("user PATCH", () => {
   test.each(["blogs", "bookings", "locations", "sessions"])(
     "rejects unsupported PATCH requests for %s",
