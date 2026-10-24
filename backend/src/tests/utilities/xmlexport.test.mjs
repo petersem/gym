@@ -39,12 +39,19 @@ describe("XML local date/time formatting", () => {
     ).not.toHaveProperty("id");
   });
 
-  test("declares booking and user XML elements consistently", () => {
+  test("declares booking and member XML elements consistently", () => {
     expect(bookingsDtd).toContain("<!ELEMENT id (#PCDATA)>");
     expect(bookingsDtd).toContain(
-      "<!ELEMENT booking (id, user, created, session)>",
+      "<!ELEMENT booking (id, member, created, session)>",
     );
-    expect(bookingsDtd).toContain("<!ELEMENT user (firstName, lastName)>");
+    expect(bookingsDtd).toContain("<!ELEMENT member (firstName, lastName)>");
+    expect(
+      bookingXmlRecord(
+        { id: 1, user_id: 9 },
+        session,
+        { ...lookups, users: [{ id: 9, first_name: "A", last_name: "Member" }] },
+      ),
+    ).toHaveProperty("member", { firstName: "A", lastName: "Member" });
   });
 
   test.each([

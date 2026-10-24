@@ -152,13 +152,13 @@ describe("BookingsController", () => {
       '<!ATTLIST gymBookings export-date CDATA "0000-00-00">',
     );
     expect(res.send.mock.calls[0][0]).toContain(
-      "<!ELEMENT booking (id, user, created, session)>",
+      "<!ELEMENT booking (id, member, created, session)>",
     );
     expect(res.send.mock.calls[0][0]).toContain(
       "<!ELEMENT session (title, date, time, activity, trainer, location)>",
     );
     expect(res.send.mock.calls[0][0]).toMatch(
-      /<gymBookings export-date="\d{4}-\d{2}-\d{2}">\s*<booking>\s*<id>[\s\S]*?<\/id>\s*<user>\s*<firstName>Alex &amp; Sam<\/firstName>\s*<lastName>O&apos;Brien<\/lastName>\s*<\/user>[\s\S]*?<session>\s*<title>/,
+      /<gymBookings export-date="\d{4}-\d{2}-\d{2}">\s*<booking>\s*<id>[\s\S]*?<\/id>\s*<member>\s*<firstName>Alex &amp; Sam<\/firstName>\s*<lastName>O&apos;Brien<\/lastName>\s*<\/member>[\s\S]*?<session>\s*<title>/,
     );
     expect(res.send.mock.calls[0][0]).not.toContain('<booking export-date="');
     expect(res.send.mock.calls[0][0]).toMatch(
