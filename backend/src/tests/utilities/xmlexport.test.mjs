@@ -46,11 +46,10 @@ describe("XML local date/time formatting", () => {
     );
     expect(bookingsDtd).toContain("<!ELEMENT member (firstName, lastName)>");
     expect(
-      bookingXmlRecord(
-        { id: 1, user_id: 9 },
-        session,
-        { ...lookups, users: [{ id: 9, first_name: "A", last_name: "Member" }] },
-      ),
+      bookingXmlRecord({ id: 1, user_id: 9 }, session, {
+        ...lookups,
+        users: [{ id: 9, first_name: "A", last_name: "Member" }],
+      }),
     ).toHaveProperty("member", { firstName: "A", lastName: "Member" });
   });
 
