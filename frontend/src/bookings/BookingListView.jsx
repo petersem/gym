@@ -128,6 +128,7 @@ function BookingListView() {
       .then((response) => {
         if (response.status === 200) {
           setSuccess("Booking cancelled.");
+          window.scrollTo({ top: 0, behavior: "smooth" });
           getBookings();
         } else {
           setError(response.body.message);
@@ -147,6 +148,7 @@ function BookingListView() {
       .then((response) => {
         if (response.status === 200) {
           setSuccess("Session deleted.");
+          window.scrollTo({ top: 0, behavior: "smooth" });
           setSessions((current) =>
             current.filter((session) => session.id !== deletingSession.id),
           );
