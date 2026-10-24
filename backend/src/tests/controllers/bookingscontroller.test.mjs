@@ -192,6 +192,7 @@ describe("BookingsController", () => {
     "shows booking locations only with All locations (%j)",
     async (query, expectedLocations) => {
       const today = new Date();
+      today.setDate(today.getDate() + 1);
       const date = [
         today.getFullYear(),
         String(today.getMonth() + 1).padStart(2, "0"),
@@ -351,6 +352,7 @@ describe("BookingsController", () => {
       ];
       const now = new Date();
       now.setHours(0, 0, 0, 0);
+      now.setDate(now.getDate() + 1);
       const sessionDate = [
         now.getFullYear(),
         String(now.getMonth() + 1).padStart(2, "0"),
@@ -396,7 +398,7 @@ describe("BookingsController", () => {
         expect.objectContaining(defaultExpectations),
       );
       expect(
-        res.render.mock.calls.at(-1)[1].bookingCalendarDays[0].bookings,
+        res.render.mock.calls.at(-1)[1].bookingCalendarDays[1].bookings,
       ).toEqual([bookings[0]]);
 
       await BookingsController.viewBookingManagement(
@@ -405,7 +407,7 @@ describe("BookingsController", () => {
       );
       const selectedUserData = res.render.mock.calls.at(-1)[1];
       expect(selectedUserData.bookingUserId).toBe(7);
-      expect(selectedUserData.bookingCalendarDays[0].bookings).toEqual([
+      expect(selectedUserData.bookingCalendarDays[1].bookings).toEqual([
         bookings[0],
       ]);
 
@@ -415,7 +417,7 @@ describe("BookingsController", () => {
       );
       const allTrainerData = res.render.mock.calls.at(-1)[1];
       expect(allTrainerData.bookingUserId).toBe(7);
-      expect(allTrainerData.bookingCalendarDays[0].bookings).toEqual([
+      expect(allTrainerData.bookingCalendarDays[1].bookings).toEqual([
         bookings[0],
       ]);
 
@@ -452,7 +454,7 @@ describe("BookingsController", () => {
         );
         const selectedTrainerData = res.render.mock.calls.at(-1)[1];
         expect(selectedTrainerData.bookingTrainerId).toBe(13);
-        expect(selectedTrainerData.bookingCalendarDays[0].sessions).toEqual([
+        expect(selectedTrainerData.bookingCalendarDays[1].sessions).toEqual([
           {
             id: 4,
             location_id: 9,
@@ -477,6 +479,55 @@ describe("BookingsController", () => {
       expect(res.render.mock.calls.at(-1)[1].selectedBooking.id).toBeNull();
     },
   );
+
+  test("hides bookings for sessions that have already started", async () => {
+    const sessionAt = (offset) => {
+      const start = new Date(Date.now() + offset);
+      const date = [
+        start.getFullYear(),
+        String(start.getMonth() + 1).padStart(2, "0"),
+        String(start.getDate()).padStart(2, "0"),
+      ].join("-");
+      const time = [
+        String(start.getHours()).padStart(2, "0"),
+        String(start.getMinutes()).padStart(2, "0"),
+        String(start.getSeconds()).padStart(2, "0"),
+      ].join(":");
+      return { date, time };
+    };
+    const starts = [-60_000, 0, 60_000].map(sessionAt);
+    jest.spyOn(BookingsModel, "getByUserId").mockResolvedValue(
+      starts.map((_, index) => ({
+        id: index + 1,
+        session_id: index + 1,
+        user_id: 7,
+      })),
+    );
+    jest.spyOn(UsersModel, "getAll").mockResolvedValue([]);
+    jest.spyOn(SessionsModel, "getAll").mockResolvedValue(
+      starts.map(({ date, time }, index) => ({
+        id: index + 1,
+        location_id: 9,
+        date,
+        time,
+      })),
+    );
+    jest.spyOn(LocationModel, "getAll").mockResolvedValue([]);
+    jest.spyOn(ActivitiesModel, "getAll").mockResolvedValue([]);
+    const res = response();
+
+    await BookingsController.viewBookingManagement(
+      request({}, {}, {}, { id: 7, role: "member" }),
+      res,
+    );
+
+    const { bookingCalendarDays } = res.render.mock.calls[0][1];
+    expect(
+      bookingCalendarDays.flatMap((day) =>
+        day.bookings.map((booking) => booking.id),
+      ),
+    ).toEqual([3]);
+  });
 
   test("groups sessions by their local calendar date", async () => {
     const tomorrow = new Date();

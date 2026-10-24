@@ -5,6 +5,11 @@
     business --prefersdark;
 }
 
+[data-theme="business"] .next-booking-badge {
+  background-color: color-mix(in srgb, #2563eb 20%, transparent);
+  color: #93c5fd;
+}
+
 /* added smooth transition between theme changes 250ms */
 @layer base {
   @media (prefers-reduced-motion: no-preference) {

@@ -295,7 +295,7 @@ function BookingListView() {
                   <div className="flex flex-wrap items-center gap-2 font-semibold">
                     {session?.title ?? `Session #${booking.session_id}`}
                     {!isTrainer && booking.id === nextBooking?.id && (
-                      <span className="badge badge-primary badge-soft badge-sm">
+                      <span className="badge badge-primary badge-soft badge-sm next-booking-badge items-center leading-none">
                         next
                       </span>
                     )}

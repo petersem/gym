@@ -318,7 +318,13 @@ export class BookingsController {
             (!availableTrainerId ||
               Number(session.trainer_id) === availableTrainerId),
         );
+        const currentTime = new Date();
         const bookingSessions = sessions.filter((session) => {
+          const sessionStart = new Date(
+            `${String(session.date).slice(0, 10)}T${session.time}`,
+          );
+          const hasNotStarted =
+            page !== "bookings" || sessionStart > currentTime;
           const matchesLocation =
             !bookingLocationId ||
             Number(session.location_id) === bookingLocationId;
@@ -334,9 +340,9 @@ export class BookingsController {
             !bookingTrainerId ||
             Number(session.trainer_id) === Number(bookingTrainerId) ||
             isOwnBooking;
-          return matchesLocation && matchesTrainer;
+          return hasNotStarted && matchesLocation && matchesTrainer;
         });
-        const today = new Date();
+        const today = new Date(currentTime);
         today.setHours(0, 0, 0, 0);
         const byTime = (left, right) =>
           String(left.time).localeCompare(String(right.time));
