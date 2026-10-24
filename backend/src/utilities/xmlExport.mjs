@@ -40,10 +40,10 @@ const bookingSessionElements = `<!ELEMENT session (title, date, time, activity, 
 export const bookingsDtd = `<!DOCTYPE gymBookings [
 <!ELEMENT gymBookings (booking*)>
 <!ATTLIST gymBookings export-date CDATA "0000-00-00">
-<!ELEMENT booking (id, user, created, session)>
+<!ELEMENT booking (id, member, created, session)>
 <!ELEMENT id (#PCDATA)>
 <!ELEMENT created (#PCDATA)>
-<!ELEMENT user (firstName, lastName)>
+<!ELEMENT member (firstName, lastName)>
 <!ELEMENT firstName (#PCDATA)>
 <!ELEMENT lastName (#PCDATA)>
 ${bookingSessionElements}
@@ -127,12 +127,12 @@ export function sessionXmlRecord(
  * @returns {Object} XML-ready booking.
  */
 export function bookingXmlRecord(booking, session, lookups) {
-  const bookingUser = byId(lookups.users, booking.user_id);
+  const bookingMember = byId(lookups.users, booking.user_id);
   return {
     id: String(booking.id),
-    user: {
-      firstName: String(bookingUser.first_name ?? ""),
-      lastName: String(bookingUser.last_name ?? ""),
+    member: {
+      firstName: String(bookingMember.first_name ?? ""),
+      lastName: String(bookingMember.last_name ?? ""),
     },
     created:
       booking.created == null || booking.created === ""
