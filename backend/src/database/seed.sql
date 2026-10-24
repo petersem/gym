@@ -23,27 +23,27 @@ INSERT INTO `locations` VALUES (1,'Ashgrove','0499 026 517','ftp@hsg.com','20–
 -- Dumping data for table `sessions`
 --
 INSERT INTO `sessions` VALUES
-(624,'Get lean and mean',1,315,2,DATE_ADD(CURRENT_DATE(), INTERVAL 0 DAY),'17:00:00'),
-(1578,'Endurance',1,1,5,DATE_ADD(CURRENT_DATE(), INTERVAL 1 DAY),'11:15:00'),
-(1803,'Papperazzi',1910,2,5,DATE_ADD(CURRENT_DATE(), INTERVAL 2 DAY),'19:00:00'),
-(1804,'Spandex people',1909,2,2,DATE_ADD(CURRENT_DATE(), INTERVAL 3 DAY),'11:00:00'),
-(1805,'Definition session',1911,1,5,DATE_ADD(CURRENT_DATE(), INTERVAL 4 DAY),'17:30:00'),
-(1806,'Work it out',1912,2,2,DATE_ADD(CURRENT_DATE(), INTERVAL 5 DAY),'10:00:00'),
-(1807,'Shake it',1,1,5,DATE_ADD(CURRENT_DATE(), INTERVAL 6 DAY),'15:00:00'),
-(1808,'Work it baby',1910,2,5,DATE_ADD(CURRENT_DATE(), INTERVAL 0 DAY),'09:00:00'),
-(1810,'Getting Evil',1909,315,2,DATE_ADD(CURRENT_DATE(), INTERVAL 1 DAY),'09:00:00'),
-(1811,'Work it out',1,1,2,DATE_ADD(CURRENT_DATE(), INTERVAL 2 DAY),'16:00:00'),
-(1812,'Go for it',1914,1935,2,DATE_ADD(CURRENT_DATE(), INTERVAL 6 DAY),'11:00:00'),
-(1813,'Dance session',1913,1,5,DATE_ADD(CURRENT_DATE(), INTERVAL 4 DAY),'15:00:00'),
-(1814,'Take all the road',1909,1,2,DATE_ADD(CURRENT_DATE(), INTERVAL 5 DAY),'09:00:00'),
-(1815,'1M Dollars',1,1,2,DATE_ADD(CURRENT_DATE(), INTERVAL 6 DAY),'09:00:00'),
-(1816,'Use the force',1910,315,2,DATE_ADD(CURRENT_DATE(), INTERVAL 0 DAY),'11:00:00'),
-(1817,'Cardio blast',1,1,5,DATE_SUB(CURRENT_DATE(), INTERVAL 1 DAY),'08:00:00'),
-(1818,'Boxing basics',1912,2,2,DATE_SUB(CURRENT_DATE(), INTERVAL 2 DAY),'10:00:00'),
-(1819,'Stretch and recover',1914,1935,5,DATE_SUB(CURRENT_DATE(), INTERVAL 3 DAY),'11:00:00'),
-(1820,'Mindful morning',2246,315,2,DATE_SUB(CURRENT_DATE(), INTERVAL 4 DAY),'09:00:00'),
-(1821,'Ride together',1909,2,5,DATE_SUB(CURRENT_DATE(), INTERVAL 1 DAY),'15:00:00'),
-(1822,'Dance fitness',1913,1,2,DATE_SUB(CURRENT_DATE(), INTERVAL 2 DAY),'17:30:00');
+(624,'Get lean and mean 🏋🏽🔥💪🏼🎧',1,315,2,DATE_ADD(CURRENT_DATE(), INTERVAL 0 DAY),'17:00:00'),
+(1578,'Unlimited POWER ⚡',1,1,5,DATE_ADD(CURRENT_DATE(), INTERVAL 1 DAY),'11:15:00'),
+(1803,'Papperazzi 📸',1910,2,5,DATE_ADD(CURRENT_DATE(), INTERVAL 2 DAY),'19:00:00'),
+(1804,'Spandex people 🚲',1909,2,2,DATE_ADD(CURRENT_DATE(), INTERVAL 3 DAY),'11:00:00'),
+(1805,'Definition session 🦢',1911,1,5,DATE_ADD(CURRENT_DATE(), INTERVAL 4 DAY),'17:30:00'),
+(1806,'Push it 🏋🏻‍♀️',1912,2,2,DATE_ADD(CURRENT_DATE(), INTERVAL 5 DAY),'11:00:00'),
+(1807,'Shake it 💃🏻🕺🏽',1,1,5,DATE_ADD(CURRENT_DATE(), INTERVAL 6 DAY),'15:00:00'),
+(1808,'Working 9-5 grind 💼👟',1910,2,5,DATE_ADD(CURRENT_DATE(), INTERVAL 0 DAY),'09:00:00'),
+(1810,'Getting Evil 😈',1909,315,2,DATE_ADD(CURRENT_DATE(), INTERVAL 1 DAY),'09:00:00'),
+(1811,'Work it out 👟',1,1,2,DATE_ADD(CURRENT_DATE(), INTERVAL 2 DAY),'16:00:00'),
+(1812,'Go for it ᯓ🏃🏻‍♀️‍➡️',1914,1935,2,DATE_ADD(CURRENT_DATE(), INTERVAL 6 DAY),'11:00:00'),
+(1813,'Dance session 🕺',1913,1,5,DATE_ADD(CURRENT_DATE(), INTERVAL 4 DAY),'15:00:00'),
+(1814,'Take all the road 🏞',1909,1,2,DATE_ADD(CURRENT_DATE(), INTERVAL 5 DAY),'09:00:00'),
+(1815,'Look 1M Dollars 💵',1,1,2,DATE_ADD(CURRENT_DATE(), INTERVAL 6 DAY),'09:00:00'),
+(1816,'Use the force ⚔️',1910,315,2,DATE_ADD(CURRENT_DATE(), INTERVAL 0 DAY),'11:00:00'),
+(1817,'Cardio blast 💪🏻ﮩ٨ـﮩ٨ـ🫀ﮩ٨ـﮩ٨ـ',1,1,5,DATE_SUB(CURRENT_DATE(), INTERVAL 1 DAY),'08:00:00'),
+(1818,'Boxing basics 🥊🥷🥋',1912,2,2,DATE_SUB(CURRENT_DATE(), INTERVAL 2 DAY),'10:00:00'),
+(1819,'Stretch and recover 🤸🏻‍♀️',1914,1935,5,DATE_SUB(CURRENT_DATE(), INTERVAL 3 DAY),'11:00:00'),
+(1820,'Mindful morning 🧘🏻‍♂️',2246,315,2,DATE_SUB(CURRENT_DATE(), INTERVAL 4 DAY),'09:00:00'),
+(1821,'Ride together 🚴',1909,2,5,DATE_SUB(CURRENT_DATE(), INTERVAL 1 DAY),'15:00:00'),
+(1822,'Dance fitness 𓀤',1913,1,2,DATE_SUB(CURRENT_DATE(), INTERVAL 2 DAY),'17:30:00');
 --
 -- Dumping data for table `bookings`
 --
@@ -57,5 +57,5 @@ INSERT INTO `bookings` (session_id, user_id, created) VALUES
 (1815,9772,@seed_booking_created),(1810,9772,@seed_booking_created),(624,9772,@seed_booking_created),(1578,9772,@seed_booking_created),(1817,9772,@seed_booking_created),(1818,9772,@seed_booking_created),(1806,9772,@seed_booking_created),(1813,9772,@seed_booking_created),(1816,9772,@seed_booking_created),(1808,9772,@seed_booking_created),(1804,9772,@seed_booking_created),(1811,9772,@seed_booking_created),(1821,9772,@seed_booking_created),(1820,9772,@seed_booking_created),
 (1808,10014,@seed_booking_created),(1821,10014,@seed_booking_created),(1812,10014,@seed_booking_created),(1819,10014,@seed_booking_created),(1817,10014,@seed_booking_created),(1805,10014,@seed_booking_created),
 (1806,10085,@seed_booking_created),(1813,10085,@seed_booking_created),(1812,10085,@seed_booking_created),(1808,10085,@seed_booking_created),(1805,10085,@seed_booking_created),
-(1821,8,@seed_booking_created),(1811,8,@seed_booking_created),(1822,8,@seed_booking_created),(1818,8,@seed_booking_created),(1810,8,@seed_booking_created),(624,8,@seed_booking_created),(1806,8,@seed_booking_created),(1808,8,@seed_booking_created),(1820,8,@seed_booking_created),(1813,8,@seed_booking_created),(1803,8,@seed_booking_created),(1819,8,@seed_booking_created),(1814,8,@seed_booking_created),(1578,8,@seed_booking_created),(1804,8,@seed_booking_created),(1816,8,@seed_booking_created),(1807,8,@seed_booking_created),(1812,8,@seed_booking_created),(1815,8,@seed_booking_created),(1805,8,@seed_booking_created),
+(1821,8,@seed_booking_created),(1811,9772,@seed_booking_created),(1822,8,@seed_booking_created),(1818,9988,@seed_booking_created),(1810,8,@seed_booking_created),(624,8,@seed_booking_created),(1806,10039,@seed_booking_created),(1808,10072,@seed_booking_created),(1820,8,@seed_booking_created),(1813,8,@seed_booking_created),(1803,8,@seed_booking_created),(1819,8,@seed_booking_created),(1814,8,@seed_booking_created),(1578,8,@seed_booking_created),(1804,8,@seed_booking_created),(1816,8,@seed_booking_created),(1807,8,@seed_booking_created),(1812,8,@seed_booking_created),(1815,8,@seed_booking_created),(1805,8,@seed_booking_created),
 (1814,10036,@seed_booking_created),(1822,10036,@seed_booking_created),(624,10036,@seed_booking_created),(1817,10036,@seed_booking_created),(1807,10036,@seed_booking_created),(1806,10036,@seed_booking_created),(1818,10036,@seed_booking_created),(1816,10036,@seed_booking_created),(1803,10036,@seed_booking_created),(1821,10036,@seed_booking_created),(1820,10036,@seed_booking_created),(1812,10036,@seed_booking_created),(1808,10036,@seed_booking_created),(1813,10036,@seed_booking_created),(1819,10036,@seed_booking_created),(1810,10036,@seed_booking_created),(1815,10036,@seed_booking_created),(1804,10036,@seed_booking_created),(1578,10036,@seed_booking_created),(1811,10036,@seed_booking_created);
