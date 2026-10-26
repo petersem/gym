@@ -17,7 +17,7 @@ export class APIAuthenticationController {
   }
 
   /**
-   * This middleware checks the for the API key header and
+   * This middleware checks for the API key header and
    * loads the respective user into req.authenticatedUser if found.
    *
    * @private
