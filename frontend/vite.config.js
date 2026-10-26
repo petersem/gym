@@ -6,9 +6,10 @@ import { VitePWA } from "vite-plugin-pwa";
 // The backend only allows CORS from its own origin, so API calls are proxied in dev.
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, import.meta.dirname, "");
+  //console.log(env.API_URL);
   const proxy = {
     "/api": {
-      target: env.API_TARGET || "http://localhost:3000",
+      target: env.API_URL || "http://localhost:3000",
       changeOrigin: true,
     },
   };
