@@ -41,9 +41,11 @@ export const limiterOptions = {
 };
 
 // cors
-const PORT = process.env.PORT || 3000;
 export const corsOptions = {
-  origin: [`http://localhost:${PORT}`],
+  origin: (process.env.WEB_ORIGINS ?? "")
+    .split(",")
+    .map((origin) => origin.trim())
+    .filter(Boolean),
 };
 
 // idempotency options

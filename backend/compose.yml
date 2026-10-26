@@ -43,6 +43,7 @@ services:
       DATA_SEED: ${DATA_SEED:-false}
       ADMIN_EMAIL: ${ADMIN_EMAIL}
       ADMIN_PASSWORD: ${ADMIN_PASSWORD}
+      WEB_ORIGINS: ${WEB_ORIGINS}
     depends_on:
       gymdb:
         condition: service_healthy

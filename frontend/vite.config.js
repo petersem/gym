@@ -8,7 +8,7 @@ export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, import.meta.dirname, "");
   const proxy = {
     "/api": {
-      target: env.VITE_API_TARGET || "http://localhost:3000",
+      target: env.API_TARGET || "http://localhost:3000",
       changeOrigin: true,
     },
   };
