@@ -1,5 +1,8 @@
 // Relative base; Vite proxies /api to the backend (see vite.config.js).
-export const API_BASE_URL = "/api/v1";
+//export const API_BASE_URL = "/api/v1";
+
+// hardcode url base so we can bypass the Vite proxy during local development, and see preflight OPTIONS requests in the browser console.
+export const API_BASE_URL = "http://localhost:3000/api/v1";
 
 /**
  * @param {"GET" | "POST" | "PUT" | "PATCH" | "DELETE" | string} method - HTTP Method
