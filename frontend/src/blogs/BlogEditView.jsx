@@ -43,7 +43,11 @@ function BlogEditView() {
   };
 
   return (
-    <form onSubmit={handleSubmit(save)} noValidate className="flex flex-col gap-4 p-4">
+    <form
+      onSubmit={handleSubmit(save)}
+      noValidate
+      className="flex flex-col gap-4 p-4"
+    >
       <h1 className="text-3xl">New post</h1>
       <StatusAlert
         message={error}
@@ -59,7 +63,10 @@ function BlogEditView() {
             aria-invalid={errors.title ? "true" : "false"}
             {...register("title", {
               validate: (v) => v.trim() !== "" || "Title is required.",
-              maxLength: { value: 100, message: "Title must be 100 characters or fewer." },
+              maxLength: {
+                value: 100,
+                message: "Title must be 100 characters or fewer.",
+              },
             })}
           />
         </label>
@@ -78,7 +85,10 @@ function BlogEditView() {
             aria-invalid={errors.content ? "true" : "false"}
             {...register("content", {
               validate: (v) => v.trim() !== "" || "Content is required.",
-              maxLength: { value: 250, message: "Content must be 250 characters or fewer." },
+              maxLength: {
+                value: 250,
+                message: "Content must be 250 characters or fewer.",
+              },
             })}
           />
         </label>
@@ -88,7 +98,8 @@ function BlogEditView() {
           </p>
         )}
       </div>
-      <span className="self-end text-xs opacity-60">{contentLength}/250</span>      <div className="flex gap-2">
+      <span className="self-end text-xs opacity-60">{contentLength}/250</span>{" "}
+      <div className="flex gap-2">
         <button
           type="button"
           className="btn grow"

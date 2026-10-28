@@ -30,12 +30,16 @@ function LoginView() {
   return (
     <form
       noValidate
-      onSubmit={handleSubmit((form) => login(form.username.trim(), form.password))}
+      onSubmit={handleSubmit((form) =>
+        login(form.username.trim(), form.password),
+      )}
       className="flex flex-col items-center gap-4 p-4"
     >
       <h1 className="text-3xl">Member &amp; Trainer Login</h1>
       <div className="w-full">
-        <label className={`input w-full ${errors.username ? "input-error" : ""}`}>
+        <label
+          className={`input w-full ${errors.username ? "input-error" : ""}`}
+        >
           <span className="label">email</span>
           <input
             {...register("username", {
@@ -44,7 +48,10 @@ function LoginView() {
                 value: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
                 message: "Please enter a valid email address.",
               },
-              maxLength: { value: 100, message: "Email must be 100 characters or fewer." },
+              maxLength: {
+                value: 100,
+                message: "Email must be 100 characters or fewer.",
+              },
             })}
             className="grow"
             type="email"
@@ -59,12 +66,17 @@ function LoginView() {
         )}
       </div>
       <div className="w-full">
-        <label className={`input w-full ${errors.password ? "input-error" : ""}`}>
+        <label
+          className={`input w-full ${errors.password ? "input-error" : ""}`}
+        >
           <span className="label">password</span>
           <input
             {...register("password", {
               required: "Password is required.",
-              maxLength: { value: 72, message: "Password must be 72 characters or fewer." },
+              maxLength: {
+                value: 72,
+                message: "Password must be 72 characters or fewer.",
+              },
             })}
             className="grow"
             type="password"

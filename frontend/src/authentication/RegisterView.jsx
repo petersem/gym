@@ -79,7 +79,11 @@ function RegisterView() {
     validate: (v) => v.trim() !== "" || `${what} is required.`,
   });
   return (
-    <form onSubmit={handleSubmit(register)} noValidate className="flex flex-col gap-4 p-4">
+    <form
+      onSubmit={handleSubmit(register)}
+      noValidate
+      className="flex flex-col gap-4 p-4"
+    >
       <h1 className="text-3xl">Become a member</h1>
 
       <StatusAlert
@@ -99,14 +103,20 @@ function RegisterView() {
         {field("first_name", "First name", {
           rules: {
             ...required("First name"),
-            maxLength: { value: 45, message: "First name must be 45 characters or fewer." },
+            maxLength: {
+              value: 45,
+              message: "First name must be 45 characters or fewer.",
+            },
           },
           autoComplete: "given-name",
         })}
         {field("last_name", "Last name", {
           rules: {
             ...required("Last name"),
-            maxLength: { value: 45, message: "Last name must be 45 characters or fewer." },
+            maxLength: {
+              value: 45,
+              message: "Last name must be 45 characters or fewer.",
+            },
           },
           autoComplete: "family-name",
         })}
@@ -118,7 +128,10 @@ function RegisterView() {
               value: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
               message: "Please enter a valid email address.",
             },
-            maxLength: { value: 100, message: "Email must be 100 characters or fewer." },
+            maxLength: {
+              value: 100,
+              message: "Email must be 100 characters or fewer.",
+            },
           },
           autoComplete: "email",
         })}
@@ -133,7 +146,10 @@ function RegisterView() {
               message:
                 "Please enter a valid Australian phone number, e.g. 0412 345 678 or 02 9999 8888.",
             },
-            maxLength: { value: 20, message: "Phone must be 20 characters or fewer." },
+            maxLength: {
+              value: 20,
+              message: "Phone must be 20 characters or fewer.",
+            },
           },
           autoComplete: "tel",
         })}
@@ -146,8 +162,14 @@ function RegisterView() {
           type: "password",
           rules: {
             required: "Password is required.",
-            minLength: { value: 8, message: "Password must be at least 8 characters." },
-            maxLength: { value: 36, message: "Password must be 36 characters or fewer." },
+            minLength: {
+              value: 8,
+              message: "Password must be at least 8 characters.",
+            },
+            maxLength: {
+              value: 36,
+              message: "Password must be 36 characters or fewer.",
+            },
           },
           autoComplete: "new-password",
         })}
@@ -155,7 +177,8 @@ function RegisterView() {
           type: "password",
           rules: {
             required: "Please confirm your password.",
-            validate: (v) => v === getValues("password") || "Passwords do not match.",
+            validate: (v) =>
+              v === getValues("password") || "Passwords do not match.",
           },
           autoComplete: "new-password",
         })}

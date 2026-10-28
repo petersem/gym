@@ -35,7 +35,7 @@ is only built for production, so test it with:
 
 ### Architecture
 
-![Architecture diagram](https://raw.githubusercontent.com/petersem/gym/main/gh-assets/diagram.png)
+[![Architecture diagram](https://gitdiagram.com/diagram-badge.svg)](https://gitdiagram.com/petersem/gym?utm_source=readme&utm_medium=badge)
 
 ### Backend API
 
