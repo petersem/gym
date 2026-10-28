@@ -5,27 +5,20 @@ import { useAuthenticate } from "./useAuthenticate.jsx";
 import StatusAlert from "../common/StatusAlert.jsx";
 import { useForm } from "react-hook-form";
 
-const EMPTY_FORM = {
-  first_name: "",
-  last_name: "",
-  email: "",
-  phone: "",
-  dob: "",
-  password: "",
-  confirm: "",
-};
-
 function RegisterView() {
   const navigate = useNavigate();
   const { login, status, user } = useAuthenticate();
 
-  const [form, setForm] = useState(EMPTY_FORM);
   const [saving, setSaving] = useState(false);
   const [registered, setRegistered] = useState(false);
   const [error, setError] = useState(null);
 
-  // const { register, formState: { errors } } = useForm();
-
+  const {
+    register: reg,
+    handleSubmit,
+    getValues,
+    formState: { errors },
+  } = useForm({ mode: "onBlur", reValidateMode: "onChange" });
   useEffect(() => {
     if (user) {
       navigate("/");
@@ -38,16 +31,8 @@ function RegisterView() {
     !["authenticating", "loading", "loaded", "resuming"].includes(status);
   const busy = saving || (registered && !loginFailed);
 
-  const update = (field) => (e) =>
-    setForm({ ...form, [field]: e.target.value });
-
-  const register = (e) => {
-    e.preventDefault();
+  const register = (form) => {
     setError(null);
-    if (form.password !== form.confirm) {
-      setError("Passwords do not match.");
-      return;
-    }
     const email = form.email.trim();
     setSaving(true);
     fetchAPI("POST", "/register", {
@@ -70,21 +55,31 @@ function RegisterView() {
       .finally(() => setSaving(false));
   };
 
-  const field = (name, label, props = {}) => (
-    <label className="floating-label">
-      <span>{label}</span>
-      <input
-        className="input w-full"
-        placeholder={label}
-        value={form[name]}
-        onChange={update(name)}
-        {...props}
-      />
-    </label>
+  const field = (name, label, { rules = {}, ...props } = {}) => (
+    <div>
+      <label className="floating-label">
+        <span>{label}</span>
+        <input
+          className={`input w-full ${errors[name] ? "input-error" : ""}`}
+          placeholder={label}
+          aria-invalid={errors[name] ? "true" : "false"}
+          {...reg(name, rules)}
+          {...props}
+        />
+      </label>
+      {errors[name] && (
+        <p role="alert" className="text-error text-sm mt-1">
+          {errors[name].message}
+        </p>
+      )}
+    </div>
   );
 
+  const required = (what) => ({
+    validate: (v) => v.trim() !== "" || `${what} is required.`,
+  });
   return (
-    <form onSubmit={register} className="flex flex-col gap-4 p-4">
+    <form onSubmit={handleSubmit(register)} noValidate className="flex flex-col gap-4 p-4">
       <h1 className="text-3xl">Become a member</h1>
 
       <StatusAlert
@@ -102,27 +97,44 @@ function RegisterView() {
       <fieldset className="fieldset gap-4 rounded-box border border-base-300 p-4">
         <legend className="fieldset-legend">Your details</legend>
         {field("first_name", "First name", {
-          required: true,
-          maxLength: 45,
+          rules: {
+            ...required("First name"),
+            maxLength: { value: 45, message: "First name must be 45 characters or fewer." },
+          },
           autoComplete: "given-name",
         })}
         {field("last_name", "Last name", {
-          required: true,
-          maxLength: 45,
+          rules: {
+            ...required("Last name"),
+            maxLength: { value: 45, message: "Last name must be 45 characters or fewer." },
+          },
           autoComplete: "family-name",
         })}
         {field("email", "Email", {
           type: "email",
-          required: "false",
-          // error: "Please enter a valid email address. OR ELSE!!!",
-          // message: "Please enter a valid email address. OR ELSE!!!",
-          maxLength: 100,
+          rules: {
+            required: "Email is required.",
+            pattern: {
+              value: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
+              message: "Please enter a valid email address.",
+            },
+            maxLength: { value: 100, message: "Email must be 100 characters or fewer." },
+          },
           autoComplete: "email",
         })}
         {field("phone", "Phone", {
           type: "tel",
-          required: true,
-          maxLength: 20,
+          rules: {
+            ...required("Phone"),
+            pattern: {
+              // Mobile (04xx xxx xxx) or landline (02/03/07/08 xxxx xxxx), optionally +61/61 prefixed
+              value:
+                /^(?:(?:\+?61|0)[\s-]?4\d{2}[\s-]?\d{3}[\s-]?\d{3}|(?:\+?61|0)[\s-]?[2378][\s-]?\d{4}[\s-]?\d{4})$/,
+              message:
+                "Please enter a valid Australian phone number, e.g. 0412 345 678 or 02 9999 8888.",
+            },
+            maxLength: { value: 20, message: "Phone must be 20 characters or fewer." },
+          },
           autoComplete: "tel",
         })}
         {field("dob", "Date of birth (optional)", { type: "date" })}
@@ -132,16 +144,20 @@ function RegisterView() {
         <legend className="fieldset-legend">Password</legend>
         {field("password", "Password", {
           type: "password",
-          required: true,
+          rules: {
+            required: "Password is required.",
+            minLength: { value: 8, message: "Password must be at least 8 characters." },
+            maxLength: { value: 36, message: "Password must be 36 characters or fewer." },
+          },
           autoComplete: "new-password",
-          minLength: 8,
-          maxLength: 36,
         })}
         {field("confirm", "Confirm password", {
           type: "password",
-          required: true,
+          rules: {
+            required: "Please confirm your password.",
+            validate: (v) => v === getValues("password") || "Passwords do not match.",
+          },
           autoComplete: "new-password",
-          maxLength: 36,
         })}
         <p className="label">8&ndash;36 characters.</p>
       </fieldset>
@@ -155,9 +171,6 @@ function RegisterView() {
           Log in
         </Link>
       </p>
-      {/* Inside your rendering logic: */}
-      {/* {errors.first_name && <p className="text-error">{errors.first_name.message}</p>} */}
-
     </form>
   );
 }

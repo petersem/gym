@@ -236,7 +236,7 @@ function BookingListView() {
             onError={setError}
             className="btn btn-sm btn-warning"
           >
-            Export Bookings
+            Download Bookings
           </XMLDownloadButton>
         )}
         {can(user, "exportSessions") && (
