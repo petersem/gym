@@ -3,6 +3,7 @@ import { Link, useNavigate } from "react-router";
 import { fetchAPI } from "../api.mjs";
 import { useAuthenticate } from "./useAuthenticate.jsx";
 import StatusAlert from "../common/StatusAlert.jsx";
+import { useForm } from "react-hook-form";
 
 const EMPTY_FORM = {
   first_name: "",
@@ -22,6 +23,8 @@ function RegisterView() {
   const [saving, setSaving] = useState(false);
   const [registered, setRegistered] = useState(false);
   const [error, setError] = useState(null);
+
+  // const { register, formState: { errors } } = useForm();
 
   useEffect(() => {
     if (user) {
@@ -110,7 +113,9 @@ function RegisterView() {
         })}
         {field("email", "Email", {
           type: "email",
-          required: true,
+          required: "false",
+          // error: "Please enter a valid email address. OR ELSE!!!",
+          // message: "Please enter a valid email address. OR ELSE!!!",
           maxLength: 100,
           autoComplete: "email",
         })}
@@ -150,6 +155,9 @@ function RegisterView() {
           Log in
         </Link>
       </p>
+      {/* Inside your rendering logic: */}
+      {/* {errors.first_name && <p className="text-error">{errors.first_name.message}</p>} */}
+
     </form>
   );
 }

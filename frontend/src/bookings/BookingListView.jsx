@@ -236,7 +236,7 @@ function BookingListView() {
             onError={setError}
             className="btn btn-sm btn-warning"
           >
-            Export past
+            Export Bookings
           </XMLDownloadButton>
         )}
         {can(user, "exportSessions") && (
@@ -247,7 +247,7 @@ function BookingListView() {
             onError={setError}
             className="btn btn-sm btn-warning"
           >
-            My sessions
+            Download Sessions
           </XMLDownloadButton>
         )}
       </div>
