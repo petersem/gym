@@ -1,5 +1,6 @@
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { Link, useLocation, useNavigate } from "react-router";
+import { useForm } from "react-hook-form";
 import { useAuthenticate } from "./useAuthenticate.jsx";
 
 function LoginView() {
@@ -7,8 +8,11 @@ function LoginView() {
   const location = useLocation();
   const { login, status, user } = useAuthenticate();
 
-  const [username, setUsername] = useState("");
-  const [password, setPassword] = useState("");
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm({ mode: "onBlur", reValidateMode: "onChange" });
 
   useEffect(() => {
     if (user) {
@@ -25,37 +29,55 @@ function LoginView() {
 
   return (
     <form
-      onSubmit={(e) => {
-        e.preventDefault();
-        login(username.trim(), password);
-      }}
+      noValidate
+      onSubmit={handleSubmit((form) => login(form.username.trim(), form.password))}
       className="flex flex-col items-center gap-4 p-4"
     >
       <h1 className="text-3xl">Member &amp; Trainer Login</h1>
-      <label className="input w-full">
-        <span className="label">email</span>
-        <input
-          value={username}
-          onChange={(e) => setUsername(e.target.value)}
-          className="grow"
-          type="email"
-          autoComplete="username"
-          maxLength={100}
-          required
-        />
-      </label>
-      <label className="input w-full">
-        <span className="label">password</span>
-        <input
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          className="grow"
-          type="password"
-          autoComplete="current-password"
-          maxLength={72}
-          required
-        />
-      </label>
+      <div className="w-full">
+        <label className={`input w-full ${errors.username ? "input-error" : ""}`}>
+          <span className="label">email</span>
+          <input
+            {...register("username", {
+              required: "Email is required.",
+              pattern: {
+                value: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
+                message: "Please enter a valid email address.",
+              },
+              maxLength: { value: 100, message: "Email must be 100 characters or fewer." },
+            })}
+            className="grow"
+            type="email"
+            autoComplete="username"
+            aria-invalid={errors.username ? "true" : "false"}
+          />
+        </label>
+        {errors.username && (
+          <p role="alert" className="text-error text-sm mt-1">
+            {errors.username.message}
+          </p>
+        )}
+      </div>
+      <div className="w-full">
+        <label className={`input w-full ${errors.password ? "input-error" : ""}`}>
+          <span className="label">password</span>
+          <input
+            {...register("password", {
+              required: "Password is required.",
+              maxLength: { value: 72, message: "Password must be 72 characters or fewer." },
+            })}
+            className="grow"
+            type="password"
+            autoComplete="current-password"
+            aria-invalid={errors.password ? "true" : "false"}
+          />
+        </label>
+        {errors.password && (
+          <p role="alert" className="text-error text-sm mt-1">
+            {errors.password.message}
+          </p>
+        )}
+      </div>
       <button className="btn btn-primary btn-lg self-stretch" disabled={busy}>
         {busy ? (
           <span className="loading loading-spinner"></span>

@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useForm, useWatch } from "react-hook-form";
 import { useNavigate } from "react-router";
 import { useAuthenticate } from "../authentication/useAuthenticate.jsx";
 import StatusAlert from "../common/StatusAlert.jsx";
@@ -8,13 +9,22 @@ function BlogEditView() {
   const navigate = useNavigate();
   const { authFetch } = useAuthenticate(PERMISSIONS.createBlog);
 
-  const [title, setTitle] = useState("");
-  const [content, setContent] = useState("");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState(null);
 
-  const save = (e) => {
-    e.preventDefault();
+  const {
+    register,
+    handleSubmit,
+    control,
+    formState: { errors },
+  } = useForm({
+    mode: "onBlur",
+    reValidateMode: "onChange",
+    defaultValues: { title: "", content: "" },
+  });
+  const contentLength = useWatch({ control, name: "content" }).length;
+
+  const save = ({ title, content }) => {
     setSaving(true);
     setError(null);
     authFetch("POST", "/blogs", {
@@ -33,37 +43,52 @@ function BlogEditView() {
   };
 
   return (
-    <form onSubmit={save} className="flex flex-col gap-4 p-4">
+    <form onSubmit={handleSubmit(save)} noValidate className="flex flex-col gap-4 p-4">
       <h1 className="text-3xl">New post</h1>
       <StatusAlert
         message={error}
         onClose={() => setError(null)}
         autoHideMs={3000}
       />
-      <label className="floating-label">
-        <span>Title</span>
-        <input
-          className="input w-full"
-          placeholder="Title"
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
-          maxLength={100}
-          required
-        />
-      </label>
-      <label className="floating-label">
-        <span>Content</span>
-        <textarea
-          className="textarea h-40 w-full"
-          placeholder="What's happening at the gym?"
-          value={content}
-          onChange={(e) => setContent(e.target.value)}
-          maxLength={250}
-          required
-        />
-      </label>
-      <span className="self-end text-xs opacity-60">{content.length}/250</span>
-      <div className="flex gap-2">
+      <div>
+        <label className="floating-label">
+          <span>Title</span>
+          <input
+            className={`input w-full ${errors.title ? "input-error" : ""}`}
+            placeholder="Title"
+            aria-invalid={errors.title ? "true" : "false"}
+            {...register("title", {
+              validate: (v) => v.trim() !== "" || "Title is required.",
+              maxLength: { value: 100, message: "Title must be 100 characters or fewer." },
+            })}
+          />
+        </label>
+        {errors.title && (
+          <p role="alert" className="text-error text-sm mt-1">
+            {errors.title.message}
+          </p>
+        )}
+      </div>
+      <div>
+        <label className="floating-label">
+          <span>Content</span>
+          <textarea
+            className={`textarea h-40 w-full ${errors.content ? "textarea-error" : ""}`}
+            placeholder="What's happening at the gym?"
+            aria-invalid={errors.content ? "true" : "false"}
+            {...register("content", {
+              validate: (v) => v.trim() !== "" || "Content is required.",
+              maxLength: { value: 250, message: "Content must be 250 characters or fewer." },
+            })}
+          />
+        </label>
+        {errors.content && (
+          <p role="alert" className="text-error text-sm mt-1">
+            {errors.content.message}
+          </p>
+        )}
+      </div>
+      <span className="self-end text-xs opacity-60">{contentLength}/250</span>      <div className="flex gap-2">
         <button
           type="button"
           className="btn grow"
