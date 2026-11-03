@@ -43,13 +43,12 @@ INSERT INTO `sessions` VALUES
 (1819,'Stretch and recover 🤸🏻‍♀️',1914,1935,5,DATE_SUB(CURRENT_DATE(), INTERVAL 3 DAY),'11:00:00'),
 (1820,'Mindful morning 🧘🏻‍♂️',2246,315,2,DATE_SUB(CURRENT_DATE(), INTERVAL 4 DAY),'09:00:00'),
 (1821,'Ride together 🚴',1909,2,5,DATE_SUB(CURRENT_DATE(), INTERVAL 1 DAY),'15:00:00'),
-(1822,'Dance fitness 𓀤',1913,1,2,DATE_SUB(CURRENT_DATE(), INTERVAL 2 DAY),'17:30:00'),
-(1823,'Gym trivia 🏋🏻‍♀️🏆',2249,1,2,DATE_ADD(CURRENT_DATE(), INTERVAL 5 DAY),'20:00:00');
+(1822,'Dance fitness 𓀤',1913,1,2,DATE_SUB(CURRENT_DATE(), INTERVAL 2 DAY),'17:30:00');
 --
 -- Dumping data for table `bookings`
 --
 
-SET @seed_booking_created = DATE_SUB(CURRENT_TIMESTAMP(), INTERVAL 3 DAY);
+SET @seed_booking_created = DATE_SUB(CURRENT_TIMESTAMP(), INTERVAL 7 DAY);
 
 INSERT INTO `bookings` (session_id, user_id, created) VALUES
 (1810,10015,@seed_booking_created),(1816,10015,@seed_booking_created),(1806,10015,@seed_booking_created),(1815,10015,@seed_booking_created),(1578,10015,@seed_booking_created),(1822,10015,@seed_booking_created),(1804,10015,@seed_booking_created),(1814,10015,@seed_booking_created),(1807,10015,@seed_booking_created),(1811,10015,@seed_booking_created),(624,10015,@seed_booking_created),(1812,10015,@seed_booking_created),(1805,10015,@seed_booking_created),(1817,10015,@seed_booking_created),(1820,10015,@seed_booking_created),(1808,10015,@seed_booking_created),
@@ -59,4 +58,4 @@ INSERT INTO `bookings` (session_id, user_id, created) VALUES
 (1808,10014,@seed_booking_created),(1821,10014,@seed_booking_created),(1812,10014,@seed_booking_created),(1819,10014,@seed_booking_created),(1817,10014,@seed_booking_created),(1805,10014,@seed_booking_created),
 (1806,10085,@seed_booking_created),(1813,10085,@seed_booking_created),(1812,10085,@seed_booking_created),(1808,10085,@seed_booking_created),(1805,10085,@seed_booking_created),
 (1821,8,@seed_booking_created),(1811,9772,@seed_booking_created),(1822,8,@seed_booking_created),(1818,9988,@seed_booking_created),(1810,8,@seed_booking_created),(624,8,@seed_booking_created),(1806,10039,@seed_booking_created),(1808,10072,@seed_booking_created),(1820,8,@seed_booking_created),(1813,8,@seed_booking_created),(1803,8,@seed_booking_created),(1819,8,@seed_booking_created),(1814,8,@seed_booking_created),(1578,8,@seed_booking_created),(1804,8,@seed_booking_created),(1816,8,@seed_booking_created),(1807,8,@seed_booking_created),(1812,8,@seed_booking_created),(1815,8,@seed_booking_created),(1805,8,@seed_booking_created),
-(1814,10036,@seed_booking_created),(1807,10036,@seed_booking_created),(1818,10036,@seed_booking_created),(1803,10036,@seed_booking_created),(1821,10036,@seed_booking_created),(1820,10036,@seed_booking_created),(1812,10036,@seed_booking_created),(1808,10036,@seed_booking_created),(1813,10036,@seed_booking_created),(1819,10036,@seed_booking_created),(1810,10036,@seed_booking_created),(1815,10036,@seed_booking_created),(1804,10036,@seed_booking_created),(1578,10036,@seed_booking_created),(1811,10036,@seed_booking_created);
+(1814,10036,@seed_booking_created),(1807,10036,@seed_booking_created),(1818,10036,@seed_booking_created),(1803,10036,@seed_booking_created),(1821,10036,@seed_booking_created),(1820,10036,@seed_booking_created),(1812,10036,@seed_booking_created),(1808,10036,@seed_booking_created),(1813,10036,@seed_booking_created),(1819,10036,@seed_booking_created),(1810,10036,@seed_booking_created),(1815,10036,@seed_booking_created),(1804,10036,@seed_booking_created),(1578,10036,@seed_booking_created),(1811,10036,@seed_booking_created),(624,10036,@seed_booking_created),(1805,10036,@seed_booking_created),(1806,10036,@seed_booking_created);
