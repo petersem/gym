@@ -26,6 +26,9 @@ export function useAuthenticate(restrictToRoles = null) {
           if (response.status === 200) {
             setUser({ ...response.body, authenticationKey });
             setStatus("loaded");
+          } else if (response.status >= 500) {
+            // Keep the key: the server is unavailable, not rejecting it.
+            setStatus(response.body.message ?? "Server error");
           } else {
             localStorage.removeItem(STORAGE_KEY);
             setUser(null);
@@ -33,7 +36,7 @@ export function useAuthenticate(restrictToRoles = null) {
           }
         })
         .catch((error) => {
-          setStatus(error);
+          setStatus(String(error));
         });
     },
     [setUser, setStatus],
@@ -53,7 +56,7 @@ export function useAuthenticate(restrictToRoles = null) {
           }
         })
         .catch((error) => {
-          setStatus(error);
+          setStatus(String(error));
         });
     },
     [setStatus, getUser],

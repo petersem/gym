@@ -39,6 +39,8 @@ export class APIUserController {
    *                  $ref: "#/components/responses/Forbidden"
    *              '500':
    *                  $ref: "#/components/responses/InternalServerError"
+   *              '503':
+   *                  $ref: "#/components/responses/ServiceUnavailable"
    */
   static async getAuthenticatedUser(req, res) {
     res.status(200).json(publicUser(req.authenticatedUser));

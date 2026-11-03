@@ -1,9 +1,12 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useNavigate } from "react-router";
 import { useForm } from "react-hook-form";
 import { useAuthenticate } from "../authentication/useAuthenticate.jsx";
 import StatusAlert from "../common/StatusAlert.jsx";
+import LoadFailed from "../common/LoadFailed.jsx";
+import { useRetryWhile } from "../common/useRetryWhile.jsx";
 import { initials } from "../common/format.mjs";
+import { isAustralianPhone } from "../common/phone.mjs";
 import { PERMISSIONS, ROLE_BADGE } from "../common/permissions.mjs";
 
 const toForm = (profile) => ({
@@ -23,6 +26,7 @@ function ProfileView() {
   );
 
   const [loaded, setLoaded] = useState(false);
+  const [loadError, setLoadError] = useState(null);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(null);
@@ -35,23 +39,30 @@ function ProfileView() {
     formState: { errors },
   } = useForm({ mode: "onBlur", reValidateMode: "onChange" });
 
-  useEffect(() => {
-    if (!user) {
-      return;
-    }
+  const loadProfile = useCallback(() => {
     authFetch("GET", "/user/self")
       .then((response) => {
         if (response.status === 200) {
           reset(toForm(response.body));
           setLoaded(true);
+          setLoadError(null);
         } else {
-          setError(response.body.message);
+          setLoadError(response.body.message);
         }
       })
-      .catch(setError);
+      .catch((error) => setLoadError(String(error)));
+  }, [authFetch, reset]);
+
+  useEffect(() => {
+    if (!user) {
+      return;
+    }
+    loadProfile();
     // Only load once per user; later user refreshes shouldn't discard edits.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.id]);
+
+  useRetryWhile(Boolean(user) && !loaded && loadError !== null, loadProfile);
 
   const save = (form) => {
     setError(null);
@@ -84,9 +95,9 @@ function ProfileView() {
   };
 
   if (!user || !loaded) {
-    return error ? (
+    return loadError ? (
       <div className="p-4">
-        <StatusAlert message={error} />
+        <LoadFailed message={loadError} onRetry={loadProfile} />
       </div>
     ) : (
       <span className="loading loading-spinner loading-xl mx-auto mt-8 block"></span>
@@ -187,13 +198,9 @@ function ProfileView() {
             type: "tel",
             rules: {
               ...required("Phone"),
-              pattern: {
-                // Mobile (04xx xxx xxx) or landline (02/03/07/08 xxxx xxxx), optionally +61/61 prefixed
-                value:
-                  /^(?:(?:\+?61|0)[\s-]?4\d{2}[\s-]?\d{3}[\s-]?\d{3}|(?:\+?61|0)[\s-]?[2378][\s-]?\d{4}[\s-]?\d{4})$/,
-                message:
-                  "Please enter a valid Australian phone number, e.g. 0412 345 678 or 02 9999 8888.",
-              },
+              validate: (value) =>
+                isAustralianPhone(value) ||
+                "Please enter a valid Australian phone number, e.g. 0412 345 678 or 02 9999 8888.",
               maxLength: {
                 value: 20,
                 message: "Phone must be 20 characters or fewer.",

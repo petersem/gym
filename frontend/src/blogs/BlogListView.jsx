@@ -5,6 +5,8 @@ import { queryString } from "../api.mjs";
 import { useAuthenticate } from "../authentication/useAuthenticate.jsx";
 import SearchSortBar from "../common/SearchSortBar.jsx";
 import StatusAlert from "../common/StatusAlert.jsx";
+import LoadFailed from "../common/LoadFailed.jsx";
+import { useRetryWhile } from "../common/useRetryWhile.jsx";
 import { formatDateTime } from "../common/format.mjs";
 import { can, PERMISSIONS } from "../common/permissions.mjs";
 
@@ -24,7 +26,7 @@ function BlogListView() {
   const [searchTerm, setSearchTerm] = useState("");
   const [sortBy, setSortBy] = useState("created");
   const [sortDir, setSortDir] = useState("desc");
-  const [error, setError] = useState(null);
+  const [loadError, setLoadError] = useState(null);
 
   const getBlogs = useCallback(() => {
     authFetch(
@@ -39,16 +41,19 @@ function BlogListView() {
       .then((response) => {
         if (response.status === 200) {
           setBlogs(response.body);
+          setLoadError(null);
         } else {
-          setError(response.body.message);
+          setLoadError(response.body.message);
         }
       })
-      .catch(setError);
+      .catch((error) => setLoadError(String(error)));
   }, [authFetch, searchTerm, sortBy, sortDir]);
 
   useEffect(() => {
     getBlogs();
   }, [getBlogs]);
+
+  useRetryWhile(blogs === null && loadError !== null, getBlogs);
 
   // The API returns every post, so paging happens here.
   const pageCount = Math.max(1, Math.ceil((blogs?.length ?? 0) / PAGE_SIZE));
@@ -146,15 +151,19 @@ function BlogListView() {
       />
 
       <StatusAlert
-        message={error}
-        onClose={() => setError(null)}
+        message={blogs === null ? null : loadError}
+        onClose={() => setLoadError(null)}
         autoHideMs={3000}
       />
 
       {pagination}
 
       {blogs === null ? (
-        <span className="loading loading-spinner loading-xl self-center"></span>
+        loadError ? (
+          <LoadFailed message={loadError} onRetry={getBlogs} />
+        ) : (
+          <span className="loading loading-spinner loading-xl self-center"></span>
+        )
       ) : blogs.length === 0 ? (
         <span className="self-center p-4 opacity-70">No posts found</span>
       ) : (

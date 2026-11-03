@@ -11,6 +11,8 @@ import { queryString } from "../api.mjs";
 import { useAuthenticate } from "../authentication/useAuthenticate.jsx";
 import SearchSortBar from "../common/SearchSortBar.jsx";
 import StatusAlert from "../common/StatusAlert.jsx";
+import LoadFailed from "../common/LoadFailed.jsx";
+import { useRetryWhile } from "../common/useRetryWhile.jsx";
 import {
   formatDayOfMonth,
   formatRelativeDate,
@@ -47,6 +49,8 @@ function TimetableView() {
   const [sortBy, setSortBy] = useState("date");
   const [sortDir, setSortDir] = useState("asc");
   const [error, setError] = useState(null);
+  const [loadError, setLoadError] = useState(null);
+  const [bookingsError, setBookingsError] = useState(null);
   const [success, setSuccess] = useState(null);
   const [pendingId, setPendingId] = useState(null);
   const [openDays, setOpenDays] = useState(null);
@@ -108,11 +112,12 @@ function TimetableView() {
       .then((response) => {
         if (response.status === 200) {
           setSessions(response.body.filter((session) => !hasStarted(session)));
+          setLoadError(null);
         } else {
-          setError(response.body.message);
+          setLoadError(response.body.message);
         }
       })
-      .catch(setError);
+      .catch((error) => setLoadError(String(error)));
   }, [
     canViewTimetable,
     authFetch,
@@ -128,17 +133,28 @@ function TimetableView() {
       return;
     }
     authFetch("GET", "/bookings")
-      .then((response) => response.status === 200 && setBookings(response.body))
-      .catch(setError);
+      .then((response) => {
+        if (response.status === 200) {
+          setBookings(response.body);
+          setBookingsError(null);
+        } else {
+          setBookingsError(response.body.message);
+        }
+      })
+      .catch((error) => setBookingsError(String(error)));
   }, [authFetch, canBook, isTrainer]);
 
   useEffect(() => {
     getSessions();
   }, [getSessions]);
 
+  useRetryWhile(sessions === null && loadError !== null, getSessions);
+
   useEffect(() => {
     getBookings();
   }, [getBookings]);
+
+  useRetryWhile(bookingsError !== null, getBookings);
 
   // Ignore stale bookings after logging out or switching to a non-member role.
   const bookingBySession = useMemo(
@@ -251,11 +267,22 @@ function TimetableView() {
         onClose={() => setSuccess(null)}
         autoHideMs={3000}
       />
-      <StatusAlert message={error} onClose={() => setError(null)} />
-      <StatusAlert message={lookupError} />
+      <StatusAlert
+        message={
+          sessions === null && loadError ? null : (error ?? bookingsError)
+        }
+        onClose={() => setError(null)}
+      />
+      <StatusAlert
+        message={sessions === null && loadError ? null : lookupError}
+      />
 
       {sessions === null ? (
-        <span className="loading loading-spinner loading-xl self-center"></span>
+        loadError ? (
+          <LoadFailed message={loadError} onRetry={getSessions} />
+        ) : (
+          <span className="loading loading-spinner loading-xl self-center"></span>
+        )
       ) : sessions.length === 0 ? (
         <span className="self-center p-4 opacity-70">No sessions found</span>
       ) : (

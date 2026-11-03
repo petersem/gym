@@ -3,7 +3,11 @@ import swaggerJsdoc from "swagger-jsdoc";
 import path from "path";
 import { fileURLToPath } from "url";
 import pkg from "../package.json" with { type: "json" };
-import { apiResourcePaths } from "./controllers/api/APIResourcesController.mjs";
+import { APIUsersController } from "./controllers/api/APIUsersController.mjs";
+import { APILocationsController } from "./controllers/api/APILocationsController.mjs";
+import { APISessionsController } from "./controllers/api/APISessionsController.mjs";
+import { APIBookingsController } from "./controllers/api/APIBookingsController.mjs";
+import { APIBlogsController } from "./controllers/api/APIBlogsController.mjs";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -69,7 +73,13 @@ const options = {
         },
       },
     },
-    paths: apiResourcePaths,
+    paths: {
+      ...APIUsersController.paths,
+      ...APILocationsController.paths,
+      ...APISessionsController.paths,
+      ...APIBookingsController.paths,
+      ...APIBlogsController.paths,
+    },
   },
   apis: [
     path.join(__dirname, "controllers/api/*.mjs"),

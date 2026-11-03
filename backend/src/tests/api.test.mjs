@@ -1,4 +1,4 @@
-﻿import {
+import {
   afterAll,
   afterEach,
   beforeAll,
@@ -221,24 +221,28 @@ describe("documented API errors", () => {
   };
 
   test.each([
-    ["/authenticate", "post", [200, 400, 401, 403, 413, 415, 500]],
-    ["/authenticate", "delete", [200, 400, 401, 403, 500]],
-    ["/register", "post", [201, 400, 401, 403, 409, 413, 415, 500]],
-    ["/user/self", "get", [200, 400, 401, 403, 500]],
-    ["/users/{id}", "put", [200, 400, 401, 403, 404, 409, 413, 415, 500]],
-    ["/users/{id}", "patch", [200, 400, 401, 403, 404, 409, 413, 415, 500]],
-    ["/locations", "get", [200, 400, 401, 403, 500]],
-    ["/trainers", "get", [200, 400, 401, 403, 500]],
-    ["/timetable", "get", [200, 400, 401, 403, 500]],
-    ["/sessions/{id}", "delete", [200, 400, 401, 403, 404, 409, 500]],
-    ["/bookings", "get", [200, 400, 401, 403, 500]],
-    ["/bookings", "post", [201, 400, 401, 403, 404, 409, 413, 415, 500]],
-    ["/bookings/{id}", "put", [200, 400, 401, 403, 413, 415, 500]],
-    ["/bookings/{id}", "delete", [200, 400, 401, 403, 404, 409, 500]],
-    ["/blogs", "get", [200, 400, 401, 403, 500]],
-    ["/blogs", "post", [201, 400, 401, 403, 404, 409, 413, 415, 500]],
-    ["/bookings/xml", "get", [200, 400, 401, 403, 500]],
-    ["/sessions/xml", "get", [200, 400, 401, 403, 500]],
+    ["/authenticate", "post", [200, 400, 401, 403, 413, 415, 500, 503]],
+    ["/authenticate", "delete", [200, 400, 401, 403, 500, 503]],
+    ["/register", "post", [201, 400, 401, 403, 409, 413, 415, 500, 503]],
+    ["/user/self", "get", [200, 400, 401, 403, 500, 503]],
+    ["/users/{id}", "put", [200, 400, 401, 403, 404, 409, 413, 415, 500, 503]],
+    [
+      "/users/{id}",
+      "patch",
+      [200, 400, 401, 403, 404, 409, 413, 415, 500, 503],
+    ],
+    ["/locations", "get", [200, 400, 401, 403, 500, 503]],
+    ["/trainers", "get", [200, 400, 401, 403, 500, 503]],
+    ["/timetable", "get", [200, 400, 401, 403, 500, 503]],
+    ["/sessions/{id}", "delete", [200, 400, 401, 403, 404, 500, 503]],
+    ["/bookings", "get", [200, 400, 401, 403, 500, 503]],
+    ["/bookings", "post", [201, 400, 401, 403, 404, 409, 413, 415, 500, 503]],
+    ["/bookings/{id}", "put", [200, 400, 401, 403, 413, 415, 500, 503]],
+    ["/bookings/{id}", "delete", [200, 400, 401, 403, 404, 500, 503]],
+    ["/blogs", "get", [200, 400, 401, 403, 500, 503]],
+    ["/blogs", "post", [201, 400, 401, 403, 404, 413, 415, 500, 503]],
+    ["/bookings/xml", "get", [200, 400, 401, 403, 500, 503]],
+    ["/sessions/xml", "get", [200, 400, 401, 403, 500, 503]],
   ])("lists explicit statuses for %s %s", (path, method, statuses) => {
     const { responses } = swaggerSpec.paths[`/api/v1${path}`][method];
     expect(Object.keys(responses).sort()).toEqual(statuses.map(String).sort());
@@ -349,6 +353,40 @@ describe("documented API errors", () => {
       documentedResponse("/blogs", "get", 500).content["application/json"]
         .example,
     );
+
+    const unavailable = Object.assign(new Error("connect ECONNREFUSED"), {
+      code: "ECONNREFUSED",
+    });
+    BlogModel.getAll.mockRejectedValue(unavailable);
+    const down = await request("/blogs");
+    expect(down.status).toBe(503);
+    expect(down.body).toEqual(
+      documentedResponse("/blogs", "get", 503).content["application/json"]
+        .example,
+    );
+    UsersModel.getByUsername.mockRejectedValue(unavailable);
+    const login = await request("/authenticate", {
+      method: "POST",
+      body: { username: "user3@example.com", password: "x" },
+    });
+    expect(login.status).toBe(503);
+    expect(login.body).toEqual(down.body);
+  });
+
+  test("reports health from a database ping", async () => {
+    const queryMock = jest
+      .spyOn(DatabaseModel, "query")
+      .mockResolvedValueOnce([{ 1: 1 }]);
+    const healthy = await request("/health");
+    expect(healthy.status).toBe(200);
+    expect(healthy.body).toEqual({ status: "ok" });
+    jest.spyOn(console, "error").mockImplementation(() => {});
+    queryMock.mockRejectedValueOnce(
+      Object.assign(new Error("down"), { code: "PROTOCOL_CONNECTION_LOST" }),
+    );
+    const down = await request("/health");
+    expect(down.status).toBe(503);
+    expect(down.body.message).toBeTruthy();
   });
 });
 describe("user PATCH", () => {
@@ -1149,7 +1187,7 @@ describe("API authentication and access", () => {
   test.each([
     [{ email: "user3@example.com" }, 409],
     [{ phone: "12345" }, 400],
-    [{ dob: "2001-02-30" }, 400],
+    [{ phone: "0412  345 678" }, 400],
     [{ password: "short" }, 400],
     [{ password: "é".repeat(30) }, 400],
     [{ role: "trainer" }, 400],
@@ -1598,15 +1636,15 @@ describe("ownership and gym rules", () => {
   );
 
   test("maps database conflicts and returns JSON errors for missing routes", async () => {
-    BlogModel.create.mockRejectedValue(
+    BookingsModel.create.mockRejectedValue(
       Object.assign(new Error("SQL detail"), { code: "ER_DUP_ENTRY" }),
     );
     expect(
       (
-        await request("/blogs", {
+        await request("/bookings", {
           method: "POST",
           user: 3,
-          body: bodies.blogs,
+          body: bodies.bookings,
         })
       ).status,
     ).toBe(409);

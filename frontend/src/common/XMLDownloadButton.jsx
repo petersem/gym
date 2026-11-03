@@ -1,6 +1,6 @@
 import { useCallback, useState } from "react";
 import { FaFileDownload } from "react-icons/fa";
-import { API_BASE_URL } from "../api.mjs";
+import { API_BASE_URL, NETWORK_ERROR_MESSAGE } from "../api.mjs";
 
 function XMLDownloadButton({
   className,
@@ -36,8 +36,8 @@ function XMLDownloadButton({
           onError(body.message ?? "Download failed");
         }
       })
-      .catch((error) => {
-        onError("Failed to download - " + error);
+      .catch(() => {
+        onError(NETWORK_ERROR_MESSAGE);
       })
       .finally(() => setDownloading(false));
   }, [route, authenticationKey, filename, onError]);

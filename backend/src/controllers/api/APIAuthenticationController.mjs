@@ -2,7 +2,12 @@ import express from "express";
 import { UsersModel } from "../../models/UsersModel.mjs";
 import bcrypt from "bcryptjs";
 import { randomUUID } from "node:crypto";
-import { APIError, publicUser, validateUserDetails } from "./apiHelpers.mjs";
+import {
+  APIError,
+  isDatabaseUnavailable,
+  publicUser,
+  validateUserDetails,
+} from "./apiHelpers.mjs";
 
 export class APIAuthenticationController {
   static middleware = express.Router();
@@ -81,6 +86,8 @@ export class APIAuthenticationController {
    *                  $ref: "#/components/responses/UnsupportedMediaType"
    *              '500':
    *                  $ref: "#/components/responses/AuthenticationFailed"
+   *              '503':
+   *                  $ref: "#/components/responses/ServiceUnavailable"
    *      delete:
    *          summary: "Deauthenticate"
    *          description: "Revoke the current API key."
@@ -99,6 +106,8 @@ export class APIAuthenticationController {
    *                  $ref: "#/components/responses/Forbidden"
    *              '500':
    *                  $ref: "#/components/responses/InternalServerError"
+   *              '503':
+   *                  $ref: "#/components/responses/ServiceUnavailable"
    */
   static async handleAuthenticate(req, res) {
     if (req.method === "POST") {
@@ -135,6 +144,13 @@ export class APIAuthenticationController {
             break;
           default:
             console.error(error);
+            if (isDatabaseUnavailable(error)) {
+              res.status(503).json({
+                message:
+                  "The service is temporarily unavailable. Try again later.",
+              });
+              break;
+            }
             res.status(500).json({
               message: "Failed to authenticate user",
             });
@@ -190,13 +206,15 @@ export class APIAuthenticationController {
    *              '403':
    *                  $ref: "#/components/responses/Forbidden"
    *              '409':
-   *                  $ref: "#/components/responses/Conflict"
+   *                  $ref: "#/components/responses/EmailConflict"
    *              '413':
    *                  $ref: "#/components/responses/PayloadTooLarge"
    *              '415':
    *                  $ref: "#/components/responses/UnsupportedMediaType"
    *              '500':
    *                  $ref: "#/components/responses/InternalServerError"
+   *              '503':
+   *                  $ref: "#/components/responses/ServiceUnavailable"
    */
   static async handleRegister(req, res) {
     if (req.authenticatedUser) {

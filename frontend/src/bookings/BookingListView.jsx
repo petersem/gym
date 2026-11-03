@@ -15,6 +15,8 @@ import { useAuthenticate } from "../authentication/useAuthenticate.jsx";
 import ConfirmDialog from "../common/ConfirmDialog.jsx";
 import SearchSortBar from "../common/SearchSortBar.jsx";
 import StatusAlert from "../common/StatusAlert.jsx";
+import LoadFailed from "../common/LoadFailed.jsx";
+import { useRetryWhile } from "../common/useRetryWhile.jsx";
 import XMLDownloadButton from "../common/XMLDownloadButton.jsx";
 import {
   formatDate,
@@ -50,6 +52,8 @@ function BookingListView() {
   const [sortBy, setSortBy] = useState("session_date");
   const [sortDir, setSortDir] = useState("asc");
   const [error, setError] = useState(null);
+  const [loadError, setLoadError] = useState(null);
+  const [sessionsError, setSessionsError] = useState(null);
   const [success, setSuccess] = useState(null);
   const [cancelling, setCancelling] = useState(null);
   const [deletingSession, setDeletingSession] = useState(null);
@@ -64,29 +68,43 @@ function BookingListView() {
       .then((response) => {
         if (response.status === 200) {
           setBookings(response.body);
+          setLoadError(null);
         } else {
-          setError(response.body.message);
+          setLoadError(response.body.message);
         }
       })
-      .catch(setError);
+      .catch((error) => setLoadError(String(error)));
   }, [user, authFetch]);
 
   useEffect(() => {
     getBookings();
   }, [getBookings]);
 
+  useRetryWhile(bookings === null && loadError !== null, getBookings);
+
   // Sessions can't be read individually via the API; the timetable covers today
   // plus the next 6 days.
-  useEffect(() => {
+  const getSessions = useCallback(() => {
     if (!can(user, "viewTimetable")) {
       return;
     }
     authFetch("GET", "/timetable")
-      .then((response) =>
-        setSessions(response.status === 200 ? response.body : []),
-      )
-      .catch(() => setSessions([]));
+      .then((response) => {
+        if (response.status === 200) {
+          setSessions(response.body);
+          setSessionsError(null);
+        } else {
+          setSessionsError(response.body.message);
+        }
+      })
+      .catch((error) => setSessionsError(String(error)));
   }, [authFetch, user]);
+
+  useEffect(() => {
+    getSessions();
+  }, [getSessions]);
+
+  useRetryWhile(sessions === null && sessionsError !== null, getSessions);
 
   const sessionById = useMemo(
     () => new Map((sessions ?? []).map((session) => [session.id, session])),
@@ -269,10 +287,28 @@ function BookingListView() {
         autoHideMs={3000}
       />
       <StatusAlert message={error} onClose={() => setError(null)} />
-      <StatusAlert message={lookupError} />
+      <StatusAlert
+        message={
+          rows === null && (loadError || sessionsError) ? null : lookupError
+        }
+      />
 
       {rows === null ? (
-        <span className="loading loading-spinner loading-xl self-center"></span>
+        loadError || sessionsError ? (
+          <LoadFailed
+            message={loadError ?? sessionsError}
+            onRetry={() => {
+              if (bookings === null) {
+                getBookings();
+              }
+              if (sessions === null) {
+                getSessions();
+              }
+            }}
+          />
+        ) : (
+          <span className="loading loading-spinner loading-xl self-center"></span>
+        )
       ) : rows.length === 0 ? (
         <div className="flex flex-col items-center gap-2 p-4 opacity-70">
           <span>No bookings found</span>

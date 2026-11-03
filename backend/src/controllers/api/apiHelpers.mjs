@@ -49,6 +49,7 @@ export function publicUser(user) {
  */
 export function validateUserDetails(user) {
   if (
+    / {2,}/.test(user.phone) ||
     !/^(?:0[23478]\d{8}|\+61[23478]\d{8}|13\d{4}|(?:1300|1800)\d{6})$/.test(
       user.phone.replace(/[ ().-]/g, ""),
     )
@@ -80,6 +81,27 @@ export function publicRecord(record) {
   return result;
 }
 
+const databaseUnavailableCodes = new Set([
+  "ECONNREFUSED",
+  "ECONNRESET",
+  "ETIMEDOUT",
+  "EHOSTUNREACH",
+  "ENOTFOUND",
+  "PROTOCOL_CONNECTION_LOST",
+  "ER_CON_COUNT_ERROR",
+  "POOL_CLOSED",
+]);
+
+/**
+ * Check whether an error means the database could not be reached.
+ *
+ * @param {*} error Error thrown by a model query.
+ * @returns {boolean} True for connection-level failures.
+ */
+export function isDatabaseUnavailable(error) {
+  return databaseUnavailableCodes.has(error?.code);
+}
+
 export function apiErrorHandler(error, _req, res, next) {
   if (res.headersSent) {
     return next(error);
@@ -89,6 +111,11 @@ export function apiErrorHandler(error, _req, res, next) {
   if (error === "not found") {
     status = 404;
     message = "Resource not found.";
+  } else if (isDatabaseUnavailable(error)) {
+    console.error(error);
+    return res.status(503).json({
+      message: "The service is temporarily unavailable. Try again later.",
+    });
   } else if (error.code === "ER_DUP_ENTRY") {
     status = 409;
     message = "A record with these details already exists.";

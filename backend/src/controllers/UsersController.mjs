@@ -96,9 +96,10 @@ export class UsersController {
         .custom((value) => {
           const number = value.replace(/[ ().-]/g, "");
           return (
-            /^(?:0[23478]\d{8}|\+61[23478]\d{8})$/.test(number) ||
-            /^13\d{4}$/.test(number) ||
-            /^(?:1300|1800)\d{6}$/.test(number)
+            !/ {2,}/.test(value) &&
+            (/^(?:0[23478]\d{8}|\+61[23478]\d{8})$/.test(number) ||
+              /^13\d{4}$/.test(number) ||
+              /^(?:1300|1800)\d{6}$/.test(number))
           );
         })
         .withMessage("Phone must be a valid Australian phone number."),

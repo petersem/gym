@@ -4,7 +4,12 @@ import * as ApiValidator from "express-openapi-validator";
 import { swaggerSpec } from "../../swagger.config.mjs";
 import { APIUserController } from "./APIUserController.mjs";
 import { APIAuthenticationController } from "./APIAuthenticationController.mjs";
-import { APIResourcesController } from "./APIResourcesController.mjs";
+import { APIUsersController } from "./APIUsersController.mjs";
+import { APILocationsController } from "./APILocationsController.mjs";
+import { APISessionsController } from "./APISessionsController.mjs";
+import { APIBookingsController } from "./APIBookingsController.mjs";
+import { APIBlogsController } from "./APIBlogsController.mjs";
+import { APIHealthController } from "./APIHealthController.mjs";
 import { apiErrorHandler } from "./apiHelpers.mjs";
 
 export function authorizationIconsPlugin() {
@@ -102,9 +107,14 @@ export class APIController {
         validateSecurity: false,
       }),
     );
+    this.routes.use(APIHealthController.routes);
     this.routes.use(APIAuthenticationController.routes);
     this.routes.use("/user", APIUserController.routes);
-    this.routes.use(APIResourcesController.routes);
+    this.routes.use(APIUsersController.routes);
+    this.routes.use(APILocationsController.routes);
+    this.routes.use(APISessionsController.routes);
+    this.routes.use(APIBookingsController.routes);
+    this.routes.use(APIBlogsController.routes);
     this.routes.use((_req, res) =>
       res.status(404).json({ message: "API endpoint not found." }),
     );

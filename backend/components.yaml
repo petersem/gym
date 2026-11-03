@@ -743,8 +743,8 @@ components:
             $ref: "#/components/schemas/Error"
           example:
             message: Resource not found.
-    Conflict:
-      description: Duplicate account/details, duplicate or overlapping booking, or a conflict with related records.
+    EmailConflict:
+      description: An account with this email address already exists.
       content:
         application/json:
           schema:
@@ -753,15 +753,26 @@ components:
             email:
               value:
                 message: An account with this email already exists.
-            booking:
-              value:
-                message: The member already has a booking for this session or start time.
+    UserConflict:
+      description: The email address is already used by another account.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+          examples:
             duplicate:
               value:
                 message: A record with these details already exists.
-            relatedRecords:
+    BookingConflict:
+      description: The member already has a booking for this session, or another booking that starts at the same date and time.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+          examples:
+            booking:
               value:
-                message: The operation conflicts with related records.
+                message: The member already has a booking for this session or start time.
     PayloadTooLarge:
       description: The JSON request body exceeds the server's 100 KB limit.
       content:
@@ -789,6 +800,14 @@ components:
             $ref: "#/components/schemas/Error"
           example:
             message: Unable to process the API request.
+    ServiceUnavailable:
+      description: The database is unreachable, so the service is temporarily unavailable. Try again later.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+          example:
+            message: The service is temporarily unavailable. Try again later.
     AuthenticationFailed:
       description: An unexpected server/database error prevented login.
       content:

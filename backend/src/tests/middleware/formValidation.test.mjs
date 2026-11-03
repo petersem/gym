@@ -365,6 +365,7 @@ describe("form validation", () => {
     "0412 345 67",
     "0912 345 678",
     "+61 (02) 1234-5678",
+    "0412  345 678",
   ])("rejects invalid Australian user phone number %s", async (phone) => {
     for (const action of ["create", "update"]) {
       expect(

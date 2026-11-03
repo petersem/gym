@@ -3,6 +3,7 @@ import { Link, useNavigate } from "react-router";
 import { fetchAPI } from "../api.mjs";
 import { useAuthenticate } from "./useAuthenticate.jsx";
 import StatusAlert from "../common/StatusAlert.jsx";
+import { isAustralianPhone } from "../common/phone.mjs";
 import { useForm } from "react-hook-form";
 
 function RegisterView() {
@@ -139,13 +140,9 @@ function RegisterView() {
           type: "tel",
           rules: {
             ...required("Phone"),
-            pattern: {
-              // Mobile (04xx xxx xxx) or landline (02/03/07/08 xxxx xxxx), optionally +61/61 prefixed
-              value:
-                /^(?:(?:\+?61|0)[\s-]?4\d{2}[\s-]?\d{3}[\s-]?\d{3}|(?:\+?61|0)[\s-]?[2378][\s-]?\d{4}[\s-]?\d{4})$/,
-              message:
-                "Please enter a valid Australian phone number, e.g. 0412 345 678 or 02 9999 8888.",
-            },
+            validate: (value) =>
+              isAustralianPhone(value) ||
+              "Please enter a valid Australian phone number, e.g. 0412 345 678 or 02 9999 8888.",
             maxLength: {
               value: 20,
               message: "Phone must be 20 characters or fewer.",

@@ -1,6 +1,7 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useAuthenticate } from "../authentication/useAuthenticate.jsx";
 import { can } from "./permissions.mjs";
+import { useRetryWhile } from "./useRetryWhile.jsx";
 
 /**
  * Loads authenticated trainer and location lists used to populate form controls
@@ -13,11 +14,8 @@ export function useLookups() {
   const [locations, setLocations] = useState([]);
   const [error, setError] = useState(null);
 
-  useEffect(() => {
-    if (!canRead) {
-      return;
-    }
-    let active = true;
+  const mounted = useRef(true);
+  const load = useCallback(() => {
     Promise.all([authFetch("GET", "/trainers"), authFetch("GET", "/locations")])
       .then(([trainerResponse, locationResponse]) => {
         for (const response of [trainerResponse, locationResponse]) {
@@ -25,21 +23,30 @@ export function useLookups() {
             throw new Error(response.body.message);
           }
         }
-        if (active) {
+        if (mounted.current) {
           setTrainers(trainerResponse.body);
           setLocations(locationResponse.body);
           setError(null);
         }
       })
       .catch((error) => {
-        if (active) {
-          setError(String(error));
+        if (mounted.current) {
+          setError(error instanceof Error ? error.message : String(error));
         }
       });
+  }, [authFetch]);
+
+  useEffect(() => {
+    mounted.current = true;
+    if (canRead) {
+      load();
+    }
     return () => {
-      active = false;
+      mounted.current = false;
     };
-  }, [authFetch, canRead]);
+  }, [canRead, load]);
+
+  useRetryWhile(canRead && error !== null, load);
 
   const trainerById = useMemo(
     () =>
