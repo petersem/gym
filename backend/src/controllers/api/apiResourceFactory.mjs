@@ -146,9 +146,15 @@ const asText = (value) =>
   value instanceof Date ? value.toISOString() : String(value ?? "");
 
 /**
+ * @typedef {object} SearchResource
+ * @property {object} [query] Search and sort options.
+ * @property {function(): Promise<function(object): object>} [fields] Resolves the resource's searchable and sortable field mapper.
+ */
+
+/**
  * Filter and sort records according to the query options of a resource.
  *
- * @param {{query?: object, fields?: function(): Promise<function(object): object>}} resource Resource configuration. `fields` resolves a function mapping a record to its searchable (`search`) and sortable values.
+ * @param {SearchResource} resource Resource configuration.
  * @param {object[]} records Records to filter and sort.
  * @param {object} query Request query parameters.
  * @returns {Promise<object[]>} Filtered and sorted records.
