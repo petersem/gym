@@ -234,7 +234,7 @@ function BookingListView() {
       <div className="flex items-center justify-between gap-2">
         <div>
           <h1 className="text-3xl">
-            {isTrainer ? "Session bookings" : "My bookings"}
+            {isTrainer ? "Sessions" : "My bookings"}
           </h1>
           <p className="text-sm opacity-70">
             {isTrainer

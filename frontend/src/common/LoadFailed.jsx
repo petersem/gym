@@ -12,7 +12,7 @@ function LoadFailed({ message, onRetry }) {
     >
       <span>{message} Retrying automatically…</span>
       <button type="button" className="btn btn-sm" onClick={onRetry}>
-        Retry now
+        Retry
       </button>
     </div>
   );

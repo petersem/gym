@@ -4,6 +4,7 @@ import { createBrowserRouter, Navigate, RouterProvider } from "react-router";
 
 import "./index.css";
 import Layout from "./Layout.jsx";
+import { useAuthenticate } from "./authentication/useAuthenticate.jsx";
 import { AuthenticationProvider } from "./authentication/AuthenticationProvider.jsx";
 import LoginView from "./authentication/LoginView.jsx";
 import RegisterView from "./authentication/RegisterView.jsx";
@@ -13,6 +14,11 @@ import BlogListView from "./blogs/BlogListView.jsx";
 import BlogEditView from "./blogs/BlogEditView.jsx";
 import ProfileView from "./users/ProfileView.jsx";
 import PrivacyPolicyView from "./legal/PrivacyPolicyView.jsx";
+
+function RoleRoute({ roles, children }) {
+  const { user } = useAuthenticate(roles);
+  return roles.includes(user?.role) ? children : null;
+}
 
 const router = createBrowserRouter([
   {
@@ -24,7 +30,19 @@ const router = createBrowserRouter([
       },
       {
         path: "/bookings",
-        Component: BookingListView,
+        element: (
+          <RoleRoute roles={["member"]}>
+            <BookingListView />
+          </RoleRoute>
+        ),
+      },
+      {
+        path: "/sessions",
+        element: (
+          <RoleRoute roles={["trainer"]}>
+            <BookingListView />
+          </RoleRoute>
+        ),
       },
       {
         path: "/blogs",

@@ -43,6 +43,7 @@ function Layout() {
   const [theme, setTheme] = useTheme();
 
   const { user, logout } = useAuthenticate();
+  const sessionsPath = user?.role === "trainer";
 
   const dockItems = [
     {
@@ -53,10 +54,12 @@ function Layout() {
       permission: "viewTimetable",
     },
     {
-      path: "/bookings",
-      label: "Bookings",
+      path: sessionsPath ? "/sessions" : "/bookings",
+      label: sessionsPath ? "Sessions" : "Bookings",
       icon: FaClipboardList,
-      active: location.pathname.startsWith("/bookings"),
+      active: location.pathname.startsWith(
+        sessionsPath ? "/sessions" : "/bookings",
+      ),
       permission: "readBookings",
     },
     {
