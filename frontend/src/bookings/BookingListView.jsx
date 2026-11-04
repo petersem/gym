@@ -233,9 +233,7 @@ function BookingListView() {
     <section className="flex flex-col gap-4 p-4">
       <div className="flex items-center justify-between gap-2">
         <div>
-          <h1 className="text-3xl">
-            {isTrainer ? "Sessions" : "My bookings"}
-          </h1>
+          <h1 className="text-3xl">{isTrainer ? "Sessions" : "My bookings"}</h1>
           <p className="text-sm opacity-70">
             {isTrainer
               ? `${totalBookings} member ${
