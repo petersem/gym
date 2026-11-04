@@ -75,6 +75,7 @@ describe("XML local date/time formatting", () => {
 
   test("places the export date on the gymBookings root element", () => {
     const today = new Date();
+    const copyright = `Copyright ${today.getFullYear()}`;
     const expectedDate = [
       today.getFullYear(),
       String(today.getMonth() + 1).padStart(2, "0"),
@@ -86,12 +87,18 @@ describe("XML local date/time formatting", () => {
       "<!DOCTYPE gymBookings []>",
     );
 
-    expect(xml).toContain(`<gymBookings export-date="${expectedDate}">`);
+    expect(xml).toContain(
+      `<gymBookings export-date="${expectedDate}" copyright="${copyright}">`,
+    );
     expect(xml).not.toContain('<booking export-date="');
+    expect(bookingsDtd).toContain(
+      `<!ATTLIST gymBookings copyright CDATA "${copyright}">`,
+    );
   });
 
   test("places the export date on the gymSessions root element", () => {
     const today = new Date();
+    const copyright = `Copyright ${today.getFullYear()}`;
     const expectedDate = [
       today.getFullYear(),
       String(today.getMonth() + 1).padStart(2, "0"),
@@ -103,10 +110,15 @@ describe("XML local date/time formatting", () => {
       sessionsDtd,
     );
 
-    expect(xml).toContain(`<gymSessions export-date="${expectedDate}">`);
+    expect(xml).toContain(
+      `<gymSessions export-date="${expectedDate}" copyright="${copyright}">`,
+    );
     expect(xml).not.toContain('<session export-date="');
     expect(sessionsDtd).toContain(
       '<!ATTLIST gymSessions export-date CDATA "0000-00-00">',
+    );
+    expect(sessionsDtd).toContain(
+      `<!ATTLIST gymSessions copyright CDATA "${copyright}">`,
     );
   });
 });

@@ -1,5 +1,7 @@
 import XMLBuilder from "fast-xml-builder";
 
+const copyrightNotice = () => `Copyright ${new Date().getFullYear()}`;
+
 const xmlBuilder = new XMLBuilder({
   ignoreAttributes: false,
   format: true,
@@ -40,6 +42,7 @@ const bookingSessionElements = `<!ELEMENT session (title, date, time, activity, 
 export const bookingsDtd = `<!DOCTYPE gymBookings [
 <!ELEMENT gymBookings (booking*)>
 <!ATTLIST gymBookings export-date CDATA "0000-00-00">
+<!ATTLIST gymBookings copyright CDATA "Copyright 0000">
 <!ELEMENT booking (id, member, created, session)>
 <!ELEMENT id (#PCDATA)>
 <!ELEMENT created (#PCDATA)>
@@ -52,6 +55,7 @@ ${bookingSessionElements}
 export const sessionsDtd = `<!DOCTYPE gymSessions [
 <!ELEMENT gymSessions (session*)>
 <!ATTLIST gymSessions export-date CDATA "0000-00-00">
+<!ATTLIST gymSessions copyright CDATA "Copyright 0000">
 ${sessionElements}
 ]>`;
 
@@ -150,6 +154,7 @@ export function bookingXmlRecord(booking, session, lookups) {
 export function bookingsXmlContent(bookings) {
   return {
     "@_export-date": exportDate(),
+    "@_copyright": copyrightNotice(),
     booking: bookings,
   };
 }
@@ -162,6 +167,7 @@ export function bookingsXmlContent(bookings) {
 export function sessionsXmlContent(sessions) {
   return {
     "@_export-date": exportDate(),
+    "@_copyright": copyrightNotice(),
     session: sessions,
   };
 }
