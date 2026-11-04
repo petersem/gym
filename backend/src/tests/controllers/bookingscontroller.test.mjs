@@ -158,14 +158,14 @@ describe("BookingsController", () => {
       "<!ELEMENT session (title, date, time, activity, trainer, location)>",
     );
     expect(res.send.mock.calls[0][0]).toMatch(
-      /<gymBookings export-date="\d{4}-\d{2}-\d{2}">\s*<booking>\s*<id>[\s\S]*?<\/id>\s*<member>\s*<firstName>Alex &amp; Sam<\/firstName>\s*<lastName>O&apos;Brien<\/lastName>\s*<\/member>[\s\S]*?<session>\s*<title>/,
+      /<gymBookings export-date="\d{4}-\d{2}-\d{2}" copyright="Copyright \d{4}">\s*<booking>\s*<id>[\s\S]*?<\/id>\s*<member>\s*<firstName>Alex &amp; Sam<\/firstName>\s*<lastName>O&apos;Brien<\/lastName>\s*<\/member>[\s\S]*?<session>\s*<title>/,
     );
     expect(res.send.mock.calls[0][0]).not.toContain('<booking export-date="');
     expect(res.send.mock.calls[0][0]).toMatch(
       /<trainer>\s*<firstName>Taylor<\/firstName>\s*<lastName>Trainer<\/lastName>\s*<\/trainer>/,
     );
     expect(res.send.mock.calls[0][0]).toMatch(
-      /<gymBookings export-date="\d{4}-\d{2}-\d{2}">/,
+      /<gymBookings export-date="\d{4}-\d{2}-\d{2}" copyright="Copyright \d{4}">/,
     );
     expect(res.send.mock.calls[0][0]).toContain(
       "<title>Spin &amp; Strength</title>",

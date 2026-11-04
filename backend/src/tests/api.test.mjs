@@ -1993,7 +1993,7 @@ describe("XML exports", () => {
     expect(result.body).toMatch(/^<\?xml version="1.0" encoding="UTF-8"\?>/);
     expect(result.body).toContain("<!DOCTYPE gymBookings [");
     expect(result.body).toMatch(
-      /<gymBookings export-date="\d{4}-\d{2}-\d{2}">/,
+      /<gymBookings export-date="\d{4}-\d{2}-\d{2}" copyright="Copyright \d{4}">/,
     );
     expect(result.body).not.toContain('<booking export-date="');
     expect(ids(result.body, "booking")).toEqual([6, 5]);
@@ -2019,7 +2019,7 @@ describe("XML exports", () => {
     expect(result.disposition).toBe('attachment; filename="gym-sessions.xml"');
     expect(result.body).toContain("<!DOCTYPE gymSessions [");
     expect(result.body).toMatch(
-      /<gymSessions export-date="\d{4}-\d{2}-\d{2}">/,
+      /<gymSessions export-date="\d{4}-\d{2}-\d{2}" copyright="Copyright \d{4}">/,
     );
     expect(result.body).toContain(
       "<!ELEMENT session (id, title, date, time, activity, trainer, location)>",
