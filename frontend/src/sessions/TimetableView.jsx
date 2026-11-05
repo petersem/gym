@@ -181,6 +181,7 @@ function TimetableView() {
     setSuccess(null);
     if (method === "POST" && hasStarted(session)) {
       setError("This session has already started and can't be booked.");
+      window.scrollTo({ top: 0, behavior: "smooth" });
       getSessions();
       return;
     }
@@ -196,9 +197,13 @@ function TimetableView() {
           getBookings();
         } else {
           setError(response.body.message);
+          window.scrollTo({ top: 0, behavior: "smooth" });
         }
       })
-      .catch(setError)
+      .catch((err) => {
+        setError(err);
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      })
       .finally(() => {
         setPendingId(null);
       });
@@ -265,13 +270,14 @@ function TimetableView() {
         type="success"
         message={success}
         onClose={() => setSuccess(null)}
-        autoHideMs={3000}
+        autoHideMs={5000}
       />
       <StatusAlert
         message={
           sessions === null && loadError ? null : (error ?? bookingsError)
         }
         onClose={() => setError(null)}
+        autoHideMs={5000}
       />
       <StatusAlert
         message={sessions === null && loadError ? null : lookupError}

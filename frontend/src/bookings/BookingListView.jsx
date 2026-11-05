@@ -282,9 +282,9 @@ function BookingListView() {
         type="success"
         message={success}
         onClose={() => setSuccess(null)}
-        autoHideMs={3000}
+        autoHideMs={5000}
       />
-      <StatusAlert message={error} onClose={() => setError(null)} />
+      <StatusAlert message={error} onClose={() => setError(null)} autoHideMs={5000} />
       <StatusAlert
         message={
           rows === null && (loadError || sessionsError) ? null : lookupError
