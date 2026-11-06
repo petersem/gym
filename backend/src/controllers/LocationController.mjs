@@ -123,7 +123,9 @@ export class LocationController {
    * Renders the location management page with a filtered, sorted and paginated
    * location list. Loads the location in the URL into the edit form, even when it
    * is not on the current page. Invalid or missing location IDs return a 404.
-   * @type {express.RequestHandler}
+   * @param {express.Request} req Express request containing location ID and listing filters.
+   * @param {express.Response} res Express response used to render the management page or status page.
+   * @returns {void} Starts loading page data and renders the page or an error response.
    */
   static viewLocationManagement(req, res) {
     const selectedLocationId = req.params.id;
@@ -199,7 +201,12 @@ export class LocationController {
       });
   }
 
-  // @type {express.RequestHandler}
+  /**
+   * Render the public location list with optional search and sort filters.
+   * @param {express.Request} req Express request containing location search and sort query parameters.
+   * @param {express.Response} res Express response used to render the location list or a status page.
+   * @returns {void} Starts loading locations and renders the list or an error response.
+   */
   static viewLocationList(req, res) {
     const selectedSearchTerm = String(req.query.search_term ?? "").trim();
     const selectedSortBy = Object.keys(LocationModel.SORTABLE_COLUMNS).includes(
@@ -239,7 +246,12 @@ export class LocationController {
       });
   }
 
-  // @type {express.RequestHandler}
+  /**
+   * Render the details page for the location identified by the route parameter.
+   * @param {express.Request} req Express request containing the location ID in `params.id`.
+   * @param {express.Response} res Express response used to render the details or not-found page.
+   * @returns {void} Starts loading the location and renders its details or an error response.
+   */
   static viewLocationDetails(req, res) {
     LocationModel.getById(req.params.id)
       .then((location) => {
@@ -260,7 +272,9 @@ export class LocationController {
 
   /**
    * Creates, updates or deletes a location from the validated management form.
-   * @type {express.RequestHandler}
+   * @param {express.Request} req Express request containing the action, location fields, and optional location ID.
+   * @param {express.Response} res Express response used to redirect or render a status page.
+   * @returns {void} Starts the requested database operation and sends its response.
    */
   static handleLocationManagement(req, res) {
     const authenticatedUserId = Number(req.authenticatedUser?.id);

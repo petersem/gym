@@ -66,7 +66,7 @@ export class LocationModel extends DatabaseModel {
   }
 
   /**
-   *
+   * Retrieve all locations that are not soft-deleted.
    * @returns {Promise<Array<LocationModel>>}
    */
   static async getAll() {
@@ -76,7 +76,8 @@ export class LocationModel extends DatabaseModel {
   }
 
   /**
-   *
+   * Find non-deleted locations whose name, suburb, or postcode contains the search term.
+   * @param {string} term Text used to search location names, suburbs, and postcodes.
    * @returns {Promise<Array<LocationModel>>}
    */
   static async getBySearch(term) {
@@ -140,9 +141,10 @@ export class LocationModel extends DatabaseModel {
   }
 
   /**
-   *
-   * @param {number} id
-   * @returns {Promise<LocationModel>}
+   * Retrieve a location by its identifier.
+   * @param {number} id Unique location identifier.
+   * @returns {Promise<LocationModel>} The matching location.
+   * @throws {"not found"} When no location has the supplied identifier.
    */
   static async getById(id) {
     const result = await this.query("SELECT * FROM locations WHERE id = ?", [
@@ -154,9 +156,9 @@ export class LocationModel extends DatabaseModel {
   }
 
   /**
-   *
-   * @param {LocationModel} location
-   * @returns {Promise<mysql.OkPacket>}
+   * Update the stored fields of an existing location.
+   * @param {LocationModel} location Location values to persist; its `id` selects the row.
+   * @returns {Promise<mysql.OkPacket>} Database result describing the update.
    */
   static update(location) {
     return this.query(
@@ -181,10 +183,10 @@ export class LocationModel extends DatabaseModel {
   }
 
   /**
-   *
-   * @param {number} location id
-   * @param {number} difference in stock level to apply
-   * @returns {Promise<mysql.OkPacket>}
+   * Adjust a location's stock value by the supplied difference.
+   * @param {number} id Unique location identifier.
+   * @param {number} difference Stock adjustment to apply; may be positive or negative.
+   * @returns {Promise<mysql.OkPacket>} Database result describing the update.
    */
   static updateLocationById(id, difference) {
     return this.query(
@@ -198,8 +200,9 @@ export class LocationModel extends DatabaseModel {
   }
 
   /**
-   * @param {LocationModel} location
-   * @returns {Promise<mysql.OkPacket>}
+   * Insert a new location using a database-generated identifier.
+   * @param {LocationModel} location Location values to insert.
+   * @returns {Promise<mysql.OkPacket>} Database result describing the insert.
    */
   static create(location) {
     return this.query(
@@ -223,8 +226,9 @@ export class LocationModel extends DatabaseModel {
   }
 
   /**
-   * @param {LocationModel} location
-   * @returns {Promise<mysql.OkPacket>}
+   * Insert a location while preserving the identifier supplied on the model.
+   * @param {LocationModel} location Location values, including the identifier to insert.
+   * @returns {Promise<mysql.OkPacket>} Database result describing the insert.
    */
   static createWithExistingID(location) {
     return this.query(
@@ -249,8 +253,9 @@ export class LocationModel extends DatabaseModel {
   }
 
   /**
-   * @param {number} id
-   * @returns {Promise<mysql.OkPacket>}
+   * Soft-delete the location with the supplied identifier.
+   * @param {number} id Unique location identifier.
+   * @returns {Promise<mysql.OkPacket>} Database result describing the update.
    */
   static delete(id) {
     return this.query(`UPDATE locations SET deleted = 1 WHERE id = ?`, [id]);

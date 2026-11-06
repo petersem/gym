@@ -140,7 +140,10 @@ export class AuthenticationController {
 
   /**
    * Load the session user and expose authentication to all rendered views.
-   * @type {express.RequestHandler}
+   * @param {express.Request} req Express request containing the session and any authenticated user.
+   * @param {express.Response} res Express response whose locals receive the authentication state.
+   * @param {express.NextFunction} next Express callback to continue the middleware chain.
+   * @returns {Promise<void>} Resolves after setting view locals and continuing the chain.
    */
   static async #sessionAuthenticationProvider(req, res, next) {
     if (req.session.userId && !req.authenticatedUser) {
@@ -156,7 +159,10 @@ export class AuthenticationController {
   }
 
   /**
-   * @type {express.RequestHandler}
+   * Render the login form.
+   * @param {express.Request} req Express request for the login page.
+   * @param {express.Response} res Express response used to render the form.
+   * @returns {void} Renders the login page.
    */
   static viewLogin(req, res) {
     res.render("login.ejs");
@@ -164,14 +170,19 @@ export class AuthenticationController {
 
   /**
    * Render the member registration form.
-   * @type {express.RequestHandler}
+   * @param {express.Request} req Express request for the registration page.
+   * @param {express.Response} res Express response used to render the form.
+   * @returns {void} Renders the registration page.
    */
   static viewRegister(req, res) {
     res.render("register.ejs");
   }
 
   /**
-   * @type {express.RequestHandler}
+   * Authenticate the submitted credentials and establish a user session.
+   * @param {express.Request} req Express request containing the submitted username and password.
+   * @param {express.Response} res Express response used to redirect or render an authentication error.
+   * @returns {Promise<void>} Resolves after completing authentication and responding to the request.
    */
   static async handleLogin(req, res) {
     const username = req.body["username"];
@@ -210,7 +221,9 @@ export class AuthenticationController {
 
   /**
    * Create a member account with a hashed password and redirect to login.
-   * @type {express.RequestHandler}
+   * @param {express.Request} req Express request containing the validated registration fields.
+   * @param {express.Response} res Express response used to redirect or render a registration error.
+   * @returns {Promise<void>} Resolves after attempting registration and responding to the request.
    */
   static async handleRegister(req, res) {
     const { firstName, lastName, email, password, phone, dob } = req.body;
@@ -242,7 +255,10 @@ export class AuthenticationController {
   }
 
   /**
-   * @type {express.RequestHandler}
+   * Destroy the authenticated user's session and render the logout result.
+   * @param {express.Request} req Express request containing the current session and authentication state.
+   * @param {express.Response} res Express response used to render the logout result.
+   * @returns {void} Renders the logout result or an unauthenticated error.
    */
   static handleLogout(req, res) {
     if (req.authenticatedUser) {

@@ -173,7 +173,9 @@ export class UsersController {
    * Renders the user management page with a filtered, sorted and paginated user
    * list. Loads the user in the URL into the edit form, even when that user is
    * not on the current page.
-   * @type {express.RequestHandler}
+   * @param {express.Request} req Express request containing the optional user ID and listing filters.
+   * @param {express.Response} res Express response used to render the management page or an error.
+   * @returns {void} Starts loading page data and renders the page or an error response.
    */
   static viewUserManagement(req, res) {
     const selectedUserId = req.params.id;
@@ -239,7 +241,9 @@ export class UsersController {
   /**
    * Creates, updates or deletes a user from the validated management form.
    * Hashes the password unless it is already a bcrypt hash or the action is delete.
-   * @type {express.RequestHandler}
+   * @param {express.Request} req Express request containing the action, user fields, and optional user ID.
+   * @param {express.Response} res Express response used to redirect or render a status page.
+   * @returns {void} Starts the requested database operation and sends its response.
    */
   static handleUserManagement(req, res) {
     const selectedUserId = req.params.id;

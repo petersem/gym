@@ -113,7 +113,9 @@ export class BlogController {
    * Renders the blog page with a searched, sorted and paginated list of posts.
    * Loads the post in the URL into the edit form, even when it is not on the
    * current page.
-   * @type {express.RequestHandler}
+   * @param {express.Request} req Express request containing listing filters and an optional blog ID.
+   * @param {express.Response} res Express response used to render the blog management page.
+   * @returns {Promise<void|express.Response>} Resolves after rendering the page or a database error.
    */
   static viewBlogManagement(req, res) {
     const selectedSearchTerm = String(req.query.search_term ?? "").trim();
@@ -171,7 +173,9 @@ export class BlogController {
 
   /**
    * Creates, updates or deletes a blog post from the validated form.
-   * @type {express.RequestHandler}
+   * @param {express.Request} req Express request containing the action, form data, and optional blog ID.
+   * @param {express.Response} res Express response used to redirect or render a status page.
+   * @returns {void|express.Response|Promise<express.Response>} Handles the action and returns its response when applicable.
    */
   static handleBlogManagement(req, res) {
     const blogBasePath =
@@ -294,7 +298,13 @@ export class BlogController {
     }
   }
 
-  // @type {express.RequestHandler}
+  /**
+   * Return all blog posts or those matching the optional search query as JSON.
+   * @param {express.Request} req Express request; `query.search_term` optionally filters posts.
+   * @param {express.Response} res Express response used to send the blog posts.
+   * @param {express.NextFunction} next Express error handler for model failures.
+   * @returns {Promise<void>} Resolves after sending JSON or forwarding an error.
+   */
   static async list(req, res, next) {
     try {
       const blogs = req.query.search_term
@@ -306,7 +316,13 @@ export class BlogController {
     }
   }
 
-  // @type {express.RequestHandler}
+  /**
+   * Return the blog post identified by the route parameter as JSON.
+   * @param {express.Request} req Express request containing the blog ID in `params.id`.
+   * @param {express.Response} res Express response used to send the blog post.
+   * @param {express.NextFunction} next Express error handler for model failures.
+   * @returns {Promise<void>} Resolves after sending JSON or forwarding an error.
+   */
   static async getById(req, res, next) {
     try {
       res.json(await BlogModel.getById(Number(req.params.id)));
@@ -315,7 +331,13 @@ export class BlogController {
     }
   }
 
-  // @type {express.RequestHandler}
+  /**
+   * Create a blog post from the request body and return the result as JSON.
+   * @param {express.Request} req Express request containing the blog post fields in the body.
+   * @param {express.Response} res Express response used to return the created post.
+   * @param {express.NextFunction} next Express error handler for model failures.
+   * @returns {Promise<void>} Resolves after sending JSON or forwarding an error.
+   */
   static async create(req, res, next) {
     try {
       res.status(201).json(await BlogModel.create(req.body));
@@ -324,7 +346,13 @@ export class BlogController {
     }
   }
 
-  // @type {express.RequestHandler}
+  /**
+   * Update an existing blog post, subject to the authenticated user's permissions.
+   * @param {express.Request} req Express request containing the blog ID and updated fields.
+   * @param {express.Response} res Express response used to return the update result or an authorization error.
+   * @param {express.NextFunction} next Express error handler for model failures.
+   * @returns {Promise<void|express.Response>} Resolves after responding or forwarding an error.
+   */
   static async update(req, res, next) {
     try {
       if (!req.authenticatedUser) {
@@ -348,7 +376,13 @@ export class BlogController {
     }
   }
 
-  // @type {express.RequestHandler}
+  /**
+   * Soft-delete an existing blog post, subject to the authenticated user's permissions.
+   * @param {express.Request} req Express request containing the blog ID in `params.id`.
+   * @param {express.Response} res Express response used to return the deletion result or an authorization error.
+   * @param {express.NextFunction} next Express error handler for model failures.
+   * @returns {Promise<void|express.Response>} Resolves after responding or forwarding an error.
+   */
   static async delete(req, res, next) {
     try {
       if (!req.authenticatedUser) {

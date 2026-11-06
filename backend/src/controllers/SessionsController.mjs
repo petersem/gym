@@ -239,7 +239,9 @@ export class SessionsController {
    * Renders the session management page with sessions for the next seven days,
    * filtered by search term and trainer, and loads the session in the URL into
    * the edit form.
-   * @type {express.RequestHandler}
+   * @param {express.Request} req Express request containing session ID and listing filters.
+   * @param {express.Response} res Express response used to render the management page or an error.
+   * @returns {Promise<void|express.Response>} Resolves after rendering the page or an error response.
    */
   static viewSessionManagement(req, res) {
     return Promise.all([
@@ -354,7 +356,9 @@ export class SessionsController {
 
   /**
    * Creates, updates or deletes a session from the validated management form.
-   * @type {express.RequestHandler}
+   * @param {express.Request} req Express request containing the action, session fields, and optional session ID.
+   * @param {express.Response} res Express response used to redirect or render a status page.
+   * @returns {void|Promise<express.Response>} Handles the action and returns its response when applicable.
    */
   static handleSessionManagement(req, res) {
     const title = req.body.title;
@@ -427,7 +431,13 @@ export class SessionsController {
     }
   }
 
-  // @type {express.RequestHandler}
+  /**
+   * Return all sessions as JSON.
+   * @param {express.Request} req Express request for the session collection.
+   * @param {express.Response} res Express response used to send the sessions.
+   * @param {express.NextFunction} next Express error handler for model failures.
+   * @returns {Promise<void>} Resolves after sending JSON or forwarding an error.
+   */
   static async list(req, res, next) {
     try {
       res.json(await SessionsModel.getAll());
@@ -436,7 +446,13 @@ export class SessionsController {
     }
   }
 
-  // @type {express.RequestHandler}
+  /**
+   * Return the session identified by the route parameter as JSON.
+   * @param {express.Request} req Express request containing the session ID in `params.id`.
+   * @param {express.Response} res Express response used to send the session.
+   * @param {express.NextFunction} next Express error handler for model failures.
+   * @returns {Promise<void>} Resolves after sending JSON or forwarding an error.
+   */
   static async getById(req, res, next) {
     try {
       res.json(await SessionsModel.getById(Number(req.params.id)));
@@ -445,7 +461,13 @@ export class SessionsController {
     }
   }
 
-  // @type {express.RequestHandler}
+  /**
+   * Create a session from the request body and return the result as JSON.
+   * @param {express.Request} req Express request containing the session fields in the body.
+   * @param {express.Response} res Express response used to return the create result and its status.
+   * @param {express.NextFunction} next Express error handler for model failures.
+   * @returns {Promise<void>} Resolves after sending JSON or forwarding an error.
+   */
   static async create(req, res, next) {
     try {
       const result = await SessionsModel.create(req.body);
@@ -455,7 +477,13 @@ export class SessionsController {
     }
   }
 
-  // @type {express.RequestHandler}
+  /**
+   * Update the session identified by the route parameter using the request body.
+   * @param {express.Request} req Express request containing the session ID and updated fields.
+   * @param {express.Response} res Express response used to return the update result and its status.
+   * @param {express.NextFunction} next Express error handler for model failures.
+   * @returns {Promise<void>} Resolves after sending JSON or forwarding an error.
+   */
   static async update(req, res, next) {
     try {
       const result = await SessionsModel.update({
@@ -468,7 +496,13 @@ export class SessionsController {
     }
   }
 
-  // @type {express.RequestHandler}
+  /**
+   * Delete the session identified by the route parameter.
+   * @param {express.Request} req Express request containing the session ID in `params.id`.
+   * @param {express.Response} res Express response used to return the deletion result as JSON.
+   * @param {express.NextFunction} next Express error handler for model failures.
+   * @returns {Promise<void>} Resolves after sending JSON or forwarding an error.
+   */
   static async delete(req, res, next) {
     try {
       res.json(await SessionsModel.delete(Number(req.params.id)));

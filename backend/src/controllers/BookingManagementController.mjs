@@ -35,7 +35,12 @@ export class BookingManagementController {
     this.routes.post("/:id", this.formValidation, this.save);
   }
 
-  // Render searchable booking rows and the editor, using only authorised sessions.
+  /**
+   * Render searchable booking rows and the editor, using only authorised sessions.
+   * @param {express.Request} req Express request containing filters and an optional booking ID.
+   * @param {express.Response} res Express response used to render the management page or an error.
+   * @returns {Promise<void|express.Response>} Resolves after rendering the page or a status response.
+   */
   static async view(req, res) {
     try {
       const [allBookings, allSessions, users, locations] = await Promise.all([
@@ -158,7 +163,12 @@ export class BookingManagementController {
     }
   }
 
-  // Validate existing and destination session ownership before any write.
+  /**
+   * Validate booking ownership and form references before creating, updating, or deleting a booking.
+   * @param {express.Request} req Express request containing the action, booking ID, and booking fields.
+   * @param {express.Response} res Express response used to redirect or render a status response.
+   * @returns {Promise<express.Response>} Resolves to the redirect or status response.
+   */
   static async save(req, res) {
     try {
       const [sessions, users, bookings] = await Promise.all([

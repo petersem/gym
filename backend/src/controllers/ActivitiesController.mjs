@@ -85,7 +85,9 @@ export class ActivitiesController {
    * Renders the activity management page with a filtered, sorted and paginated
    * activity list. Loads the activity in the URL into the edit form, even when it
    * is not on the current page.
-   * @type {express.RequestHandler}
+   * @param {express.Request} req Express request containing route and listing query parameters.
+   * @param {express.Response} res Express response used to render the page or an error.
+   * @returns {Promise<void>} Resolves after the page or an error page is rendered.
    */
   static async viewActivityManagement(req, res) {
     const selectedSearchTerm = String(req.query.search_term ?? "").trim();
@@ -132,7 +134,9 @@ export class ActivitiesController {
 
   /**
    * Creates, updates or deletes an activity from the validated management form.
-   * @type {express.RequestHandler}
+   * @param {express.Request} req Express request containing the action, form data, and optional activity ID.
+   * @param {express.Response} res Express response used to redirect or render a status page.
+   * @returns {Promise<express.Response>} Resolves to the redirect or status response.
    */
   static async handleActivityManagement(req, res) {
     const activity = new ActivitiesModel(
@@ -178,7 +182,13 @@ export class ActivitiesController {
     }
   }
 
-  // @type {express.RequestHandler}
+  /**
+   * Return all activities or those matching the optional search query as JSON.
+   * @param {express.Request} req Express request; `query.search_term` optionally filters activities.
+   * @param {express.Response} res Express response used to send the activity list.
+   * @param {express.NextFunction} next Express error handler for model failures.
+   * @returns {Promise<void>} Resolves after sending JSON or forwarding an error.
+   */
   static async list(req, res, next) {
     try {
       const activities = req.query.search_term
@@ -190,7 +200,13 @@ export class ActivitiesController {
     }
   }
 
-  // @type {express.RequestHandler}
+  /**
+   * Return the activity identified by the route parameter as JSON.
+   * @param {express.Request} req Express request containing the activity ID in `params.id`.
+   * @param {express.Response} res Express response used to send the activity.
+   * @param {express.NextFunction} next Express error handler for model failures.
+   * @returns {Promise<void>} Resolves after sending JSON or forwarding an error.
+   */
   static async getById(req, res, next) {
     try {
       res.json(await ActivitiesModel.getById(Number(req.params.id)));
@@ -199,7 +215,13 @@ export class ActivitiesController {
     }
   }
 
-  // @type {express.RequestHandler}
+  /**
+   * Create an activity from the request body and return the created result as JSON.
+   * @param {express.Request} req Express request containing the activity fields in the body.
+   * @param {express.Response} res Express response used to return the created activity.
+   * @param {express.NextFunction} next Express error handler for model failures.
+   * @returns {Promise<void>} Resolves after sending the created activity or forwarding an error.
+   */
   static async create(req, res, next) {
     try {
       res.status(201).json(await ActivitiesModel.create(req.body));
@@ -208,7 +230,13 @@ export class ActivitiesController {
     }
   }
 
-  // @type {express.RequestHandler}
+  /**
+   * Update the activity identified by the route parameter using the request body.
+   * @param {express.Request} req Express request containing the activity ID and updated fields.
+   * @param {express.Response} res Express response used to return the update result as JSON.
+   * @param {express.NextFunction} next Express error handler for model failures.
+   * @returns {Promise<void>} Resolves after sending JSON or forwarding an error.
+   */
   static async update(req, res, next) {
     try {
       res.json(
@@ -222,7 +250,13 @@ export class ActivitiesController {
     }
   }
 
-  // @type {express.RequestHandler}
+  /**
+   * Soft-delete the activity identified by the route parameter.
+   * @param {express.Request} req Express request containing the activity ID in `params.id`.
+   * @param {express.Response} res Express response used to return the deletion result as JSON.
+   * @param {express.NextFunction} next Express error handler for model failures.
+   * @returns {Promise<void>} Resolves after sending JSON or forwarding an error.
+   */
   static async delete(req, res, next) {
     try {
       res.json(await ActivitiesModel.delete(Number(req.params.id)));
